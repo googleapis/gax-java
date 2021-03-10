@@ -61,7 +61,7 @@ public interface ResultRetryAlgorithmWithContext<ResponseT>
    * @param previousResponse response returned by the previous attempt
    * @param previousSettings previous attempt settings
    */
-  public TimedAttemptSettings createNextAttempt(
+  TimedAttemptSettings createNextAttempt(
       RetryingContext context,
       Throwable previousThrowable,
       ResponseT previousResponse,
@@ -75,7 +75,7 @@ public interface ResultRetryAlgorithmWithContext<ResponseT>
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param previousResponse response returned by the previous attempt.
    */
-  public boolean shouldRetry(
+  boolean shouldRetry(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
       throws CancellationException;
 }

@@ -165,9 +165,9 @@ public interface ApiCallContext extends RetryingContext {
    * #withRetrySettings(RetrySettings)} on an RPC that does not include {@link
    * Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without calling {@link
    * #withRetryableCodes(Set)} with a set that includes at least {@link Code#DEADLINE_EXCEEDED})
-   * will effectively only set a simple timeout that is equal to {@link
-   * RetrySettings#getInitialRpcTimeout()}. It is recommended to use {@link #withTimeout(Duration)}
-   * if that is the intended behavior.
+   * will effectively only set a single timeout that is equal to {@link
+   * RetrySettings#getInitialRpcTimeout()}. If this timeout is exceeded, the RPC will not be retried
+   * and will fail with {@link Code#DEADLINE_EXCEEDED}.
    *
    * <p>Example usage:
    *
@@ -188,6 +188,7 @@ public interface ApiCallContext extends RetryingContext {
    *     StatusCode.Code.DEADLINE_EXCEEDED));
    * }</pre>
    */
+  @BetaApi
   ApiCallContext withRetrySettings(RetrySettings retrySettings);
 
   /**
@@ -202,6 +203,7 @@ public interface ApiCallContext extends RetryingContext {
    * to change which codes are considered retryable for an RPC that already has at least one
    * retryable code in its default settings.
    */
+  @BetaApi
   ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */

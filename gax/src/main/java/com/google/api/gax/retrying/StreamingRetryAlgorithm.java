@@ -76,25 +76,10 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
-      ServerStreamingAttemptException attemptException =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
-
-      // If we have made progress in the last attempt, then reset the delays
-      if (attemptException.hasSeenResponses()) {
-        prevSettings =
-            createFirstAttempt()
-                .toBuilder()
-                .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
-                .setOverallAttemptCount(prevSettings.getOverallAttemptCount())
-                .build();
-      }
-    }
-
-    return super.createNextAttempt(prevThrowable, prevResponse, prevSettings);
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    return createNextAttempt(null, previousThrowable, previousResponse, previousSettings);
   }
 
   /**
@@ -136,21 +121,11 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
    */
   @Override
   public boolean shouldRetry(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings)
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-
-    // Unwrap
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
-      ServerStreamingAttemptException attemptExceptino =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
-
-      if (!attemptExceptino.canResume()) {
-        return false;
-      }
-    }
-
-    return super.shouldRetry(prevThrowable, prevResponse, nextAttemptSettings);
+    return shouldRetry(null, previousThrowable, previousResponse, nextAttemptSettings);
   }
 
   /**

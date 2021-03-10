@@ -62,7 +62,7 @@ public class BasicResultRetryAlgorithm<ResponseT>
       Throwable previousThrowable,
       ResponseT previousResponse,
       TimedAttemptSettings previousSettings) {
-    return null;
+    return createNextAttempt(previousThrowable, previousResponse, previousSettings);
   }
 
   /**

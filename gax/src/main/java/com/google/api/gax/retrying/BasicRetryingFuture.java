@@ -192,9 +192,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           setAttemptResult(throwable, response, true);
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
-          if (retryAlgorithm
-              .getContextAwareResultAlgorithm()
-              .shouldRetry(retryingContext, throwable, response)) {
+          if (retryAlgorithm.shouldRetryBasedOnResult(retryingContext, throwable, response)) {
             tracer.attemptFailedRetriesExhausted(throwable);
           } else {
             tracer.attemptPermanentFailure(throwable);

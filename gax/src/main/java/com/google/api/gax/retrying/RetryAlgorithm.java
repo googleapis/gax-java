@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
+import javax.annotation.Nullable;
 
 /**
  * The retry algorithm, which makes decision based either on the thrown exception or the returned
@@ -43,8 +44,10 @@ import java.util.concurrent.CancellationException;
  * @param <ResponseT> response type
  */
 public class RetryAlgorithm<ResponseT> {
-  private final ResultRetryAlgorithmWithContext<ResponseT> resultAlgorithm;
-  private final TimedRetryAlgorithmWithContext timedAlgorithm;
+  private final ResultRetryAlgorithm<ResponseT> resultAlgorithm;
+  private final TimedRetryAlgorithm timedAlgorithm;
+  private final ResultRetryAlgorithmWithContext<ResponseT> resultAlgorithmWithContext;
+  private final TimedRetryAlgorithmWithContext timedAlgorithmWithContext;
 
   /**
    * Creates a new retry algorithm instance, which uses thrown exception or returned response and
@@ -58,13 +61,16 @@ public class RetryAlgorithm<ResponseT> {
    *
    * @param resultAlgorithm result algorithm to use
    * @param timedAlgorithm timed algorithm to use
+   * @deprecated use {@link RetryAlgorithm#RetryAlgorithm(ResultRetryAlgorithmWithContext,
+   *     TimedRetryAlgorithmWithContext)} instead
    */
+  @Deprecated
   public RetryAlgorithm(
       ResultRetryAlgorithm<ResponseT> resultAlgorithm, TimedRetryAlgorithm timedAlgorithm) {
-    this.resultAlgorithm =
-        new IgnoreRetryingContextResultRetryAlgorithm<>(checkNotNull(resultAlgorithm));
-    this.timedAlgorithm =
-        new IgnoreRetryingContextTimedRetryAlgorithm(checkNotNull(timedAlgorithm));
+    this.resultAlgorithm = checkNotNull(resultAlgorithm);
+    this.timedAlgorithm = checkNotNull(timedAlgorithm);
+    this.resultAlgorithmWithContext = null;
+    this.timedAlgorithmWithContext = null;
   }
 
   /**
@@ -78,8 +84,10 @@ public class RetryAlgorithm<ResponseT> {
   public RetryAlgorithm(
       ResultRetryAlgorithmWithContext<ResponseT> resultAlgorithm,
       TimedRetryAlgorithmWithContext timedAlgorithm) {
-    this.resultAlgorithm = checkNotNull(resultAlgorithm);
-    this.timedAlgorithm = checkNotNull(timedAlgorithm);
+    this.resultAlgorithm = null;
+    this.timedAlgorithm = null;
+    this.resultAlgorithmWithContext = checkNotNull(resultAlgorithm);
+    this.timedAlgorithmWithContext = checkNotNull(timedAlgorithm);
   }
 
   /**
@@ -88,7 +96,7 @@ public class RetryAlgorithm<ResponseT> {
    * @return first attempt settings
    */
   public TimedAttemptSettings createFirstAttempt() {
-    return timedAlgorithm.createFirstAttempt();
+    return createFirstAttempt(null);
   }
 
   /**
@@ -98,35 +106,30 @@ public class RetryAlgorithm<ResponseT> {
    *     RetrySettings}
    * @return first attempt settings
    */
+  @SuppressWarnings("deprecation")
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
-    return getTimedAlgorithmWithContext().createFirstAttempt(context);
+    if (timedAlgorithmWithContext != null && context != null) {
+      return timedAlgorithmWithContext.createFirstAttempt(context);
+    }
+    return timedAlgorithm.createFirstAttempt();
   }
 
   /**
    * Creates a next attempt {@link TimedAttemptSettings}. This method will return first non-null
    * value, returned by either result or timed retry algorithms in that particular order.
    *
-   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
-   *     instead
-   * @param prevResponse response returned by the previous attempt or null if an exception was
+   * @param previousThrowable exception thrown by the previous attempt or null if a result was
+   *     returned instead
+   * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
-   * @param prevSettings previous attempt settings
+   * @param previousSettings previous attempt settings
    * @return next attempt settings, can be {@code null}, if no there should be no new attempt
    */
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    // a small optimization, which allows to avoid calling relatively heavy methods
-    // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (!resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
-      return null;
-    }
-
-    TimedAttemptSettings newSettings =
-        resultAlgorithm.createNextAttempt(prevThrowable, prevResponse, prevSettings);
-    if (newSettings == null) {
-      newSettings = timedAlgorithm.createNextAttempt(prevSettings);
-    }
-    return newSettings;
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    return createNextAttempt(null, previousThrowable, previousResponse, previousSettings);
   }
 
   /**
@@ -149,26 +152,47 @@ public class RetryAlgorithm<ResponseT> {
       TimedAttemptSettings previousSettings) {
     // a small optimization that avoids calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (!getContextAwareResultAlgorithm()
-        .shouldRetry(context, previousThrowable, previousResponse)) {
+    if (!shouldRetryBasedOnResult(context, previousThrowable, previousResponse)) {
       return null;
     }
 
     TimedAttemptSettings newSettings =
-        getContextAwareResultAlgorithm()
-            .createNextAttempt(context, previousThrowable, previousResponse, previousSettings);
+        createNextAttemptBasedOnResult(
+            context, previousThrowable, previousResponse, previousSettings);
     if (newSettings == null) {
-      newSettings = getTimedAlgorithmWithContext().createNextAttempt(context, previousSettings);
+      newSettings = createNextAttemptBasedOnTiming(context, previousSettings);
     }
     return newSettings;
+  }
+
+  @SuppressWarnings("deprecation")
+  private TimedAttemptSettings createNextAttemptBasedOnResult(
+      RetryingContext context,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    if (resultAlgorithmWithContext != null && context != null) {
+      return resultAlgorithmWithContext.createNextAttempt(
+          context, previousThrowable, previousResponse, previousSettings);
+    }
+    return resultAlgorithm.createNextAttempt(previousThrowable, previousResponse, previousSettings);
+  }
+
+  @SuppressWarnings("deprecation")
+  private TimedAttemptSettings createNextAttemptBasedOnTiming(
+      RetryingContext context, TimedAttemptSettings previousSettings) {
+    if (timedAlgorithmWithContext != null && context != null) {
+      return timedAlgorithmWithContext.createNextAttempt(context, previousSettings);
+    }
+    return timedAlgorithm.createNextAttempt(previousSettings);
   }
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
-   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
-   *     instead
-   * @param prevResponse response returned by the previous attempt or null if an exception was
+   * @param previousThrowable exception thrown by the previous attempt or null if a result was
+   *     returned instead
+   * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
@@ -176,11 +200,11 @@ public class RetryAlgorithm<ResponseT> {
    * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   public boolean shouldRetry(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings)
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-    return resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
-        && nextAttemptSettings != null
-        && timedAlgorithm.shouldRetry(nextAttemptSettings);
+    return shouldRetry(null, previousThrowable, previousResponse, nextAttemptSettings);
   }
 
   /**
@@ -203,29 +227,48 @@ public class RetryAlgorithm<ResponseT> {
       ResponseT previousResponse,
       TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-    return getContextAwareResultAlgorithm()
-            .shouldRetry(context, previousThrowable, previousResponse)
-        && nextAttemptSettings != null
-        && getTimedAlgorithmWithContext().shouldRetry(context, nextAttemptSettings);
+    return shouldRetryBasedOnResult(context, previousThrowable, previousResponse)
+        && shouldRetryBasedOnTiming(context, nextAttemptSettings);
+  }
+
+  @SuppressWarnings("deprecation")
+  boolean shouldRetryBasedOnResult(
+      RetryingContext context, Throwable previousThrowable, ResponseT previousResponse) {
+    if (resultAlgorithmWithContext != null && context != null) {
+      return resultAlgorithmWithContext.shouldRetry(context, previousThrowable, previousResponse);
+    }
+    return resultAlgorithm.shouldRetry(previousThrowable, previousResponse);
+  }
+
+  @SuppressWarnings("deprecation")
+  private boolean shouldRetryBasedOnTiming(
+      RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
+    if (nextAttemptSettings == null) {
+      return false;
+    }
+    if (timedAlgorithmWithContext != null && context != null) {
+      return timedAlgorithmWithContext.shouldRetry(context, nextAttemptSettings);
+    }
+    return timedAlgorithm.shouldRetry(nextAttemptSettings);
   }
 
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
   public ResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
-    return resultAlgorithm;
+    return resultAlgorithmWithContext != null ? resultAlgorithmWithContext : resultAlgorithm;
   }
 
+  /**
+   * Returns the context-aware result retry algorithm that is used by this {@link RetryAlgorithm},
+   * or null if the algorithm was created with a result algorithm that is not context aware.
+   */
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
-  public ResultRetryAlgorithmWithContext<ResponseT> getContextAwareResultAlgorithm() {
-    return resultAlgorithm;
+  @Nullable
+  public ResultRetryAlgorithmWithContext<ResponseT> getContextAwareResultAlgorithm_dontuse() {
+    return resultAlgorithmWithContext;
   }
 
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
   public TimedRetryAlgorithm getTimedAlgorithm() {
-    return timedAlgorithm;
-  }
-
-  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
-  public TimedRetryAlgorithmWithContext getTimedAlgorithmWithContext() {
-    return timedAlgorithm;
+    return timedAlgorithmWithContext != null ? timedAlgorithmWithContext : timedAlgorithm;
   }
 }
