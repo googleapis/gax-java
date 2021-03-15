@@ -47,6 +47,7 @@ class BlockingSemaphore implements Semaphore64 {
     this.limit = permits;
   }
 
+  @Override
   public synchronized void release(long permits) {
     checkNotNegative(permits);
 
@@ -59,6 +60,7 @@ class BlockingSemaphore implements Semaphore64 {
     notifyAll();
   }
 
+  @Override
   public synchronized boolean acquire(long permits) {
     checkNotNegative(permits);
 
@@ -78,6 +80,7 @@ class BlockingSemaphore implements Semaphore64 {
     return true;
   }
 
+  @Override
   public synchronized boolean acquirePartial(long permits) {
     checkNotNegative(permits);
 
@@ -100,6 +103,7 @@ class BlockingSemaphore implements Semaphore64 {
     return true;
   }
 
+  @Override
   public synchronized void reducePermits(long reduction) {
     checkNotNegative(reduction);
     checkNotNegative(limit - reduction);

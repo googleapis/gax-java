@@ -328,12 +328,22 @@ public class FlowController {
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentElementCountLimit() {
-    return currentElementCountLimit;
+    Long ret;
+    synchronized (updateLimitLock) {
+      // make sure the returned value is not stale
+      ret = currentElementCountLimit;
+    }
+    return ret;
   }
 
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentRequestBytesLimit() {
-    return currentRequestBytesLimit;
+    Long ret;
+    synchronized (updateLimitLock) {
+      // make sure the returned value is not stale
+      ret = currentRequestBytesLimit;
+    }
+    return ret;
   }
 }

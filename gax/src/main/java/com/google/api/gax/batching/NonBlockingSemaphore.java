@@ -31,11 +31,12 @@
 package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** A {@link Semaphore64} that immediately returns with failure if permits are not available. */
 class NonBlockingSemaphore implements Semaphore64 {
-  private long currentPermits;
-  private long limit;
+  private AtomicLong currentPermits;
+  private AtomicLong limit;
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -43,47 +44,65 @@ class NonBlockingSemaphore implements Semaphore64 {
 
   NonBlockingSemaphore(long permits) {
     checkNotNegative(permits);
-    this.currentPermits = permits;
-    this.limit = permits;
+    this.currentPermits = new AtomicLong(permits);
+    this.limit = new AtomicLong(permits);
   }
 
-  public synchronized void release(long permits) {
+  @Override
+  public void release(long permits) {
     checkNotNegative(permits);
 
-    currentPermits += permits;
+    long diff = permits + currentPermits.get() - limit.get();
+    currentPermits.addAndGet(permits);
     // If more permits are returned than what was originally set, we need to add these extra
     // permits to the limit
-    if (currentPermits > limit) {
-      limit = currentPermits;
+    if (diff > 0) {
+      limit.addAndGet(diff);
     }
   }
 
-  public synchronized boolean acquire(long permits) {
+  @Override
+  public boolean acquire(long permits) {
     checkNotNegative(permits);
-    if (currentPermits < permits) {
-      return false;
+    while (true) {
+      long old = currentPermits.get();
+      if (old < permits) {
+        return false;
+      }
+      if (currentPermits.compareAndSet(old, old - permits)) {
+        return true;
+      }
     }
-    currentPermits -= permits;
-    return true;
   }
 
-  public synchronized boolean acquirePartial(long permits) {
+  @Override
+  public boolean acquirePartial(long permits) {
     checkNotNegative(permits);
-
     // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
     // currentPermits could be negative after the permits are given out, which marks how many
     // permits are owed.
-    if (currentPermits < Math.min(limit, permits)) {
-      return false;
+    while (true) {
+      long old = currentPermits.get();
+      if (old < Math.min(limit.get(), permits)) {
+        return false;
+      }
+      if (currentPermits.compareAndSet(old, old - permits)) {
+        return true;
+      }
     }
-    currentPermits -= permits;
-    return true;
   }
 
-  public synchronized void reducePermits(long reduction) {
+  @Override
+  public void reducePermits(long reduction) {
     checkNotNegative(reduction);
-    checkNotNegative(limit - reduction);
-    limit -= reduction;
-    currentPermits -= reduction;
+
+    while (true) {
+      long oldLimit = limit.get();
+      checkNotNegative(oldLimit - reduction);
+      if (limit.compareAndSet(oldLimit, oldLimit - reduction)) {
+        currentPermits.addAndGet(-reduction);
+        return;
+      }
+    }
   }
 }
