@@ -36,6 +36,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.common.collect.ImmutableList;
 import java.security.PrivateKey;
+import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,15 +44,18 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class GoogleCredentialsProviderTest {
+  public ServiceAccountCredentials createServiceAccountCredentials() {
+    return ServiceAccountCredentials.newBuilder()
+        .setClientId("fake-client-id")
+        .setClientEmail("fake@example.com")
+        .setPrivateKeyId("fake-private-key")
+        .setPrivateKey(Mockito.mock(PrivateKey.class))
+        .build();
+  }
+
   @Test
   public void serviceAccountReplacedWithJwtTokens() throws Exception {
-    ServiceAccountCredentials serviceAccountCredentials =
-        ServiceAccountCredentials.newBuilder()
-            .setClientId("fake-client-id")
-            .setClientEmail("fake@example.com")
-            .setPrivateKeyId("fake-private-key")
-            .setPrivateKey(Mockito.mock(PrivateKey.class))
-            .build();
+    ServiceAccountCredentials serviceAccountCredentials = createServiceAccountCredentials();
 
     GoogleCredentialsProvider provider =
         GoogleCredentialsProvider.newBuilder()
@@ -71,13 +75,7 @@ public class GoogleCredentialsProviderTest {
 
   @Test
   public void noJwtWithoutScopeMatch() throws Exception {
-    ServiceAccountCredentials serviceAccountCredentials =
-        ServiceAccountCredentials.newBuilder()
-            .setClientId("fake-client-id")
-            .setClientEmail("fake@example.com")
-            .setPrivateKeyId("fake-private-key")
-            .setPrivateKey(Mockito.mock(PrivateKey.class))
-            .build();
+    ServiceAccountCredentials serviceAccountCredentials = createServiceAccountCredentials();
 
     GoogleCredentialsProvider provider =
         GoogleCredentialsProvider.newBuilder()
@@ -99,5 +97,23 @@ public class GoogleCredentialsProviderTest {
     assertThat(serviceAccountCredentials2.getPrivateKey())
         .isEqualTo(serviceAccountCredentials.getPrivateKey());
     assertThat(serviceAccountCredentials2.getScopes()).containsExactly("scope1", "scope2");
+  }
+
+  @Test
+  public void serviceAccountWithDefaultScopes() throws Exception {
+    GoogleCredentialsProvider provider =
+        GoogleCredentialsProvider.newBuilder()
+            .setDefaultScopes(ImmutableList.of("scope1"))
+            .setOAuth2Credentials(createServiceAccountCredentials())
+            .build();
+
+    Credentials credentials = provider.getCredentials();
+    assertThat(credentials).isInstanceOf(ServiceAccountCredentials.class);
+    ServiceAccountCredentials serviceAccountCredentials = (ServiceAccountCredentials) credentials;
+    Collection<String> defaultScopes = serviceAccountCredentials.getDefaultScopes();
+    Collection<String> scopes = serviceAccountCredentials.getScopes();
+    assertThat(defaultScopes.size()).isEqualTo(1);
+    assertThat(defaultScopes.toArray()[0]).isEqualTo("scope1");
+    assertThat(scopes.size()).isEqualTo(0);
   }
 }

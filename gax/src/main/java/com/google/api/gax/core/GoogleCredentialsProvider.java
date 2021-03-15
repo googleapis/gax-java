@@ -54,6 +54,9 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   public abstract List<String> getScopesToApply();
 
   @BetaApi
+  public abstract List<String> getDefaultScopes();
+
+  @BetaApi
   public abstract List<String> getJwtEnabledScopes();
 
   @VisibleForTesting
@@ -88,15 +91,18 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
           .build();
     }
 
-    if (credentials.createScopedRequired()) {
-      credentials = credentials.createScoped(getScopesToApply());
+    if (credentials.createScopedRequired() || credentials instanceof ServiceAccountCredentials) {
+      credentials = credentials.createScoped(getScopesToApply(), getDefaultScopes());
     }
+
     return credentials;
   }
 
   public static Builder newBuilder() {
     return new AutoValue_GoogleCredentialsProvider.Builder()
-        .setJwtEnabledScopes(ImmutableList.<String>of());
+        .setJwtEnabledScopes(ImmutableList.<String>of())
+        .setScopesToApply(ImmutableList.<String>of())
+        .setDefaultScopes(ImmutableList.<String>of());
   }
 
   public abstract Builder toBuilder();
@@ -134,9 +140,16 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
+    @BetaApi
+    public abstract Builder setDefaultScopes(List<String> val);
+
+    @BetaApi
+    public abstract List<String> getDefaultScopes();
+
     public GoogleCredentialsProvider build() {
       setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
       setJwtEnabledScopes(ImmutableList.copyOf(getJwtEnabledScopes()));
+      setDefaultScopes(ImmutableList.copyOf(getDefaultScopes()));
       return autoBuild();
     }
 
