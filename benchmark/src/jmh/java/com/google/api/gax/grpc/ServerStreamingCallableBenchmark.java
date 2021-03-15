@@ -146,12 +146,12 @@ public class ServerStreamingCallableBenchmark {
     stub = BigtableGrpc.newStub(grpcChannel);
 
     // Direct Callable
-    directCallable = new GrpcDirectServerStreamingCallable<>(BigtableGrpc.METHOD_READ_ROWS);
+    directCallable = new GrpcDirectServerStreamingCallable<>(BigtableGrpc.getReadRowsMethod());
 
     // Base Callable (direct + params extractor + exceptions + retries)
     GrpcCallSettings<ReadRowsRequest, ReadRowsResponse> grpcCallSettings =
         GrpcCallSettings.<ReadRowsRequest, ReadRowsResponse>newBuilder()
-            .setMethodDescriptor(BigtableGrpc.METHOD_READ_ROWS)
+            .setMethodDescriptor(BigtableGrpc.getReadRowsMethod())
             .setParamsExtractor(new FakeRequestParamsExtractor())
             .build();
 
@@ -212,7 +212,7 @@ public class ServerStreamingCallableBenchmark {
   @Benchmark
   public void asyncGrpcListener(AsyncSettings asyncSettings, Blackhole blackhole) throws Exception {
     ClientCall<ReadRowsRequest, ReadRowsResponse> clientCall =
-        grpcChannel.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
+        grpcChannel.newCall(BigtableGrpc.getReadRowsMethod(), CallOptions.DEFAULT);
 
     GrpcClientCallListener listener =
         new GrpcClientCallListener(clientCall, asyncSettings.autoFlowControl, blackhole);
@@ -242,7 +242,7 @@ public class ServerStreamingCallableBenchmark {
   public void syncGrpcIterator(Blackhole blackhole) {
     Iterator<ReadRowsResponse> iterator =
         ClientCalls.blockingServerStreamingCall(
-            grpcChannel, BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT, request);
+            grpcChannel, BigtableGrpc.getReadRowsMethod(), CallOptions.DEFAULT, request);
 
     while (iterator.hasNext()) {
       ReadRowsResponse response = iterator.next();

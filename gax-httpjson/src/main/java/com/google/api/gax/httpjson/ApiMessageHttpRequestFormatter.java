@@ -75,6 +75,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     return new ApiMessageHttpRequestFormatter.Builder<>();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Map<String, List<String>> getQueryParamNames(RequestT apiMessage) {
     Set<String> paramNames = getQueryParamNames();

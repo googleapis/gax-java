@@ -187,7 +187,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
   protected long nextRandomLong(long bound) {
-    return bound > 0 && globalSettings.isJittered()
+    return bound > 0 && globalSettings.isJittered() // Jitter check needed for testing purposes.
         ? ThreadLocalRandom.current().nextLong(bound)
         : bound;
   }

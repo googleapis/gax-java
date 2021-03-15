@@ -63,9 +63,13 @@ public interface ApiCallContext extends RetryingContext {
    * Returns a new ApiCallContext with the given timeout set.
    *
    * <p>This sets the maximum amount of time a single unary RPC attempt can take. If retries are
-   * enabled, then this can take much longer. Unlike a deadline, timeouts are relative durations
-   * that are measure from the beginning of each RPC attempt. Please note that this will limit the
-   * duration of a server streaming RPC as well.
+   * enabled, then this can take much longer, as each RPC attempt will have the same constant
+   * timeout. Unlike a deadline, timeouts are relative durations that are measure from the beginning
+   * of each RPC attempt. Please note that this limits the duration of a server streaming RPC as
+   * well.
+   *
+   * <p>If a method has default {@link com.google.api.gax.retrying.RetrySettings}, the max attempts
+   * and/or total timeout is still respected when scheduling each RPC attempt.
    */
   ApiCallContext withTimeout(@Nullable Duration timeout);
 
