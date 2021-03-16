@@ -56,20 +56,21 @@ public class Callables {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
-    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
+    UnaryCallSettings<?, ?> settings = callSettings;
+
+    if (areRetriesDisabled(settings.getRetryableCodes(), settings.getRetrySettings())) {
       // When retries are disabled, the total timeout can be treated as the rpc timeout.
-      callSettings =
-          callSettings
+      settings =
+          settings
               .toBuilder()
-              .setSimpleTimeoutNoRetries(callSettings.getRetrySettings().getTotalTimeout())
+              .setSimpleTimeoutNoRetries(settings.getRetrySettings().getTotalTimeout())
               .build();
     }
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
         new RetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
-            new ExponentialRetryAlgorithm(
-                callSettings.getRetrySettings(), clientContext.getClock()));
+            new ExponentialRetryAlgorithm(settings.getRetrySettings(), clientContext.getClock()));
     ScheduledRetryingExecutor<ResponseT> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
@@ -82,26 +83,26 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
+    ServerStreamingCallSettings<RequestT, ResponseT> settings = callSettings;
+    if (areRetriesDisabled(settings.getRetryableCodes(), settings.getRetrySettings())) {
       // When retries are disabled, the total timeout can be treated as the rpc timeout.
-      callSettings =
-          callSettings
+      settings =
+          settings
               .toBuilder()
-              .setSimpleTimeoutNoRetries(callSettings.getRetrySettings().getTotalTimeout())
+              .setSimpleTimeoutNoRetries(settings.getRetrySettings().getTotalTimeout())
               .build();
     }
 
     StreamingRetryAlgorithm<Void> retryAlgorithm =
         new StreamingRetryAlgorithm<>(
             new ApiResultRetryAlgorithm<Void>(),
-            new ExponentialRetryAlgorithm(
-                callSettings.getRetrySettings(), clientContext.getClock()));
+            new ExponentialRetryAlgorithm(settings.getRetrySettings(), clientContext.getClock()));
 
     ScheduledRetryingExecutor<Void> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
 
     return new RetryingServerStreamingCallable<>(
-        innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
+        innerCallable, retryingExecutor, settings.getResumptionStrategy());
   }
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
