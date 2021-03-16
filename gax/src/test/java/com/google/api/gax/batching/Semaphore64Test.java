@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.batching;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -96,6 +97,7 @@ public class Semaphore64Test {
     semaphore.reducePermits(3);
     assertFalse(semaphore.acquire(3));
     assertTrue(semaphore.acquire(2));
+    assertEquals(2, semaphore.getLimit());
   }
 
   @Test(timeout = 500)
@@ -120,6 +122,8 @@ public class Semaphore64Test {
 
     semaphore.release(1);
     t.join();
+
+    assertEquals(1, semaphore.getLimit());
   }
 
   @Test
@@ -130,6 +134,8 @@ public class Semaphore64Test {
     semaphore.release(6);
     assertTrue(semaphore.acquire(1));
     assertFalse(semaphore.acquirePartial(6));
+    // limit should still be 5
+    assertEquals(5, semaphore.getLimit());
   }
 
   @Test(timeout = 500)
@@ -164,5 +170,7 @@ public class Semaphore64Test {
     // wait fo thread to start
     Thread.sleep(100);
     assertTrue(t2.isAlive());
+    // limit should still be 5 and get limit should not block
+    assertEquals(5, semaphore.getLimit());
   }
 }

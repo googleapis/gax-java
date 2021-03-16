@@ -51,7 +51,6 @@ class NonBlockingSemaphore implements Semaphore64 {
   @Override
   public void release(long permits) {
     checkNotNegative(permits);
-
     long diff = permits + currentPermits.get() - limit.get();
     currentPermits.addAndGet(permits);
     // If more permits are returned than what was originally set, we need to add these extra
@@ -104,5 +103,10 @@ class NonBlockingSemaphore implements Semaphore64 {
         return;
       }
     }
+  }
+
+  @Override
+  public long getLimit() {
+    return limit.get();
   }
 }

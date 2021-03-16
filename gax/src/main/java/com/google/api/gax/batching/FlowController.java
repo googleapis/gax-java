@@ -146,8 +146,6 @@ public class FlowController {
   @Nullable private final Long maxRequestBytesLimit;
   @Nullable private final Long minElementCountLimit;
   @Nullable private final Long minRequestBytesLimit;
-  @Nullable private Long currentElementCountLimit;
-  @Nullable private Long currentRequestBytesLimit;
   private final LimitExceededBehavior limitExceededBehavior;
   private final Object updateLimitLock;
 
@@ -171,8 +169,6 @@ public class FlowController {
         this.maxRequestBytesLimit = null;
         this.minElementCountLimit = null;
         this.minRequestBytesLimit = null;
-        this.currentElementCountLimit = null;
-        this.currentRequestBytesLimit = null;
 
         this.outstandingElementCount = null;
         this.outstandingByteCount = null;
@@ -183,24 +179,24 @@ public class FlowController {
     }
     this.maxElementCountLimit = settings.getMaxOutstandingElementCount();
     this.minElementCountLimit = settings.getMinOutstandingElementCount();
-    this.currentElementCountLimit = settings.getInitialOutstandingElementCount();
-    if (currentElementCountLimit == null) {
+    Long initialElementCountLimit = settings.getInitialOutstandingElementCount();
+    if (initialElementCountLimit == null) {
       outstandingElementCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingElementCount = new BlockingSemaphore(currentElementCountLimit);
+      outstandingElementCount = new BlockingSemaphore(initialElementCountLimit);
     } else {
-      outstandingElementCount = new NonBlockingSemaphore(currentElementCountLimit);
+      outstandingElementCount = new NonBlockingSemaphore(initialElementCountLimit);
     }
 
     this.maxRequestBytesLimit = settings.getMaxOutstandingRequestBytes();
     this.minRequestBytesLimit = settings.getMinOutstandingRequestBytes();
-    this.currentRequestBytesLimit = settings.getInitialOutstandingRequestBytes();
-    if (currentRequestBytesLimit == null) {
+    Long initialRequestBytesLimit = settings.getInitialOutstandingRequestBytes();
+    if (initialRequestBytesLimit == null) {
       outstandingByteCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingByteCount = new BlockingSemaphore(currentRequestBytesLimit);
+      outstandingByteCount = new BlockingSemaphore(initialRequestBytesLimit);
     } else {
-      outstandingByteCount = new NonBlockingSemaphore(currentRequestBytesLimit);
+      outstandingByteCount = new NonBlockingSemaphore(initialRequestBytesLimit);
     }
   }
 
@@ -210,7 +206,7 @@ public class FlowController {
 
     if (outstandingElementCount != null) {
       if (!outstandingElementCount.acquire(elements)) {
-        throw new MaxOutstandingElementCountReachedException(currentElementCountLimit);
+        throw new MaxOutstandingElementCountReachedException(outstandingElementCount.getLimit());
       }
     }
 
@@ -221,7 +217,7 @@ public class FlowController {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }
-        throw new MaxOutstandingRequestBytesReachedException(currentRequestBytesLimit);
+        throw new MaxOutstandingRequestBytesReachedException(outstandingByteCount.getLimit());
       }
     }
   }
@@ -248,14 +244,14 @@ public class FlowController {
     Preconditions.checkArgument(byteSteps >= 0);
     synchronized (updateLimitLock) {
       if (outstandingElementCount != null) {
-        long actualStep = Math.min(elementSteps, maxElementCountLimit - currentElementCountLimit);
-        currentElementCountLimit += actualStep;
+        long actualStep =
+            Math.min(elementSteps, maxElementCountLimit - outstandingElementCount.getLimit());
         outstandingElementCount.release(actualStep);
       }
 
       if (outstandingByteCount != null) {
-        long actualStep = Math.min(byteSteps, maxRequestBytesLimit - currentRequestBytesLimit);
-        currentRequestBytesLimit += actualStep;
+        long actualStep =
+            Math.min(byteSteps, maxRequestBytesLimit - outstandingByteCount.getLimit());
         outstandingByteCount.release(actualStep);
       }
     }
@@ -271,14 +267,14 @@ public class FlowController {
     Preconditions.checkArgument(byteSteps >= 0);
     synchronized (updateLimitLock) {
       if (outstandingElementCount != null) {
-        long actualStep = Math.min(elementSteps, currentElementCountLimit - minElementCountLimit);
-        currentElementCountLimit -= actualStep;
+        long actualStep =
+            Math.min(elementSteps, outstandingElementCount.getLimit() - minElementCountLimit);
         outstandingElementCount.reducePermits(actualStep);
       }
 
       if (outstandingByteCount != null) {
-        long actualStep = Math.min(byteSteps, currentRequestBytesLimit - minRequestBytesLimit);
-        currentRequestBytesLimit -= actualStep;
+        long actualStep =
+            Math.min(byteSteps, outstandingByteCount.getLimit() - minRequestBytesLimit);
         outstandingByteCount.reducePermits(actualStep);
       }
     }
@@ -328,22 +324,12 @@ public class FlowController {
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentElementCountLimit() {
-    Long ret;
-    synchronized (updateLimitLock) {
-      // make sure the returned value is not stale
-      ret = currentElementCountLimit;
-    }
-    return ret;
+    return outstandingElementCount == null ? null : outstandingElementCount.getLimit();
   }
 
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentRequestBytesLimit() {
-    Long ret;
-    synchronized (updateLimitLock) {
-      // make sure the returned value is not stale
-      ret = currentRequestBytesLimit;
-    }
-    return ret;
+    return outstandingByteCount == null ? null : outstandingByteCount.getLimit();
   }
 }

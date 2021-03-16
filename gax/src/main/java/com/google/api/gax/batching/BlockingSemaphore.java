@@ -110,4 +110,9 @@ class BlockingSemaphore implements Semaphore64 {
     currentPermits -= reduction;
     limit -= reduction;
   }
+
+  @Override
+  public synchronized long getLimit() {
+    return limit;
+  }
 }
