@@ -69,8 +69,9 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     ApiCallContext callContext = originalCallContext;
 
     try {
+      // Set the RPC timeout if the caller did not provide their own.
       Duration rpcTimeout = externalFuture.getAttemptSettings().getRpcTimeout();
-      if (!rpcTimeout.isZero()) {
+      if (!rpcTimeout.isZero() && callContext.getTimeout() == null) {
         callContext = callContext.withTimeout(rpcTimeout);
       }
 
