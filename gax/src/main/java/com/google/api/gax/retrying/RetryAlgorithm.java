@@ -93,7 +93,9 @@ public class RetryAlgorithm<ResponseT> {
    * Creates a first attempt {@link TimedAttemptSettings}.
    *
    * @return first attempt settings
+   * @deprecated use {@link #createFirstAttempt(RetryingContext)} instead
    */
+  @Deprecated
   public TimedAttemptSettings createFirstAttempt() {
     return createFirstAttempt(null);
   }
@@ -105,7 +107,6 @@ public class RetryAlgorithm<ResponseT> {
    *     RetrySettings}
    * @return first attempt settings
    */
-  @SuppressWarnings("deprecation")
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
     if (timedAlgorithmWithContext != null && context != null) {
       return timedAlgorithmWithContext.createFirstAttempt(context);
@@ -123,7 +124,10 @@ public class RetryAlgorithm<ResponseT> {
    *     thrown instead
    * @param previousSettings previous attempt settings
    * @return next attempt settings, can be {@code null}, if no there should be no new attempt
+   * @deprecated use {@link #createNextAttempt(RetryingContext, Throwable, Object,
+   *     TimedAttemptSettings)} instead
    */
+  @Deprecated
   public TimedAttemptSettings createNextAttempt(
       Throwable previousThrowable,
       ResponseT previousResponse,
@@ -164,7 +168,6 @@ public class RetryAlgorithm<ResponseT> {
     return newSettings;
   }
 
-  @SuppressWarnings("deprecation")
   private TimedAttemptSettings createNextAttemptBasedOnResult(
       RetryingContext context,
       Throwable previousThrowable,
@@ -178,7 +181,6 @@ public class RetryAlgorithm<ResponseT> {
         .createNextAttempt(previousThrowable, previousResponse, previousSettings);
   }
 
-  @SuppressWarnings("deprecation")
   private TimedAttemptSettings createNextAttemptBasedOnTiming(
       RetryingContext context, TimedAttemptSettings previousSettings) {
     if (timedAlgorithmWithContext != null && context != null) {
@@ -198,7 +200,10 @@ public class RetryAlgorithm<ResponseT> {
    *     accepted
    * @throws CancellationException if the retrying process should be canceled
    * @return {@code true} if another attempt should be made, or {@code false} otherwise
+   * @deprecated use {@link #shouldRetry(RetryingContext, Throwable, Object, TimedAttemptSettings)}
+   *     instead
    */
+  @Deprecated
   public boolean shouldRetry(
       Throwable previousThrowable,
       ResponseT previousResponse,
@@ -231,7 +236,6 @@ public class RetryAlgorithm<ResponseT> {
         && shouldRetryBasedOnTiming(context, nextAttemptSettings);
   }
 
-  @SuppressWarnings("deprecation")
   boolean shouldRetryBasedOnResult(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse) {
     if (resultAlgorithmWithContext != null && context != null) {
@@ -240,7 +244,6 @@ public class RetryAlgorithm<ResponseT> {
     return getResultAlgorithm().shouldRetry(previousThrowable, previousResponse);
   }
 
-  @SuppressWarnings("deprecation")
   private boolean shouldRetryBasedOnTiming(
       RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
     if (nextAttemptSettings == null) {

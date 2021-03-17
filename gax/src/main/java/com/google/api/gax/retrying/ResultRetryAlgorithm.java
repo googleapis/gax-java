@@ -33,17 +33,17 @@ import java.util.concurrent.CancellationException;
 
 /**
  * Same as {@link ResultRetryAlgorithmWithContext}, but without methods that accept a {@link
- * RetryingContext}.
+ * RetryingContext}. Use {@link ResultRetryAlgorithmWithContext} instead of this interface when
+ * possible.
  */
 public interface ResultRetryAlgorithm<ResponseT> {
   /**
    * Same as {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
    * Object, TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @deprecated use {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
-   *     Throwable, Object, TimedAttemptSettings)} instead
+   * <p>Use {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
+   * Object, TimedAttemptSettings)} instead of this method when possible.
    */
-  @Deprecated
   TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings);
 
@@ -51,8 +51,8 @@ public interface ResultRetryAlgorithm<ResponseT> {
    * Same as {@link ResultRetryAlgorithmWithContext#shouldRetry(Throwable, Object)}, but without a
    * {@link RetryingContext}.
    *
-   * @deprecated use {@link ResultRetryAlgorithmWithContext#shouldRetry(RetryingContext, Throwable,
-   *     Object)} instead
+   * <p>Use {@link ResultRetryAlgorithmWithContext#shouldRetry(RetryingContext, Throwable, Object)}
+   * instead of this method when possible.
    */
   boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) throws CancellationException;
 }

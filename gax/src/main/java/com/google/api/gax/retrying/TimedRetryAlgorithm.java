@@ -34,7 +34,8 @@ import java.util.concurrent.CancellationException;
 
 /**
  * Same as {@link TimedRetryAlgorithmWithContext}, but without methods that accept a {@link
- * RetryingContext}.
+ * RetryingContext}. Use {@link TimedRetryAlgorithmWithContext} instead of this interface when
+ * possible.
  */
 public interface TimedRetryAlgorithm {
 
@@ -42,8 +43,8 @@ public interface TimedRetryAlgorithm {
    * Same as {@link TimedRetryAlgorithmWithContext#createFirstAttempt(RetryingContext)}, but without
    * a {@link RetryingContext}.
    *
-   * @deprecated use {@link TimedRetryAlgorithmWithContext#createFirstAttempt(RetryingContext)}
-   *     instead
+   * <p>Use {@link TimedRetryAlgorithmWithContext#createFirstAttempt(RetryingContext)} instead of
+   * this method when possible.
    */
   TimedAttemptSettings createFirstAttempt();
 
@@ -51,19 +52,17 @@ public interface TimedRetryAlgorithm {
    * Same as {@link TimedRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
    * TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @deprecated use {@link TimedRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
-   *     TimedAttemptSettings)} instead
+   * <p>Use {@link TimedRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
+   * TimedAttemptSettings)} instead of this method when possible.
    */
-  @Deprecated
   TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 
   /**
    * Same as {@link TimedRetryAlgorithmWithContext#shouldRetry(RetryingContext,
    * TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @deprecated use {@link TimedRetryAlgorithmWithContext#shouldRetry(RetryingContext,
-   *     TimedAttemptSettings)} instead
+   * <p>Use {@link TimedRetryAlgorithmWithContext#shouldRetry(RetryingContext,
+   * TimedAttemptSettings)} instead of this method when possible.
    */
-  @Deprecated
   boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) throws CancellationException;
 }
