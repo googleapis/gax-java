@@ -246,13 +246,13 @@ public class FlowController {
       if (outstandingElementCount != null) {
         long actualStep =
             Math.min(elementSteps, maxElementCountLimit - outstandingElementCount.getLimit());
-        outstandingElementCount.release(actualStep);
+        outstandingElementCount.addPermits(actualStep);
       }
 
       if (outstandingByteCount != null) {
         long actualStep =
             Math.min(byteSteps, maxRequestBytesLimit - outstandingByteCount.getLimit());
-        outstandingByteCount.release(actualStep);
+        outstandingByteCount.addPermits(actualStep);
       }
     }
   }

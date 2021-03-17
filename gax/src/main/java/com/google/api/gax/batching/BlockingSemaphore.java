@@ -50,13 +50,8 @@ class BlockingSemaphore implements Semaphore64 {
   @Override
   public synchronized void release(long permits) {
     checkNotNegative(permits);
-
+    Preconditions.checkState(currentPermits + permits <= limit, "Maximum permit count exceeded");
     currentPermits += permits;
-    // If more permits are returned than what was originally set, we need to add these extra
-    // permits to the limit too
-    if (currentPermits > limit) {
-      limit = currentPermits;
-    }
     notifyAll();
   }
 
@@ -101,6 +96,14 @@ class BlockingSemaphore implements Semaphore64 {
       Thread.currentThread().interrupt();
     }
     return true;
+  }
+
+  @Override
+  public synchronized void addPermits(long permits) {
+    checkNotNegative(permits);
+    currentPermits += permits;
+    limit += permits;
+    notifyAll();
   }
 
   @Override

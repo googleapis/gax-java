@@ -31,10 +31,12 @@ package com.google.api.gax.batching;
 
 /**
  * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
+ * permits. It also allows adding / reducing permits to the original limit and acquire partial
  * permits.
  *
- * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
- * {@code Semaphore} instead. It is almost certainly faster and less error prone.
+ * <p>Users who do not need such large number of permits and the extra functionalities are strongly
+ * encouraged to use Java's {@code Semaphore} instead. It is almost certainly faster and less error
+ * prone.
  */
 interface Semaphore64 {
   boolean acquire(long permits);
@@ -46,6 +48,8 @@ interface Semaphore64 {
    * asked.
    */
   boolean acquirePartial(long permits);
+
+  void addPermits(long permits);
 
   void reducePermits(long reduction);
 

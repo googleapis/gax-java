@@ -32,9 +32,8 @@ package com.google.api.gax.batching;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -56,39 +55,26 @@ public class Semaphore64Test {
     assertTrue(semaphore.acquire(1));
   }
 
-  @Test
+  @Test(timeout = 500)
   public void testBlocking() throws InterruptedException {
     final Semaphore64 semaphore = new BlockingSemaphore(1);
     semaphore.acquire(1);
 
-    Runnable acquireOneRunnable =
-        new Runnable() {
-          @Override
-          public void run() {
-            semaphore.acquire(1);
-          }
-        };
+    Thread t =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                semaphore.acquire(1);
+              }
+            });
+    t.start();
 
-    List<Thread> acquirers = new ArrayList<>();
-    for (int i = 0; i < 5; i++) {
-      Thread t = new Thread(acquireOneRunnable);
-      acquirers.add(t);
-      t.start();
-    }
+    Thread.sleep(50);
+    assertTrue(t.isAlive());
 
-    Thread.sleep(500);
-
-    for (Thread t : acquirers) {
-      assertTrue(t.isAlive());
-    }
-
-    semaphore.release(3);
-    semaphore.release(3);
-
-    for (Thread t : acquirers) {
-      t.join(500);
-      assertFalse(t.isAlive());
-    }
+    semaphore.release(1);
+    t.join();
   }
 
   @Test
@@ -172,5 +158,51 @@ public class Semaphore64Test {
     assertTrue(t2.isAlive());
     // limit should still be 5 and get limit should not block
     assertEquals(5, semaphore.getLimit());
+  }
+
+  @Test
+  public void testAddPermitsNonBlocking() {
+    Semaphore64 semaphore = new NonBlockingSemaphore(1);
+    assertFalse(semaphore.acquire(2));
+    try {
+      semaphore.release(1);
+      fail("Did not throw illegal state exception");
+    } catch (IllegalStateException e) {
+    }
+    semaphore.addPermits(1);
+    assertTrue(semaphore.acquire(2));
+    semaphore.release(2);
+    assertFalse(semaphore.acquire(3));
+    assertEquals(2, semaphore.getLimit());
+  }
+
+  @Test(timeout = 500)
+  public void testAddPermitsBlocking() throws Exception {
+    final Semaphore64 semaphore = new BlockingSemaphore(1);
+    semaphore.acquire(1);
+    Thread t =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                semaphore.acquire(1);
+              }
+            });
+    t.start();
+
+    Thread.sleep(50);
+    assertTrue(t.isAlive());
+
+    semaphore.addPermits(1);
+    t.join();
+    semaphore.release(2);
+
+    try {
+      semaphore.release(1);
+      fail("Did not throw illegal state exception");
+    } catch (IllegalStateException e) {
+    }
+    semaphore.acquire(2);
+    assertEquals(2, semaphore.getLimit());
   }
 }
