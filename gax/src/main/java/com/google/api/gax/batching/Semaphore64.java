@@ -49,9 +49,9 @@ interface Semaphore64 {
    */
   boolean acquirePartial(long permits);
 
-  void addPermits(long permits);
+  void increasePermitLimit(long permits);
 
-  void reducePermits(long reduction);
+  void reducePermitLimit(long reduction);
 
-  long getLimit();
+  long getPermitLimit();
 }

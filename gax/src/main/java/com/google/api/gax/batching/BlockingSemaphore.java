@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
 
 /** A {@link Semaphore64} that blocks until permits become available. */
 class BlockingSemaphore implements Semaphore64 {
-  private long currentPermits;
+  private long availablePermits;
   private long limit;
 
   private static void checkNotNegative(long l) {
@@ -43,15 +43,15 @@ class BlockingSemaphore implements Semaphore64 {
 
   BlockingSemaphore(long permits) {
     checkNotNegative(permits);
-    this.currentPermits = permits;
+    this.availablePermits = permits;
     this.limit = permits;
   }
 
   @Override
   public synchronized void release(long permits) {
     checkNotNegative(permits);
-    Preconditions.checkState(currentPermits + permits <= limit, "Maximum permit count exceeded");
-    currentPermits += permits;
+    // TODO: throw exceptions when the permits overflow
+    availablePermits = Math.min(availablePermits + permits, limit);
     notifyAll();
   }
 
@@ -60,14 +60,15 @@ class BlockingSemaphore implements Semaphore64 {
     checkNotNegative(permits);
 
     boolean interrupted = false;
-    while (currentPermits < permits) {
+    while (availablePermits < permits) {
       try {
         wait();
       } catch (InterruptedException e) {
         interrupted = true;
       }
     }
-    currentPermits -= permits;
+    // TODO: if thread is interrupted, we should not grant the permits
+    availablePermits -= permits;
 
     if (interrupted) {
       Thread.currentThread().interrupt();
@@ -80,42 +81,43 @@ class BlockingSemaphore implements Semaphore64 {
     checkNotNegative(permits);
 
     boolean interrupted = false;
-    // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
-    // currentPermits could be negative after the permits are given out, which marks how many
-    // permits are owed.
-    while (currentPermits < Math.min(limit, permits)) {
+    // To allow individual oversized requests to be sent, clamp the requested permits to the maximum
+    // limit. This will allow individual large requests to be sent. Please note that this behavior
+    // will result in availablePermits going negative.
+    while (availablePermits < Math.min(limit, permits)) {
       try {
         wait();
       } catch (InterruptedException e) {
         interrupted = true;
       }
     }
-    currentPermits -= permits;
 
     if (interrupted) {
       Thread.currentThread().interrupt();
     }
+
+    availablePermits -= permits;
     return true;
   }
 
   @Override
-  public synchronized void addPermits(long permits) {
+  public synchronized void increasePermitLimit(long permits) {
     checkNotNegative(permits);
-    currentPermits += permits;
+    availablePermits += permits;
     limit += permits;
     notifyAll();
   }
 
   @Override
-  public synchronized void reducePermits(long reduction) {
+  public synchronized void reducePermitLimit(long reduction) {
     checkNotNegative(reduction);
-    checkNotNegative(limit - reduction);
-    currentPermits -= reduction;
+    Preconditions.checkState(limit - reduction > 0, "permit limit underflow");
+    availablePermits -= reduction;
     limit -= reduction;
   }
 
   @Override
-  public synchronized long getLimit() {
+  public synchronized long getPermitLimit() {
     return limit;
   }
 }

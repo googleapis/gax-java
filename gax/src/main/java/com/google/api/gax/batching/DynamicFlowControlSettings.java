@@ -149,12 +149,9 @@ public abstract class DynamicFlowControlSettings {
         return;
       }
       Preconditions.checkState(
-          (settings.getInitialOutstandingRequestBytes() != null
-                  && settings.getMinOutstandingRequestBytes() != null
-                  && settings.getMaxOutstandingRequestBytes() != null)
-              || (settings.getInitialOutstandingRequestBytes() == null
-                  && settings.getMinOutstandingRequestBytes() == null
-                  && settings.getMaxOutstandingRequestBytes() == null),
+          settings.getInitialOutstandingRequestBytes() != null
+              && settings.getMinOutstandingRequestBytes() != null
+              && settings.getMaxOutstandingRequestBytes() != null,
           "Throttling on number of bytes is disabled by default. To enable this "
               + "setting, minOutstandingRequestBytes, initialOutstandingRequestBytes, and "
               + "maxOutstandingRequestBytes must all be set");

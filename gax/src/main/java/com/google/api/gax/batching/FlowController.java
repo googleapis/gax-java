@@ -206,7 +206,8 @@ public class FlowController {
 
     if (outstandingElementCount != null) {
       if (!outstandingElementCount.acquire(elements)) {
-        throw new MaxOutstandingElementCountReachedException(outstandingElementCount.getLimit());
+        throw new MaxOutstandingElementCountReachedException(
+            outstandingElementCount.getPermitLimit());
       }
     }
 
@@ -217,7 +218,7 @@ public class FlowController {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }
-        throw new MaxOutstandingRequestBytesReachedException(outstandingByteCount.getLimit());
+        throw new MaxOutstandingRequestBytesReachedException(outstandingByteCount.getPermitLimit());
       }
     }
   }
@@ -245,14 +246,14 @@ public class FlowController {
     synchronized (updateLimitLock) {
       if (outstandingElementCount != null) {
         long actualStep =
-            Math.min(elementSteps, maxElementCountLimit - outstandingElementCount.getLimit());
-        outstandingElementCount.addPermits(actualStep);
+            Math.min(elementSteps, maxElementCountLimit - outstandingElementCount.getPermitLimit());
+        outstandingElementCount.increasePermitLimit(actualStep);
       }
 
       if (outstandingByteCount != null) {
         long actualStep =
-            Math.min(byteSteps, maxRequestBytesLimit - outstandingByteCount.getLimit());
-        outstandingByteCount.addPermits(actualStep);
+            Math.min(byteSteps, maxRequestBytesLimit - outstandingByteCount.getPermitLimit());
+        outstandingByteCount.increasePermitLimit(actualStep);
       }
     }
   }
@@ -268,14 +269,14 @@ public class FlowController {
     synchronized (updateLimitLock) {
       if (outstandingElementCount != null) {
         long actualStep =
-            Math.min(elementSteps, outstandingElementCount.getLimit() - minElementCountLimit);
-        outstandingElementCount.reducePermits(actualStep);
+            Math.min(elementSteps, outstandingElementCount.getPermitLimit() - minElementCountLimit);
+        outstandingElementCount.reducePermitLimit(actualStep);
       }
 
       if (outstandingByteCount != null) {
         long actualStep =
-            Math.min(byteSteps, outstandingByteCount.getLimit() - minRequestBytesLimit);
-        outstandingByteCount.reducePermits(actualStep);
+            Math.min(byteSteps, outstandingByteCount.getPermitLimit() - minRequestBytesLimit);
+        outstandingByteCount.reducePermitLimit(actualStep);
       }
     }
   }
@@ -324,12 +325,12 @@ public class FlowController {
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentElementCountLimit() {
-    return outstandingElementCount == null ? null : outstandingElementCount.getLimit();
+    return outstandingElementCount == null ? null : outstandingElementCount.getPermitLimit();
   }
 
   @InternalApi("For google-cloud-java client use only")
   @Nullable
   public Long getCurrentRequestBytesLimit() {
-    return outstandingByteCount == null ? null : outstandingByteCount.getLimit();
+    return outstandingByteCount == null ? null : outstandingByteCount.getPermitLimit();
   }
 }
