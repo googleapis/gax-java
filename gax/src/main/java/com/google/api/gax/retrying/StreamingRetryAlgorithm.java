@@ -43,8 +43,29 @@ import java.util.concurrent.CancellationException;
  */
 @InternalApi("For internal use only")
 public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<ResponseT> {
+
+  /**
+   * Instances that are created using this constructor will ignore the {@link RetryingContext} that
+   * is passed in to the retrying methods. Use {@link
+   * #StreamingRetryAlgorithm(ResultRetryAlgorithmWithContext, TimedRetryAlgorithmWithContext)} to
+   * create an instance that will respect the {@link RetryingContext}.
+   *
+   * @deprecated use {@link #StreamingRetryAlgorithm(ResultRetryAlgorithmWithContext,
+   *     TimedRetryAlgorithmWithContext)} instead
+   */
+  @Deprecated
   public StreamingRetryAlgorithm(
       ResultRetryAlgorithm<ResponseT> resultAlgorithm, TimedRetryAlgorithm timedAlgorithm) {
+    super(resultAlgorithm, timedAlgorithm);
+  }
+
+  /**
+   * Creates a {@link StreamingRetryAlgorithm} that will use the settings (if any) in the {@link
+   * RetryingContext} that is passed in to the retrying methods.
+   */
+  public StreamingRetryAlgorithm(
+      ResultRetryAlgorithmWithContext<ResponseT> resultAlgorithm,
+      TimedRetryAlgorithmWithContext timedAlgorithm) {
     super(resultAlgorithm, timedAlgorithm);
   }
 
@@ -55,25 +76,41 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    return createNextAttempt(null, previousThrowable, previousResponse, previousSettings);
+  }
 
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
+  /**
+   * {@inheritDoc}
+   *
+   * <p>The attempt settings will be reset if the stream attempt produced any messages.
+   */
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+
+    if (previousThrowable instanceof ServerStreamingAttemptException) {
       ServerStreamingAttemptException attemptException =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
+          (ServerStreamingAttemptException) previousThrowable;
+      previousThrowable = previousThrowable.getCause();
 
       // If we have made progress in the last attempt, then reset the delays
       if (attemptException.hasSeenResponses()) {
-        prevSettings =
-            createFirstAttempt()
+        previousSettings =
+            createFirstAttempt(context)
                 .toBuilder()
-                .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
-                .setOverallAttemptCount(prevSettings.getOverallAttemptCount())
+                .setFirstAttemptStartTimeNanos(previousSettings.getFirstAttemptStartTimeNanos())
+                .setOverallAttemptCount(previousSettings.getOverallAttemptCount())
                 .build();
       }
     }
 
-    return super.createNextAttempt(prevThrowable, prevResponse, prevSettings);
+    return super.createNextAttempt(context, previousThrowable, previousResponse, previousSettings);
   }
 
   /**
@@ -84,20 +121,38 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
    */
   @Override
   public boolean shouldRetry(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings)
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings nextAttemptSettings)
+      throws CancellationException {
+    return shouldRetry(null, previousThrowable, previousResponse, nextAttemptSettings);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Schedules retries only if the {@link StreamResumptionStrategy} in the {@code
+   * ServerStreamingAttemptCallable} supports it.
+   */
+  @Override
+  public boolean shouldRetry(
+      RetryingContext context,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
 
     // Unwrap
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
-      ServerStreamingAttemptException attemptExceptino =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
+    if (previousThrowable instanceof ServerStreamingAttemptException) {
+      ServerStreamingAttemptException attemptException =
+          (ServerStreamingAttemptException) previousThrowable;
+      previousThrowable = previousThrowable.getCause();
 
-      if (!attemptExceptino.canResume()) {
+      if (!attemptException.canResume()) {
         return false;
       }
     }
 
-    return super.shouldRetry(prevThrowable, prevResponse, nextAttemptSettings);
+    return super.shouldRetry(context, previousThrowable, previousResponse, nextAttemptSettings);
   }
 }

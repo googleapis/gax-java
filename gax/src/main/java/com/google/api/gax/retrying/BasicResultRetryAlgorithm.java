@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.retrying;
 
+import java.util.concurrent.CancellationException;
+
 /**
  * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
  * all exceptions should be retried, all responses should be accepted (including {@code null}) and
@@ -36,30 +38,50 @@ package com.google.api.gax.retrying;
  *
  * @param <ResponseT> attempt response type
  */
-public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
+public class BasicResultRetryAlgorithm<ResponseT>
+    implements ResultRetryAlgorithmWithContext<ResponseT> {
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
-   *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @param prevSettings previous attempt settings
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
     return null;
   }
 
   /**
-   * Returns {@code true} if an exception was thrown ({@code prevThrowable != null}), {@code false}
-   * otherwise.
-   *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
+   * Always returns null, indicating that this algorithm does not provide any specific settings for
+   * the next attempt.
    */
   @Override
-  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return prevThrowable != null;
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    return createNextAttempt(previousThrowable, previousResponse, previousSettings);
+  }
+
+  /**
+   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
+   * false} otherwise.
+   */
+  @Override
+  public boolean shouldRetry(Throwable previousThrowable, ResponseT previousResponse) {
+    return previousThrowable != null;
+  }
+
+  /**
+   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
+   * false} otherwise.
+   */
+  @Override
+  public boolean shouldRetry(
+      RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
+      throws CancellationException {
+    return shouldRetry(previousThrowable, previousResponse);
   }
 }
