@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
+import static org.junit.Assert.assertSame;
+
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
@@ -38,9 +41,11 @@ import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCalla
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -125,8 +130,8 @@ public class StreamingCallableTest {
     ClientStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
     callable.clientStreamingCall(observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
-    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
+    assertSame(observer, stashCallable.getActualObserver());
+    assertSame(defaultCallContext, stashCallable.getContext());
   }
 
   @Test
@@ -134,17 +139,29 @@ public class StreamingCallableTest {
   public void testClientStreamingCallWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+    Set<StatusCode.Code> retryableCodes =
+        ImmutableSet.of(
+            StatusCode.Code.INTERNAL,
+            StatusCode.Code.UNAVAILABLE,
+            StatusCode.Code.DEADLINE_EXCEEDED);
     ApiCallContext context =
-        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
+        FakeCallContext.createDefault()
+            .withChannel(channel)
+            .withCredentials(credentials)
+            .withRetrySettings(retrySettings)
+            .withRetryableCodes(retryableCodes);
     ClientStreamingStashCallable<Integer, Integer> stashCallable =
         new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     ClientStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     callable.clientStreamingCall(observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
+    assertSame(observer, stashCallable.getActualObserver());
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
+    assertSame(channel, actualContext.getChannel());
+    assertSame(credentials, actualContext.getCredentials());
+    assertSame(retrySettings, actualContext.getRetrySettings());
+    assertSame(retryableCodes, actualContext.getRetryableCodes());
   }
 }

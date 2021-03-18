@@ -31,11 +31,14 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -156,6 +159,56 @@ public interface ApiCallContext extends RetryingContext {
    */
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
+
+  /**
+   * Returns a new ApiCallContext with the given {@link RetrySettings} set.
+   *
+   * <p>This sets the {@link RetrySettings} to use for the RPC. These settings will work in
+   * combination with either the default retryable codes for the RPC, or the retryable codes
+   * supplied through {@link #withRetryableCodes(Set)}. Calling {@link
+   * #withRetrySettings(RetrySettings)} on an RPC that does not include {@link
+   * Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without calling {@link
+   * #withRetryableCodes(Set)} with a set that includes at least {@link Code#DEADLINE_EXCEEDED})
+   * will effectively only set a single timeout that is equal to {@link
+   * RetrySettings#getInitialRpcTimeout()}. If this timeout is exceeded, the RPC will not be retried
+   * and will fail with {@link Code#DEADLINE_EXCEEDED}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ApiCallContext context = GrpcCallContext.createDefault()
+   *   .withRetrySettings(RetrySettings.newBuilder()
+   *     .setInitialRetryDelay(Duration.ofMillis(10L))
+   *     .setInitialRpcTimeout(Duration.ofMillis(100L))
+   *     .setMaxAttempts(10)
+   *     .setMaxRetryDelay(Duration.ofSeconds(10L))
+   *     .setMaxRpcTimeout(Duration.ofSeconds(30L))
+   *     .setRetryDelayMultiplier(1.4)
+   *     .setRpcTimeoutMultiplier(1.5)
+   *     .setTotalTimeout(Duration.ofMinutes(10L))
+   *     .build())
+   *   .withRetryableCodes(Sets.newSet(
+   *     StatusCode.Code.UNAVAILABLE,
+   *     StatusCode.Code.DEADLINE_EXCEEDED));
+   * }</pre>
+   */
+  @BetaApi
+  ApiCallContext withRetrySettings(RetrySettings retrySettings);
+
+  /**
+   * Returns a new ApiCallContext with the given retryable codes set.
+   *
+   * <p>This sets the retryable codes to use for the RPC. These settings will work in combination
+   * with either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings}
+   * supplied through {@link #withRetrySettings(RetrySettings)}.
+   *
+   * <p>Setting a non-empty set of retryable codes for an RPC that is not already retryable by
+   * default, will not have any effect and the RPC will NOT be retried. This option can only be used
+   * to change which codes are considered retryable for an RPC that already has at least one
+   * retryable code in its default settings.
+   */
+  @BetaApi
+  ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);
