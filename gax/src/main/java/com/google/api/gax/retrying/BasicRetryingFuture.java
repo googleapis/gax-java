@@ -77,7 +77,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
     this.retryingContext = checkNotNull(context);
 
-    this.attemptSettings = retryAlgorithm.createFirstAttempt();
+    this.attemptSettings = retryAlgorithm.createFirstAttempt(context);
 
     // A micro crime, letting "this" reference to escape from constructor before initialization is
     // completed (via internal non-static class CompletionListener). But it is guaranteed to be ok,
@@ -126,6 +126,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   // heavy (and in most cases redundant) settable future instantiation on each attempt, plus reduces
   // possibility of callback chaining going into an infinite loop in case of buggy external
   // callbacks implementation.
+  @Override
   public ApiFuture<ResponseT> getAttemptResult() {
     synchronized (lock) {
       if (attemptResult == null) {
@@ -167,8 +168,9 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         }
 
         TimedAttemptSettings nextAttemptSettings =
-            retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
-        boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
+            retryAlgorithm.createNextAttempt(retryingContext, throwable, response, attemptSettings);
+        boolean shouldRetry =
+            retryAlgorithm.shouldRetry(retryingContext, throwable, response, nextAttemptSettings);
         if (shouldRetry) {
           // Log retry info
           if (LOG.isLoggable(Level.FINEST)) {
@@ -190,7 +192,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           setAttemptResult(throwable, response, true);
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
-          if (retryAlgorithm.getResultAlgorithm().shouldRetry(throwable, response)) {
+          if (retryAlgorithm.shouldRetryBasedOnResult(retryingContext, throwable, response)) {
             tracer.attemptFailedRetriesExhausted(throwable);
           } else {
             tracer.attemptPermanentFailure(throwable);
