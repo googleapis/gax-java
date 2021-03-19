@@ -91,7 +91,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
           .build();
     }
 
-    if (credentials.createScopedRequired() || credentials instanceof ServiceAccountCredentials) {
+    if (credentials.createScopedRequired()) {
       credentials = credentials.createScoped(getScopesToApply(), getDefaultScopes());
     }
 
