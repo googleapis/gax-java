@@ -33,44 +33,36 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.CancellationException;
 
 /**
- * A timed retry algorithm is responsible for the following operations, based on the previous
- * attempt settings and current time:
- *
- * <ol>
- *   <li>Creating first attempt {@link TimedAttemptSettings}.
- *   <li>Accepting a task for retry so another attempt will be made.
- *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
- *       canceled.
- *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
- * </ol>
- *
- * Implementations of this interface must be be thread-save.
+ * Same as {@link TimedRetryAlgorithmWithContext}, but without methods that accept a {@link
+ * RetryingContext}. Use {@link TimedRetryAlgorithmWithContext} instead of this interface when
+ * possible.
  */
 public interface TimedRetryAlgorithm {
 
   /**
-   * Creates a first attempt {@link TimedAttemptSettings}.
+   * Same as {@link TimedRetryAlgorithmWithContext#createFirstAttempt(RetryingContext)}, but without
+   * a {@link RetryingContext}.
    *
-   * @return first attempt settings
+   * <p>Use {@link TimedRetryAlgorithmWithContext#createFirstAttempt(RetryingContext)} instead of
+   * this method when possible.
    */
   TimedAttemptSettings createFirstAttempt();
 
   /**
-   * Creates a next attempt {@link TimedAttemptSettings}, which defines properties of the next
-   * attempt.
+   * Same as {@link TimedRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
+   * TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @param prevSettings previous attempt settings
-   * @return next attempt settings or {@code null} if the implementing algorithm does not provide
-   *     specific settings for the next attempt
+   * <p>Use {@link TimedRetryAlgorithmWithContext#createNextAttempt(RetryingContext,
+   * TimedAttemptSettings)} instead of this method when possible.
    */
   TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 
   /**
-   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   * Same as {@link TimedRetryAlgorithmWithContext#shouldRetry(RetryingContext,
+   * TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   *     accepted
-   * @throws CancellationException if the retrying process should be canceled
+   * <p>Use {@link TimedRetryAlgorithmWithContext#shouldRetry(RetryingContext,
+   * TimedAttemptSettings)} instead of this method when possible.
    */
   boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) throws CancellationException;
 }
