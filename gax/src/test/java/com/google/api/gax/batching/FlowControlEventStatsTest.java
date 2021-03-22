@@ -29,9 +29,13 @@
  */
 package com.google.api.gax.batching;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
+import com.google.api.gax.batching.FlowController.MaxOutstandingRequestBytesReachedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +45,30 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class FlowControlEventStatsTest {
+
+  @Test
+  public void testCreateEvent() {
+    long timestamp = 12345, throttledTimeMs = 5000;
+    FlowControlEvent event = FlowControlEvent.create(timestamp, throttledTimeMs);
+    assertEquals(event.getTimestampMs(), event.getTimestampMs());
+    assertEquals(throttledTimeMs / 1000, event.getThrottledTime(TimeUnit.SECONDS).longValue());
+    assertNull(event.getException());
+
+    MaxOutstandingRequestBytesReachedException exception =
+        new MaxOutstandingRequestBytesReachedException(100);
+    event = FlowControlEvent.create(timestamp, exception);
+    assertEquals(timestamp, event.getTimestampMs());
+    assertNotNull(event.getException());
+    assertEquals(exception, event.getException());
+    assertNull(event.getThrottledTime(TimeUnit.MILLISECONDS));
+
+    try {
+      event = FlowControlEvent.create(null);
+      fail("FlowControlEvent did not throw exception");
+    } catch (IllegalArgumentException e) {
+      // expected, ignore
+    }
+  }
 
   @Test
   public void testGetLastEvent() throws InterruptedException {
@@ -67,8 +95,8 @@ public class FlowControlEventStatsTest {
       t.join(10);
     }
 
-    assertThat(stats.getLastFlowControlEvent().getTimestampMs()).isEqualTo(currentTime + 100);
-    assertThat(stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS))
-        .isEqualTo(100);
+    assertEquals(currentTime + 100, stats.getLastFlowControlEvent().getTimestampMs());
+    assertEquals(
+        100, stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS).longValue());
   }
 }
