@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.batching;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -66,6 +68,7 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
+    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -117,6 +120,7 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
+    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -131,6 +135,7 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
+    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -144,6 +149,12 @@ public class FlowControllerTest {
                 .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertNotNull(
+        flowController
+            .getFlowControlEventStats()
+            .getLastFlowControlEvent()
+            .getThrottledTime(TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -169,6 +180,12 @@ public class FlowControllerTest {
                 .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertNotNull(
+        flowController
+            .getFlowControlEventStats()
+            .getLastFlowControlEvent()
+            .getThrottledTime(TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -206,6 +223,7 @@ public class FlowControllerTest {
                 });
 
     permitsReserved.get();
+    Thread.sleep(2);
     assertFalse(finished.isDone());
     flowController.release(1, 1);
 
@@ -225,6 +243,9 @@ public class FlowControllerTest {
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getException())
+        .isInstanceOf(FlowController.MaxOutstandingElementCountReachedException.class);
   }
 
   @Test
@@ -252,6 +273,9 @@ public class FlowControllerTest {
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getException())
+        .isInstanceOf(FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
   @Test
@@ -325,6 +349,7 @@ public class FlowControllerTest {
     assertNull(flowController.getMinRequestBytesLimit());
     assertNull(flowController.getCurrentRequestBytesLimit());
     assertNull(flowController.getMaxRequestBytesLimit());
+    assertNotNull(flowController.getFlowControlEventStats());
   }
 
   @Test
