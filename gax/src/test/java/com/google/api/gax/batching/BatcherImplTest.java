@@ -617,7 +617,6 @@ public class BatcherImplTest {
   @Test
   public void testCloseRace() throws ExecutionException, InterruptedException, TimeoutException {
     int iterations = 1_000_000;
-
     ExecutorService executor = Executors.newFixedThreadPool(100);
 
     try {
@@ -684,16 +683,16 @@ public class BatcherImplTest {
       assertThat(batcher1.getFlowController()).isNotNull();
       assertThat(batcher1.getFlowController().getLimitExceededBehavior())
           .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
-      assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
+      assertThat(batcher1.getFlowController().getMaxElementCountLimit())
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
-      assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
+      assertThat(batcher1.getFlowController().getMaxRequestBytesLimit())
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
     }
 
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException.ThrowException)
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .setMaxOutstandingRequestBytes(6000L)
                 .build());
     try (BatcherImpl batcher2 = createDefaultBatcherImpl(batchingSettings, flowController)) {
