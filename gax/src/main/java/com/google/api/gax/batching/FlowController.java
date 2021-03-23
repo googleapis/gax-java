@@ -34,7 +34,6 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -155,7 +154,7 @@ public class FlowController {
 
   // Threshold to record throttling events. If reserve() takes longer than this threshold, it will
   // be recorded as a throttling event.
-  private static final Duration RESERVE_FLOW_CONTROL_THRESHOLD = Duration.ofMillis(1);
+  private static final long RESERVE_FLOW_CONTROL_THRESHOLD_MS = 1;
   private final FlowControlEventStats flowControlEventStats;
 
   public FlowController(FlowControlSettings settings) {
@@ -241,7 +240,7 @@ public class FlowController {
       }
     }
     long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-    if (elapsed >= RESERVE_FLOW_CONTROL_THRESHOLD.toMillis()) {
+    if (elapsed >= RESERVE_FLOW_CONTROL_THRESHOLD_MS) {
       flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
     }
   }
