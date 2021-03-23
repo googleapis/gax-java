@@ -49,21 +49,21 @@ public class FlowControlEventStatsTest {
   @Test
   public void testCreateEvent() {
     long timestamp = 12345, throttledTimeMs = 5000;
-    FlowControlEvent event = FlowControlEvent.create(timestamp, throttledTimeMs);
+    FlowControlEvent event = FlowControlEvent.createReserveDelayed(timestamp, throttledTimeMs);
     assertEquals(event.getTimestampMs(), event.getTimestampMs());
     assertEquals(throttledTimeMs / 1000, event.getThrottledTime(TimeUnit.SECONDS).longValue());
     assertNull(event.getException());
 
     MaxOutstandingRequestBytesReachedException exception =
         new MaxOutstandingRequestBytesReachedException(100);
-    event = FlowControlEvent.create(timestamp, exception);
+    event = FlowControlEvent.createReserveDenied(timestamp, exception);
     assertEquals(timestamp, event.getTimestampMs());
     assertNotNull(event.getException());
     assertEquals(exception, event.getException());
     assertNull(event.getThrottledTime(TimeUnit.MILLISECONDS));
 
     try {
-      event = FlowControlEvent.create(null);
+      event = FlowControlEvent.createReserveDenied(null);
       fail("FlowControlEvent did not throw exception");
     } catch (IllegalArgumentException e) {
       // expected, ignore
@@ -84,7 +84,8 @@ public class FlowControlEventStatsTest {
                 @Override
                 public void run() {
                   stats.recordFlowControlEvent(
-                      FlowControlEvent.create(currentTime + timeElapsed, timeElapsed));
+                      FlowControlEvent.createReserveDelayed(
+                          currentTime + timeElapsed, timeElapsed));
                 }
               });
       threads.add(t);

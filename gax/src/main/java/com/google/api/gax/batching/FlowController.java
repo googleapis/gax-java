@@ -34,6 +34,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -150,10 +151,12 @@ public class FlowController {
   @Nullable private final Long minElementCountLimit;
   @Nullable private final Long minRequestBytesLimit;
   private final LimitExceededBehavior limitExceededBehavior;
-  private final FlowControlEventStats flowControlEventStats;
-  // record the flow control event if it takes longer than throttledMs to reserve the permits
-  private final long throttledMs = 1;
   private final Object updateLimitLock;
+
+  // Threshold to record throttling events. If reserve() takes longer than this threshold, it will
+  // be recorded as a throttling event.
+  private static final Duration RESERVE_FLOW_CONTROL_THRESHOLD = Duration.ofMillis(1);
+  private final FlowControlEventStats flowControlEventStats;
 
   public FlowController(FlowControlSettings settings) {
     // When the FlowController is initialized with FlowControlSettings, flow control limits can't be
@@ -217,7 +220,8 @@ public class FlowController {
         MaxOutstandingElementCountReachedException exception =
             new MaxOutstandingElementCountReachedException(
                 outstandingElementCount.getPermitLimit());
-        flowControlEventStats.recordFlowControlEvent(FlowControlEvent.create(exception));
+        flowControlEventStats.recordFlowControlEvent(
+            FlowControlEvent.createReserveDenied(exception));
         throw exception;
       }
     }
@@ -231,13 +235,14 @@ public class FlowController {
         }
         MaxOutstandingRequestBytesReachedException exception =
             new MaxOutstandingRequestBytesReachedException(outstandingByteCount.getPermitLimit());
-        flowControlEventStats.recordFlowControlEvent(FlowControlEvent.create(exception));
+        flowControlEventStats.recordFlowControlEvent(
+            FlowControlEvent.createReserveDenied(exception));
         throw exception;
       }
     }
     long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-    if (elapsed >= throttledMs) {
-      flowControlEventStats.recordFlowControlEvent(FlowControlEvent.create(elapsed));
+    if (elapsed >= RESERVE_FLOW_CONTROL_THRESHOLD.toMillis()) {
+      flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
     }
   }
 

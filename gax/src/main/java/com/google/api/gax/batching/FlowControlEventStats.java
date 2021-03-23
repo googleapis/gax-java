@@ -33,20 +33,44 @@ import static com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
+import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-/** Record the statistics of flow control events. */
+/**
+ * Record the statistics of flow control events. Currently this class only captures the last flow
+ * control event. But it could be expanded to record more information in the future.
+ *
+ * <p>If {@link FlowController.LimitExceededBehavior} is {@link LimitExceededBehavior#Block} and
+ * {@link FlowController#reserve(long, long)} takes longer than expected, record the flow control
+ * event with the throttled time. For example:
+ *
+ * <pre>
+ *   Stopwatch stopwatch = Stopwatch.createStarted();
+ *   flowController.reserve(10, 10);
+ *   long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+ *   // If reserve takes longer than 1 millisecond, mark it as a flow control event
+ *   if (elapsed > 1) {
+ *      flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
+ *   }
+ * </pre>
+ *
+ * If {@link FlowController.LimitExceededBehavior} is {@link LimitExceededBehavior#ThrowException}
+ * and {@link FlowController#reserve(long, long)} throws a {@link FlowControlException}, record the
+ * flow control event with the exception. For example: try { flowController.reserve(10, 10); } catch
+ * (FlowControlException e) {
+ * flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDenied(exception)); }
+ */
 @InternalApi("For google-cloud-java client use only")
 public class FlowControlEventStats {
 
-  // Currently we're only interested in the most recent flow control event, but this class can be
-  // expanded to record other stats.
-  private FlowControlEvent lastFlowControlEvent;
+  private volatile FlowControlEvent lastFlowControlEvent;
 
-  public synchronized void recordFlowControlEvent(FlowControlEvent event) {
+  // We only need the last event to check if there was throttling in the past X minutes, so this
+  // doesn't need to be super accurate.
+  void recordFlowControlEvent(FlowControlEvent event) {
     if (lastFlowControlEvent == null || event.compareTo(lastFlowControlEvent) > 0) {
       lastFlowControlEvent = event;
     }
@@ -61,62 +85,53 @@ public class FlowControlEventStats {
    * LimitExceededBehavior#Block}, or the exception if the behavior is {@link
    * LimitExceededBehavior#ThrowException}.
    */
-  public static final class FlowControlEvent implements Comparable<FlowControlEvent> {
-    private long timestampMs;
-    private Long throttledTimeInMs;
-    private FlowControlException exception;
-
-    public static FlowControlEvent create(long throttledTimeInMs) {
-      return create(System.currentTimeMillis(), throttledTimeInMs);
+  @AutoValue
+  public abstract static class FlowControlEvent implements Comparable<FlowControlEvent> {
+    static FlowControlEvent createReserveDelayed(long throttledTimeInMs) {
+      return createReserveDelayed(System.currentTimeMillis(), throttledTimeInMs);
     }
 
-    public static FlowControlEvent create(FlowControlException exception) {
-      return create(System.currentTimeMillis(), exception);
+    static FlowControlEvent createReserveDenied(FlowControlException exception) {
+      return createReserveDenied(System.currentTimeMillis(), exception);
     }
 
     /** Package-private for use in testing. */
     @VisibleForTesting
-    static FlowControlEvent create(long timestampMs, long throttledTimeInMs) {
-      return new FlowControlEvent(timestampMs, throttledTimeInMs, null);
-    }
-
-    /** Package-private for use in testing. */
-    @VisibleForTesting
-    static FlowControlEvent create(long timestampMs, FlowControlException exception) {
-      return new FlowControlEvent(timestampMs, null, exception);
-    }
-
-    private FlowControlEvent(
-        long timestampMs,
-        @Nullable Long throttledTimeInMs,
-        @Nullable FlowControlException exception) {
+    static FlowControlEvent createReserveDelayed(long timestampMs, long throttledTimeInMs) {
+      Preconditions.checkArgument(timestampMs > 0, "timestamp must be greater than 0");
       Preconditions.checkArgument(
-          throttledTimeInMs != null || exception != null,
-          "a flow control event needs to have throttledTime or FlowControlException");
-      this.timestampMs = timestampMs;
-      this.throttledTimeInMs = throttledTimeInMs;
-      this.exception = exception;
+          throttledTimeInMs > 0, "throttled time must be greater than 0");
+      return new AutoValue_FlowControlEventStats_FlowControlEvent(
+          timestampMs, throttledTimeInMs, null);
     }
 
-    public long getTimestampMs() {
-      return timestampMs;
+    /** Package-private for use in testing. */
+    @VisibleForTesting
+    static FlowControlEvent createReserveDenied(long timestampMs, FlowControlException exception) {
+      Preconditions.checkArgument(timestampMs > 0, "timestamp must be greater than 0");
+      Preconditions.checkArgument(
+          exception != null, "FlowControlException can't be null when reserve is denied");
+      return new AutoValue_FlowControlEventStats_FlowControlEvent(timestampMs, null, exception);
     }
+
+    public abstract long getTimestampMs();
+
+    @Nullable
+    public abstract Long getThrottledTimeInMs();
+
+    @Nullable
+    public abstract FlowControlException getException();
 
     @Nullable
     public Long getThrottledTime(TimeUnit timeUnit) {
-      return throttledTimeInMs == null
+      return getThrottledTimeInMs() == null
           ? null
-          : timeUnit.convert(throttledTimeInMs, TimeUnit.MILLISECONDS);
-    }
-
-    @Nullable
-    public FlowControlException getException() {
-      return exception;
+          : timeUnit.convert(getThrottledTimeInMs(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public int compareTo(FlowControlEvent o) {
-      return Long.compare(this.timestampMs, o.timestampMs);
+      return Long.compare(this.getTimestampMs(), o.getTimestampMs());
     }
   }
 }
