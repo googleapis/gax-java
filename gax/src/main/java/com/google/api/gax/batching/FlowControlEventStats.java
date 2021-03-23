@@ -47,21 +47,27 @@ import javax.annotation.Nullable;
  * {@link FlowController#reserve(long, long)} takes longer than expected, record the flow control
  * event with the throttled time. For example:
  *
- * <pre>
- *   Stopwatch stopwatch = Stopwatch.createStarted();
- *   flowController.reserve(10, 10);
- *   long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
- *   // If reserve takes longer than 1 millisecond, mark it as a flow control event
- *   if (elapsed > 1) {
- *      flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
- *   }
- * </pre>
+ * <pre>{@code
+ * Stopwatch stopwatch = Stopwatch.createStarted();
+ * flowController.reserve(10, 10);
+ * long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+ * // If reserve takes longer than 1 millisecond, mark it as a flow control event
+ * if (elapsed > 1) {
+ *    flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
+ * }
+ * }</pre>
  *
  * If {@link FlowController.LimitExceededBehavior} is {@link LimitExceededBehavior#ThrowException}
  * and {@link FlowController#reserve(long, long)} throws a {@link FlowControlException}, record the
- * flow control event with the exception. For example: try { flowController.reserve(10, 10); } catch
- * (FlowControlException e) {
- * flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDenied(exception)); }
+ * flow control event with the exception. For example:
+ *
+ * <pre>{@code
+ * try {
+ *   flowController.reserve(10, 10);
+ * } catch (FlowControlException e) {
+ *   flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDenied(exception));
+ * }
+ * }</pre>
  */
 @InternalApi("For google-cloud-java client use only")
 public class FlowControlEventStats {
@@ -99,8 +105,7 @@ public class FlowControlEventStats {
     @VisibleForTesting
     static FlowControlEvent createReserveDelayed(long timestampMs, long throttledTimeInMs) {
       Preconditions.checkArgument(timestampMs > 0, "timestamp must be greater than 0");
-      Preconditions.checkArgument(
-          throttledTimeInMs > 0, "throttled time must be greater than 0");
+      Preconditions.checkArgument(throttledTimeInMs > 0, "throttled time must be greater than 0");
       return new AutoValue_FlowControlEventStats_FlowControlEvent(
           timestampMs, throttledTimeInMs, null);
     }
