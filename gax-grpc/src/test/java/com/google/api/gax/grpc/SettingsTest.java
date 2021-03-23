@@ -289,6 +289,17 @@ public class SettingsTest {
     Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
+  @Test
+  public void retrySettingsSetLogicalTimeout() {
+    Duration timeout = Duration.ofMillis(60000);
+    RetrySettings retrySettings = RetrySettings.newBuilder().setLogicalTimeout(timeout).build();
+
+    Truth.assertThat(retrySettings.getRpcTimeoutMultiplier()).isEqualTo(1);
+    Truth.assertThat(retrySettings.getInitialRpcTimeout()).isEqualTo(timeout);
+    Truth.assertThat(retrySettings.getMaxRpcTimeout()).isEqualTo(timeout);
+    Truth.assertThat(retrySettings.getTotalTimeout()).isEqualTo(timeout);
+  }
+
   // GrpcTransportProvider
   // ====
 

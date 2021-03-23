@@ -296,6 +296,18 @@ public abstract class RetrySettings implements Serializable {
      */
     public abstract Duration getMaxRpcTimeout();
 
+    /**
+     * Configures the timeout settings with the given timeout such that the logical call will take
+     * no longer than the given timeout and each RPC attempt will use only the time remaining in the
+     * logical call as a timeout.
+     */
+    public Builder setLogicalTimeout(Duration timeout) {
+      return setRpcTimeoutMultiplier(1)
+          .setInitialRpcTimeout(timeout)
+          .setMaxRpcTimeout(timeout)
+          .setTotalTimeout(timeout);
+    }
+
     abstract RetrySettings autoBuild();
 
     public RetrySettings build() {
