@@ -40,32 +40,23 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Record the statistics of flow control events. Currently this class only captures the last flow
- * control event. But it could be expanded to record more information in the future.
+ * Record the statistics of flow control events.
  *
- * <p>If {@link FlowController.LimitExceededBehavior} is {@link LimitExceededBehavior#Block} and
- * {@link FlowController#reserve(long, long)} takes longer than expected, record the flow control
- * event with the throttled time. For example:
- *
- * <pre>{@code
- * Stopwatch stopwatch = Stopwatch.createStarted();
- * flowController.reserve(10, 10);
- * long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
- * // If reserve takes longer than 1 millisecond, mark it as a flow control event
- * if (elapsed > 1) {
- *    flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
- * }
- * }</pre>
- *
- * If {@link FlowController.LimitExceededBehavior} is {@link LimitExceededBehavior#ThrowException}
- * and {@link FlowController#reserve(long, long)} throws a {@link FlowControlException}, record the
- * flow control event with the exception. For example:
+ * <p>This class is populated by FlowController, which will record throttling events. Currently it
+ * only keeps the last flow control event, but it could be expanded to record more information in
+ * the future. The events can be used to dynamically adjust concurrency in the client. For example:
  *
  * <pre>{@code
- * try {
- *   flowController.reserve(10, 10);
- * } catch (FlowControlException e) {
- *   flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDenied(exception));
+ * // Increase flow control limits if there was throttling in the past 5 minutes and throttled time
+ * // was longer than 1 minute.
+ * while(true) {
+ *    FlowControlEvent event = flowControlEventStats.getLastFlowControlEvent();
+ *    if (event != null
+ *         && event.getTimestampMs() > System.currentMillis() - TimeUnit.MINUTES.toMillis(5)
+ *         && event.getThrottledTimeInMs() > TimeUnit.MINUTES.toMillis(1)) {
+ *      flowController.increaseThresholds(elementSteps, byteSteps);
+ *    }
+ *    Thread.sleep(TimeUnit.MINUTE.toMillis(10));
  * }
  * }</pre>
  */
@@ -122,7 +113,7 @@ public class FlowControlEventStats {
     public abstract long getTimestampMs();
 
     @Nullable
-    public abstract Long getThrottledTimeInMs();
+    abstract Long getThrottledTimeInMs();
 
     @Nullable
     public abstract FlowControlException getException();
