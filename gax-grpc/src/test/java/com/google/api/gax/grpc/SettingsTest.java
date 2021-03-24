@@ -256,50 +256,6 @@ public class SettingsTest {
     }
   }
 
-  // RetrySettings
-  // ====
-
-  @Test
-  public void retrySettingsMerge() {
-    RetrySettings.Builder builder =
-        RetrySettings.newBuilder()
-            .setTotalTimeout(Duration.ofMillis(45000))
-            .setInitialRpcTimeout(Duration.ofMillis(2000))
-            .setRpcTimeoutMultiplier(1.5)
-            .setMaxRpcTimeout(Duration.ofMillis(30000))
-            .setInitialRetryDelay(Duration.ofMillis(100))
-            .setRetryDelayMultiplier(1.2)
-            .setMaxRetryDelay(Duration.ofMillis(1000));
-    RetrySettings.Builder mergedBuilder = RetrySettings.newBuilder();
-    mergedBuilder.merge(builder);
-
-    RetrySettings settingsA = builder.build();
-    RetrySettings settingsB = mergedBuilder.build();
-
-    Truth.assertThat(settingsA.getTotalTimeout()).isEqualTo(settingsB.getTotalTimeout());
-    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
-    Truth.assertThat(settingsA.getRpcTimeoutMultiplier())
-        .isWithin(0)
-        .of(settingsB.getRpcTimeoutMultiplier());
-    Truth.assertThat(settingsA.getMaxRpcTimeout()).isEqualTo(settingsB.getMaxRpcTimeout());
-    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
-    Truth.assertThat(settingsA.getRetryDelayMultiplier())
-        .isWithin(0)
-        .of(settingsB.getRetryDelayMultiplier());
-    Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
-  }
-
-  @Test
-  public void retrySettingsSetLogicalTimeout() {
-    Duration timeout = Duration.ofMillis(60000);
-    RetrySettings retrySettings = RetrySettings.newBuilder().setLogicalTimeout(timeout).build();
-
-    Truth.assertThat(retrySettings.getRpcTimeoutMultiplier()).isEqualTo(1);
-    Truth.assertThat(retrySettings.getInitialRpcTimeout()).isEqualTo(timeout);
-    Truth.assertThat(retrySettings.getMaxRpcTimeout()).isEqualTo(timeout);
-    Truth.assertThat(retrySettings.getTotalTimeout()).isEqualTo(timeout);
-  }
-
   // GrpcTransportProvider
   // ====
 
