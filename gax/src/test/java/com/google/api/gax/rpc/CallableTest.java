@@ -35,11 +35,9 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.testing.FakeCallContext;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -57,6 +55,8 @@ public class CallableTest {
   @Mock private UnaryCallable<String, String> innerCallable;
   private SettableApiFuture<String> innerResult;
 
+  @Mock private ServerStreamingCallable<Object, Object> innerServerStreamingCallable;
+
   private RetrySettings retrySettings =
       RetrySettings.newBuilder()
           .setInitialRpcTimeout(Duration.ofMillis(5L))
@@ -70,29 +70,22 @@ public class CallableTest {
   private ApiCallContext callContextWithRetrySettings =
       FakeCallContext.createDefault().withRetrySettings(retrySettings);
 
-  private ClientContext clientContext;
-
-  @Before
-  public void setUp() {
-    // Wire the mock inner callable
-    innerResult = SettableApiFuture.create();
-    when(innerCallable.futureCall(anyString(), any(ApiCallContext.class))).thenReturn(innerResult);
-
-    clientContext = ClientContext.newBuilder().setDefaultCallContext(callContext).build();
-  }
+  private ClientContext clientContext =
+      ClientContext.newBuilder().setDefaultCallContext(callContext).build();
 
   @Test
   public void testNonRetriedCallable() throws Exception {
+    innerResult = SettableApiFuture.create();
+    when(innerCallable.futureCall(anyString(), any(ApiCallContext.class))).thenReturn(innerResult);
     Duration timeout = Duration.ofMillis(5L);
 
-    // Verify that callables configured to not retry have context interactions.
     UnaryCallSettings<Object, Object> callSettings =
         UnaryCallSettings.newUnaryCallSettingsBuilder().setSimpleTimeoutNoRetries(timeout).build();
     UnaryCallable<String, String> callable =
         Callables.retrying(innerCallable, callSettings, clientContext);
     innerResult.set("No, my refrigerator is not running!");
 
-    ApiFuture<String> future = callable.futureCall("Is your refrigerator running?", callContext);
+    callable.futureCall("Is your refrigerator running?", callContext);
     verify(callContext, atLeastOnce()).getRetrySettings();
     verify(callContext).getTimeout();
     verify(callContext).withTimeout(timeout);
@@ -100,7 +93,9 @@ public class CallableTest {
 
   @Test
   public void testNonRetriedCallableWithRetrySettings() throws Exception {
-    // Verify that callables configured to not retry have context interactions.
+    innerResult = SettableApiFuture.create();
+    when(innerCallable.futureCall(anyString(), any(ApiCallContext.class))).thenReturn(innerResult);
+
     UnaryCallSettings<Object, Object> callSettings =
         UnaryCallSettings.newUnaryCallSettingsBuilder()
             .setSimpleTimeoutNoRetries(Duration.ofMillis(10L))
@@ -111,8 +106,40 @@ public class CallableTest {
 
     Duration timeout = retrySettings.getInitialRpcTimeout();
 
-    ApiFuture<String> future =
-        callable.futureCall("Is your refrigerator running?", callContextWithRetrySettings);
+    callable.futureCall("Is your refrigerator running?", callContextWithRetrySettings);
+
+    verify(callContextWithRetrySettings, atLeastOnce()).getRetrySettings();
+    verify(callContextWithRetrySettings).getTimeout();
+    verify(callContextWithRetrySettings).withTimeout(timeout);
+  }
+
+  @Test
+  public void testNonRetriedServerStreamingCallable() throws Exception {
+    Duration timeout = Duration.ofMillis(5L);
+    ServerStreamingCallSettings<Object, Object> callSettings =
+        ServerStreamingCallSettings.newBuilder().setSimpleTimeoutNoRetries(timeout).build();
+    ServerStreamingCallable<Object, Object> callable =
+        Callables.retrying(innerServerStreamingCallable, callSettings, clientContext);
+
+    callable.call("Is your refrigerator running?", callContext);
+
+    verify(callContext, atLeastOnce()).getRetrySettings();
+    verify(callContext).getTimeout();
+    verify(callContext).withTimeout(timeout);
+  }
+
+  @Test
+  public void testNonRetriedServerStreamingCallableWithRetrySettings() throws Exception {
+    ServerStreamingCallSettings<Object, Object> callSettings =
+        ServerStreamingCallSettings.newBuilder()
+            .setSimpleTimeoutNoRetries(Duration.ofMillis(10L))
+            .build();
+    ServerStreamingCallable<Object, Object> callable =
+        Callables.retrying(innerServerStreamingCallable, callSettings, clientContext);
+
+    Duration timeout = retrySettings.getTotalTimeout();
+
+    callable.call("Is your refrigerator running?", callContextWithRetrySettings);
 
     verify(callContextWithRetrySettings, atLeastOnce()).getRetrySettings();
     verify(callContextWithRetrySettings).getTimeout();
