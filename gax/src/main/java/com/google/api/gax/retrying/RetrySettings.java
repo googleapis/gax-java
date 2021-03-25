@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
@@ -305,6 +306,7 @@ public abstract class RetrySettings implements Serializable {
      * setters is not advised, because only the order in which they are invoked determines which
      * setter is respected.
      */
+    @BetaApi
     public Builder setLogicalTimeout(Duration timeout) {
       return setRpcTimeoutMultiplier(1)
           .setInitialRpcTimeout(timeout)
