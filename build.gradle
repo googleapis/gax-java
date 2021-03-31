@@ -193,6 +193,26 @@ subprojects {
     }
   }
 
+  // JavaDocV3 - docFX
+  // -------
+
+  task javadocJarV3(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
+
+  javadoc.options {
+    encoding = 'UTF-8'
+    links 'https://docs.oracle.com/javase/7/docs/api/'
+
+    if (JavaVersion.current().isJava8Compatible()) {
+      addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
+    if (JavaVersion.current().isJava11Compatible()) {
+      addStringOption('-release', '7')
+    }
+  }
+
   // Test jar
   // --------
 
@@ -307,6 +327,7 @@ subprojects {
             from components.java
 
             artifact javadocJar
+            artifact javadocJarV3
             artifact sourcesJar
             artifact shadowJar
             artifact testlibJar
@@ -384,7 +405,6 @@ subprojects {
 
 // JavaDoc
 // -------
-
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
@@ -394,6 +414,25 @@ task javadocCombined(type: Javadoc) {
 javadoc.options {
   encoding = 'UTF-8'
   links 'https://docs.oracle.com/javase/7/docs/api/'
+}
+
+clean {
+  delete 'tmp_gh-pages/'
+  delete 'tmp_docs/'
+}
+
+// JavaDocV3 docFX
+// -------
+task javadocCombinedV3(type: Javadoc) {
+  source subprojects.collect {project -> project.sourceSets.main.allJava }
+  classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
+  destinationDir = new File(projectDir, 'tmp_docs')
+
+  options.addStringOption('encoding', 'UTF-8')
+  options.addStringOption('charSet', 'UTF-8')
+  options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
+  options.docletpath = [file("/Users/emilyball/Documents/docfx-doclet-1.0-SNAPSHOT-jar-with-dependencies-172556.jar")]
+  options.links 'https://docs.oracle.com/javase/7/docs/api/'
 }
 
 clean {
@@ -416,6 +455,7 @@ task checkOutGhPages {
 task copyFilesToGhPages {
   dependsOn 'checkOutGhPages'
   dependsOn 'javadocCombined'
+  dependsOn 'javadocCombinedV3'
   doLast {
     def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
     new File(newSiteDirPath).mkdirs()
