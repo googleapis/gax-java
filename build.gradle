@@ -429,10 +429,8 @@ task javadocCombinedV3(type: Javadoc) {
   destinationDir = new File(projectDir, 'tmp_docs')
 
   options.addStringOption('encoding', 'UTF-8')
-  options.addStringOption('charSet', 'UTF-8')
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
   options.docletpath = [file("/Users/emilyball/Documents/docfx-doclet-1.0-SNAPSHOT-jar-with-dependencies-172556.jar")]
-  options.links 'https://docs.oracle.com/javase/7/docs/api/'
 }
 
 clean {
