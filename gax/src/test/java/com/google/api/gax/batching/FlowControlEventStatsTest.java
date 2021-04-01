@@ -76,18 +76,16 @@ public class FlowControlEventStatsTest {
     final long currentTime = System.currentTimeMillis();
 
     List<Thread> threads = new ArrayList<>();
-    for (int i = 1; i <= 100; i++) {
+    for (int i = 1; i <= 10; i++) {
       final int timeElapsed = i;
       Thread t =
-          new Thread(
-              new Runnable() {
-                @Override
-                public void run() {
-                  stats.recordFlowControlEvent(
-                      FlowControlEvent.createReserveDelayed(
-                          currentTime + timeElapsed, timeElapsed));
-                }
-              });
+          new Thread() {
+            @Override
+            public void run() {
+              stats.recordFlowControlEvent(
+                  FlowControlEvent.createReserveDelayed(currentTime + timeElapsed, timeElapsed));
+            }
+          };
       threads.add(t);
       t.start();
     }
@@ -96,8 +94,8 @@ public class FlowControlEventStatsTest {
       t.join(10);
     }
 
-    assertEquals(currentTime + 100, stats.getLastFlowControlEvent().getTimestampMs());
+    assertEquals(currentTime + 10, stats.getLastFlowControlEvent().getTimestampMs());
     assertEquals(
-        100, stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS).longValue());
+        10, stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS).longValue());
   }
 }
