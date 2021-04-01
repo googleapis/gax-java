@@ -36,6 +36,9 @@ VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
 # build the docs
 ./gradlew javadocCombinedV3
 
+# copy README to docfx-yml dir and rename index.md
+cp README.md tmp_docs/index.md
+
 pushd tmp_docs
 
 # create metadata
@@ -47,6 +50,7 @@ python3 -m docuploader create-metadata \
 # upload docs
 python3 -m docuploader upload . \
   --credentials ${CREDENTIALS} \
-  --staging-bucket ${STAGING_BUCKET_V2}
+  --staging-bucket ${STAGING_BUCKET_V2} \
+  --destination-prefix docfx
 
 popd

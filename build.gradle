@@ -173,7 +173,7 @@ subprojects {
     exclude('**/*Test.java')
   }
 
-  // JavaDoc
+  // JavaDocV1 html
   // -------
 
   task javadocJar(type: Jar) {
@@ -403,7 +403,7 @@ subprojects {
   }
 }
 
-// JavaDoc
+// JavaDocV1 html
 // -------
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
