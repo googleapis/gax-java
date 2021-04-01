@@ -65,7 +65,7 @@ public class FlowControlEventStatsTest {
     try {
       event = FlowControlEvent.createReserveDenied(null);
       fail("FlowControlEvent did not throw exception");
-    } catch (IllegalArgumentException e) {
+    } catch (NullPointerException e) {
       // expected, ignore
     }
   }

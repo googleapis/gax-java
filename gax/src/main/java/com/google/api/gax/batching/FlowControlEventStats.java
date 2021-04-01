@@ -36,7 +36,6 @@ import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -63,23 +62,18 @@ import javax.annotation.Nullable;
 @InternalApi("For google-cloud-java client use only")
 public class FlowControlEventStats {
 
-  private AtomicReference<FlowControlEvent> lastFlowControlEvent = new AtomicReference<>(null);
+  private volatile FlowControlEvent lastFlowControlEvent;
 
-  // We only need the last event to check if there was throttling in the past X minutes
+  // We only need the last event to check if there was throttling in the past X minutes so this
+  // doesn't need to be super accurate.
   void recordFlowControlEvent(FlowControlEvent event) {
-    while (true) {
-      FlowControlEvent currentEvent = lastFlowControlEvent.get();
-      if (currentEvent == null || event.compareTo(currentEvent) > 0) {
-        if (!lastFlowControlEvent.compareAndSet(currentEvent, event)) {
-          continue;
-        }
-      }
-      return;
+    if (lastFlowControlEvent == null || event.compareTo(lastFlowControlEvent) > 0) {
+      lastFlowControlEvent = event;
     }
   }
 
   public FlowControlEvent getLastFlowControlEvent() {
-    return lastFlowControlEvent.get();
+    return lastFlowControlEvent;
   }
 
   /**
@@ -108,8 +102,8 @@ public class FlowControlEventStats {
     @VisibleForTesting
     static FlowControlEvent createReserveDenied(long timestampMs, FlowControlException exception) {
       Preconditions.checkArgument(timestampMs > 0, "timestamp must be greater than 0");
-      Preconditions.checkArgument(
-          exception != null, "FlowControlException can't be null when reserve is denied");
+      Preconditions.checkNotNull(
+          exception, "FlowControlException can't be null when reserve is denied");
       return new FlowControlEvent(timestampMs, null, exception);
     }
 
