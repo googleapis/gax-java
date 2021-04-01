@@ -327,7 +327,6 @@ subprojects {
             from components.java
 
             artifact javadocJar
-            artifact javadocJarV3
             artifact sourcesJar
             artifact shadowJar
             artifact testlibJar
@@ -453,7 +452,6 @@ task checkOutGhPages {
 task copyFilesToGhPages {
   dependsOn 'checkOutGhPages'
   dependsOn 'javadocCombined'
-  dependsOn 'javadocCombinedV3'
   doLast {
     def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
     new File(newSiteDirPath).mkdirs()
