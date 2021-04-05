@@ -668,6 +668,8 @@ public class FlowControllerTest {
 
   @Test
   public void testFlowControlBlockEventIsRecorded() throws Exception {
+    // Test when reserve is blocked for at least FlowController#RESERVE_FLOW_CONTROL_THRESHOLD_MS,
+    // FlowController will record the FlowControlEvent in FlowControlEventStats
     final FlowController flowController =
         new FlowController(
             DynamicFlowControlSettings.newBuilder()
@@ -679,8 +681,8 @@ public class FlowControllerTest {
                 .setMaxOutstandingRequestBytes(10L)
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
-    Thread t =
-        new Thread() {
+    Runnable runnable =
+        new Runnable() {
           @Override
           public void run() {
             try {
@@ -690,10 +692,10 @@ public class FlowControllerTest {
             }
           }
         };
-    // blocked by element
+    // blocked by element. Reserve all 5 elements first, reserve in the runnable will be blocked
     flowController.reserve(5, 1);
     ExecutorService executor = Executors.newCachedThreadPool();
-    Future<?> finished1 = executor.submit(t);
+    Future<?> finished1 = executor.submit(runnable);
     try {
       finished1.get(50, TimeUnit.MILLISECONDS);
       fail("reserve should block");
@@ -702,6 +704,9 @@ public class FlowControllerTest {
     }
     assertFalse(finished1.isDone());
     flowController.release(5, 1);
+    // After other elements are released, reserve in the runnable should go through. Since reserve
+    // was blocked for longer than 1 millisecond, FlowController should record this event in
+    // FlowControlEventStats.
     finished1.get(50, TimeUnit.MILLISECONDS);
     assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
     assertNotNull(
@@ -711,9 +716,9 @@ public class FlowControllerTest {
             .getThrottledTime(TimeUnit.MILLISECONDS));
     flowController.release(1, 1);
 
-    // blocked by bytes
+    // Similar to blocked by element, test blocking by bytes.
     flowController.reserve(1, 5);
-    Future<?> finished2 = executor.submit(t);
+    Future<?> finished2 = executor.submit(runnable);
     try {
       finished2.get(50, TimeUnit.MILLISECONDS);
       fail("reserve should block");
@@ -725,6 +730,7 @@ public class FlowControllerTest {
     flowController.release(1, 5);
     finished2.get(50, TimeUnit.MILLISECONDS);
     assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    // Make sure this newer event is recorded
     assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getTimestampMs())
         .isAtLeast(currentTime);
   }
