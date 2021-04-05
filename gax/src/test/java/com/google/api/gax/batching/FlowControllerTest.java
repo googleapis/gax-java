@@ -526,7 +526,7 @@ public class FlowControllerTest {
         testConcurrentUpdates(
             flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
     for (Thread t : reserveThreads) {
-      t.join(100);
+      t.join(200);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
@@ -559,7 +559,7 @@ public class FlowControllerTest {
         testConcurrentUpdates(
             flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
     for (Thread t : reserveThreads) {
-      t.join(100);
+      t.join(200);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
