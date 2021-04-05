@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.batching;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -42,9 +44,11 @@ import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -225,6 +229,9 @@ public class FlowControllerTest {
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getException())
+        .isInstanceOf(FlowController.MaxOutstandingElementCountReachedException.class);
   }
 
   @Test
@@ -252,6 +259,9 @@ public class FlowControllerTest {
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getException())
+        .isInstanceOf(FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
   @Test
@@ -325,6 +335,7 @@ public class FlowControllerTest {
     assertNull(flowController.getMinRequestBytesLimit());
     assertNull(flowController.getCurrentRequestBytesLimit());
     assertNull(flowController.getMaxRequestBytesLimit());
+    assertNotNull(flowController.getFlowControlEventStats());
   }
 
   @Test
@@ -515,7 +526,7 @@ public class FlowControllerTest {
         testConcurrentUpdates(
             flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
     for (Thread t : reserveThreads) {
-      t.join(100);
+      t.join(200);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
@@ -548,7 +559,7 @@ public class FlowControllerTest {
         testConcurrentUpdates(
             flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
     for (Thread t : reserveThreads) {
-      t.join(100);
+      t.join(200);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
@@ -653,6 +664,75 @@ public class FlowControllerTest {
     // increasing permits to unblock
     flowController.increaseThresholds(50, 0);
     t.join();
+  }
+
+  @Test
+  public void testFlowControlBlockEventIsRecorded() throws Exception {
+    // Test when reserve is blocked for at least FlowController#RESERVE_FLOW_CONTROL_THRESHOLD_MS,
+    // FlowController will record the FlowControlEvent in FlowControlEventStats
+    final FlowController flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setInitialOutstandingElementCount(5L)
+                .setMinOutstandingElementCount(1L)
+                .setMaxOutstandingElementCount(10L)
+                .setInitialOutstandingRequestBytes(5L)
+                .setMinOutstandingRequestBytes(1L)
+                .setMaxOutstandingRequestBytes(10L)
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+    Runnable runnable =
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              flowController.reserve(1, 1);
+            } catch (FlowController.FlowControlException e) {
+              throw new AssertionError(e);
+            }
+          }
+        };
+    // blocked by element. Reserve all 5 elements first, reserve in the runnable will be blocked
+    flowController.reserve(5, 1);
+    ExecutorService executor = Executors.newCachedThreadPool();
+    Future<?> finished1 = executor.submit(runnable);
+    try {
+      finished1.get(50, TimeUnit.MILLISECONDS);
+      fail("reserve should block");
+    } catch (TimeoutException e) {
+      // expected
+    }
+    assertFalse(finished1.isDone());
+    flowController.release(5, 1);
+    // After other elements are released, reserve in the runnable should go through. Since reserve
+    // was blocked for longer than 1 millisecond, FlowController should record this event in
+    // FlowControlEventStats.
+    finished1.get(50, TimeUnit.MILLISECONDS);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertNotNull(
+        flowController
+            .getFlowControlEventStats()
+            .getLastFlowControlEvent()
+            .getThrottledTime(TimeUnit.MILLISECONDS));
+    flowController.release(1, 1);
+
+    // Similar to blocked by element, test blocking by bytes.
+    flowController.reserve(1, 5);
+    Future<?> finished2 = executor.submit(runnable);
+    try {
+      finished2.get(50, TimeUnit.MILLISECONDS);
+      fail("reserve should block");
+    } catch (TimeoutException e) {
+      // expected
+    }
+    assertFalse(finished2.isDone());
+    long currentTime = System.currentTimeMillis();
+    flowController.release(1, 5);
+    finished2.get(50, TimeUnit.MILLISECONDS);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    // Make sure this newer event is recorded
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getTimestampMs())
+        .isAtLeast(currentTime);
   }
 
   private List<Thread> testConcurrentUpdates(
