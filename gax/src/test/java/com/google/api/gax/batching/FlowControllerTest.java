@@ -44,9 +44,11 @@ import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +70,6 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
-    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -120,7 +121,6 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
-    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -135,7 +135,6 @@ public class FlowControllerTest {
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
-    assertNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
   }
 
   @Test
@@ -149,12 +148,6 @@ public class FlowControllerTest {
                 .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
-    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
-    assertNotNull(
-        flowController
-            .getFlowControlEventStats()
-            .getLastFlowControlEvent()
-            .getThrottledTime(TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -180,12 +173,6 @@ public class FlowControllerTest {
                 .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
-    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
-    assertNotNull(
-        flowController
-            .getFlowControlEventStats()
-            .getLastFlowControlEvent()
-            .getThrottledTime(TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -223,7 +210,6 @@ public class FlowControllerTest {
                 });
 
     permitsReserved.get();
-    Thread.sleep(2);
     assertFalse(finished.isDone());
     flowController.release(1, 1);
 
@@ -678,6 +664,69 @@ public class FlowControllerTest {
     // increasing permits to unblock
     flowController.increaseThresholds(50, 0);
     t.join();
+  }
+
+  @Test
+  public void testFlowControlBlockEventIsRecorded() throws Exception {
+    final FlowController flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setInitialOutstandingElementCount(5L)
+                .setMinOutstandingElementCount(1L)
+                .setMaxOutstandingElementCount(10L)
+                .setInitialOutstandingRequestBytes(5L)
+                .setMinOutstandingRequestBytes(1L)
+                .setMaxOutstandingRequestBytes(10L)
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+    Thread t =
+        new Thread() {
+          @Override
+          public void run() {
+            try {
+              flowController.reserve(1, 1);
+            } catch (FlowController.FlowControlException e) {
+              throw new AssertionError(e);
+            }
+          }
+        };
+    // blocked by element
+    flowController.reserve(5, 1);
+    ExecutorService executor = Executors.newCachedThreadPool();
+    Future<?> finished1 = executor.submit(t);
+    try {
+      finished1.get(50, TimeUnit.MILLISECONDS);
+      fail("reserve should block");
+    } catch (TimeoutException e) {
+      // expected
+    }
+    assertFalse(finished1.isDone());
+    flowController.release(5, 1);
+    finished1.get(50, TimeUnit.MILLISECONDS);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertNotNull(
+        flowController
+            .getFlowControlEventStats()
+            .getLastFlowControlEvent()
+            .getThrottledTime(TimeUnit.MILLISECONDS));
+    flowController.release(1, 1);
+
+    // blocked by bytes
+    flowController.reserve(1, 5);
+    Future<?> finished2 = executor.submit(t);
+    try {
+      finished2.get(50, TimeUnit.MILLISECONDS);
+      fail("reserve should block");
+    } catch (TimeoutException e) {
+      // expected
+    }
+    assertFalse(finished2.isDone());
+    long currentTime = System.currentTimeMillis();
+    flowController.release(1, 5);
+    finished2.get(50, TimeUnit.MILLISECONDS);
+    assertNotNull(flowController.getFlowControlEventStats().getLastFlowControlEvent());
+    assertThat(flowController.getFlowControlEventStats().getLastFlowControlEvent().getTimestampMs())
+        .isAtLeast(currentTime);
   }
 
   private List<Thread> testConcurrentUpdates(
