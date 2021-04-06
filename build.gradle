@@ -173,10 +173,30 @@ subprojects {
     exclude('**/*Test.java')
   }
 
-  // JavaDoc
+  // JavaDocV1 html
   // -------
 
   task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
+
+  javadoc.options {
+    encoding = 'UTF-8'
+    links 'https://docs.oracle.com/javase/7/docs/api/'
+
+    if (JavaVersion.current().isJava8Compatible()) {
+      addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
+    if (JavaVersion.current().isJava11Compatible()) {
+      addStringOption('-release', '7')
+    }
+  }
+
+  // JavaDocV3 - docFX
+  // -------
+
+  task javadocJarV3(type: Jar) {
     classifier = 'javadoc'
     from javadoc
   }
@@ -382,9 +402,8 @@ subprojects {
   }
 }
 
-// JavaDoc
+// JavaDocV1 html
 // -------
-
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
@@ -394,6 +413,23 @@ task javadocCombined(type: Javadoc) {
 javadoc.options {
   encoding = 'UTF-8'
   links 'https://docs.oracle.com/javase/7/docs/api/'
+}
+
+clean {
+  delete 'tmp_gh-pages/'
+  delete 'tmp_docs/'
+}
+
+// JavaDocV3 docFX
+// -------
+task javadocCombinedV3(type: Javadoc) {
+  source subprojects.collect {project -> project.sourceSets.main.allJava }
+  classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
+  destinationDir = new File(projectDir, 'tmp_docs')
+
+  options.addStringOption('encoding', 'UTF-8')
+  options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/docfx-doclet-1.0-SNAPSHOT-jar-with-dependencies-172556.jar")]
 }
 
 clean {

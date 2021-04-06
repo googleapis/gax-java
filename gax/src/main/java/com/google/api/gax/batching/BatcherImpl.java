@@ -293,9 +293,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
   }
 
-  /** Package-private for use in testing. */
-  @VisibleForTesting
-  FlowController getFlowController() {
+  @InternalApi("For google-cloud-java client use only")
+  public FlowController getFlowController() {
     return flowController;
   }
 

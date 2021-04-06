@@ -191,6 +191,22 @@ public interface ApiCallContext extends RetryingContext {
    *     StatusCode.Code.UNAVAILABLE,
    *     StatusCode.Code.DEADLINE_EXCEEDED));
    * }</pre>
+   *
+   * Setting a logical call timeout for the context can be done similarly with {@link
+   * RetrySettings.Builder#setLogicalTimeout(Duration timeout)}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ApiCallContext context = GrpcCallContext.createDefault()
+   *   .withRetrySettings(RetrySettings.newBuilder()
+   *     .setInitialRetryDelay(Duration.ofMillis(10L))
+   *     .setMaxRetryDelay(Duration.ofSeconds(10L))
+   *     .setRetryDelayMultiplier(1.4)
+   *     .setMaxAttempts(10)
+   *     .setLogicalTimeout(Duration.ofSeconds(30L))
+   *     .build());
+   * }</pre>
    */
   @BetaApi
   ApiCallContext withRetrySettings(RetrySettings retrySettings);

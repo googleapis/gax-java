@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
@@ -295,6 +296,23 @@ public abstract class RetrySettings implements Serializable {
      * can't increase the RPC timeout higher than this amount.
      */
     public abstract Duration getMaxRpcTimeout();
+
+    /**
+     * Configures the timeout settings with the given timeout such that the logical call will take
+     * no longer than the given timeout and each RPC attempt will use only the time remaining in the
+     * logical call as a timeout.
+     *
+     * <p>Using this method in conjunction with individual {@link RetrySettings} timeout field
+     * setters is not advised, because only the order in which they are invoked determines which
+     * setter is respected.
+     */
+    @BetaApi
+    public Builder setLogicalTimeout(Duration timeout) {
+      return setRpcTimeoutMultiplier(1)
+          .setInitialRpcTimeout(timeout)
+          .setMaxRpcTimeout(timeout)
+          .setTotalTimeout(timeout);
+    }
 
     abstract RetrySettings autoBuild();
 
