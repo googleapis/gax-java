@@ -30,7 +30,7 @@ pushd $(dirname "$0")/../../
 # install docuploader package
 python3 -m pip install gcp-docuploader
 
-NAME=gax
+NAME=google-api-gax
 VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
 
 # build the docs
