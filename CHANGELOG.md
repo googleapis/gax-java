@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.63.0](https://www.github.com/googleapis/gax-java/compare/v1.62.0...v1.63.0) (2021-04-05)
+
+
+### Features
+
+* add setLogicalTimeout helper to RetrySettings ([#1334](https://www.github.com/googleapis/gax-java/issues/1334)) ([97d3214](https://www.github.com/googleapis/gax-java/commit/97d32144e9de38a9e351dc34270aa41aef351151))
+* dynamic flow control for batcher part 2 ([#1310](https://www.github.com/googleapis/gax-java/issues/1310)) ([20f6ecf](https://www.github.com/googleapis/gax-java/commit/20f6ecf4807bb4dffd0fa80717302c1f46b1d789))
+* dynamic flow control p3: add FlowControllerEventStats ([#1332](https://www.github.com/googleapis/gax-java/issues/1332)) ([5329ea4](https://www.github.com/googleapis/gax-java/commit/5329ea43c024ca14cea1012c5ab46e694e199492))
+* support retry settings and retryable codes in call context ([#1238](https://www.github.com/googleapis/gax-java/issues/1238)) ([7f7aa25](https://www.github.com/googleapis/gax-java/commit/7f7aa252ce96413cb09e01cc2e76672b167b1baf))
+* wrap non-retryable RPCs in retry machinery ([#1328](https://www.github.com/googleapis/gax-java/issues/1328)) ([51c40ab](https://www.github.com/googleapis/gax-java/commit/51c40abd408ab0637f3b65cf5697a4ee85a544a4))
+
+
+### Bug Fixes
+
+* add BetaApi tag to setLogicalTimeout ([#1335](https://www.github.com/googleapis/gax-java/issues/1335)) ([fc7169d](https://www.github.com/googleapis/gax-java/commit/fc7169d431baf2db90992241a0ef3d40c72567a5))
+* retain user RPC timeout if set via withTimeout ([#1324](https://www.github.com/googleapis/gax-java/issues/1324)) ([3fe1db9](https://www.github.com/googleapis/gax-java/commit/3fe1db913b134e4fddee4c769ee4497847d8e01f))
+
+
+### Documentation
+
+* cloud rad java doc generation ([#1336](https://www.github.com/googleapis/gax-java/issues/1336)) ([751ccf3](https://www.github.com/googleapis/gax-java/commit/751ccf3cb351cd5a037104242cdb763a104d6bc3))
+
 ## [1.62.0](https://www.github.com/googleapis/gax-java/compare/v1.61.0...v1.62.0) (2021-02-25)
 
 
