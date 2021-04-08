@@ -129,6 +129,20 @@ public class WatchdogTest {
   }
 
   @Test
+  public void testTimedOutBeforeStart() {
+    MockServerStreamingCallable<String, String> callable1 = new MockServerStreamingCallable<>();
+    AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
+    ResponseObserver observer = watchdog.watch(downstreamObserver1, waitTime, idleTime);
+    clock.incrementNanoTime(idleTime.toNanos() + 1);
+    // This should not remove callable1 from watched list
+    watchdog.run();
+    callable1.call("request", observer);
+    // This should cancel callable1
+    watchdog.run();
+    assertThat(callable1.popLastCall().getController().isCancelled()).isTrue();
+  }
+
+  @Test
   public void testMultiple() throws Exception {
     // Start stream1
     AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
