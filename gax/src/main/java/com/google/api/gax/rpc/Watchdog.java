@@ -296,6 +296,12 @@ public final class Watchdog implements Runnable, BackgroundResource {
      * @return True if the stream was canceled.
      */
     boolean cancelIfStale() {
+      // If the stream hasn't started yet, innerController will be null. Skip the check this time
+      // and return false so the stream is still watched.
+      if (innerController == null) {
+        return false;
+      }
+
       Throwable myError = null;
 
       synchronized (lock) {
