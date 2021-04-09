@@ -183,7 +183,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
     private boolean autoAutoFlowControl = true;
 
     private final ResponseObserver<ResponseT> outerResponseObserver;
-    private StreamController innerController;
+    private volatile StreamController innerController;
 
     @GuardedBy("lock")
     private State state = State.IDLE;
