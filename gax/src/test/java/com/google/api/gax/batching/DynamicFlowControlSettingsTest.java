@@ -56,6 +56,19 @@ public class DynamicFlowControlSettingsTest {
   }
 
   @Test
+  public void testSettingsIgnored() {
+    DynamicFlowControlSettings.Builder builder = DynamicFlowControlSettings.newBuilder();
+    // If behavior is ignore, build shouldn't throw exceptions even when only one of the bytes or
+    // element limits is set
+    builder
+        .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+        .setMaxOutstandingRequestBytes(1L);
+    builder.build();
+    builder.setMinOutstandingElementCount(1L);
+    builder.build();
+  }
+
+  @Test
   public void testBuilder() {
     DynamicFlowControlSettings.Builder builder =
         DynamicFlowControlSettings.newBuilder()

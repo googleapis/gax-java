@@ -116,9 +116,10 @@ public abstract class DynamicFlowControlSettings {
 
     private void verifyElementCountSettings(DynamicFlowControlSettings settings) {
       boolean isEnabled =
-          settings.getInitialOutstandingElementCount() != null
-              || settings.getMinOutstandingElementCount() != null
-              || settings.getMaxOutstandingElementCount() != null;
+          settings.getLimitExceededBehavior() != LimitExceededBehavior.Ignore
+              && (settings.getInitialOutstandingElementCount() != null
+                  || settings.getMinOutstandingElementCount() != null
+                  || settings.getMaxOutstandingElementCount() != null);
       if (!isEnabled) {
         return;
       }
@@ -142,9 +143,10 @@ public abstract class DynamicFlowControlSettings {
 
     private void verifyRequestBytesSettings(DynamicFlowControlSettings settings) {
       boolean isEnabled =
-          settings.getInitialOutstandingRequestBytes() != null
-              || settings.getMinOutstandingRequestBytes() != null
-              || settings.getMaxOutstandingRequestBytes() != null;
+          settings.getLimitExceededBehavior() != LimitExceededBehavior.Ignore
+              && (settings.getInitialOutstandingRequestBytes() != null
+                  || settings.getMinOutstandingRequestBytes() != null
+                  || settings.getMaxOutstandingRequestBytes() != null);
       if (!isEnabled) {
         return;
       }
