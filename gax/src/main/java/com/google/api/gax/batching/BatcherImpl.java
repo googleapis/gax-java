@@ -41,8 +41,10 @@ import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.TracedBatchingContextCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Futures;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -188,16 +190,18 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // class, which made it seem unnecessary to have blocking and non-blocking semaphore
     // implementations. Some refactoring may be needed for the optimized implementation. So we'll
     // defer it till we decide on if refactoring FlowController is necessary.
+    Stopwatch stopwatch = Stopwatch.createStarted();
     try {
       flowController.reserve(1, batchingDescriptor.countBytes(element));
     } catch (FlowControlException e) {
       // This exception will only be thrown if the FlowController is set to ThrowException behavior
       throw FlowControlRuntimeException.fromFlowControlException(e);
     }
+    long throttledTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
     synchronized (elementLock) {
-      currentOpenBatch.add(element, result);
+      currentOpenBatch.add(element, result, throttledTime);
     }
 
     if (currentOpenBatch.hasAnyThresholdReached()) {
@@ -226,8 +230,19 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
     }
 
-    final ApiFuture<ResponseT> batchResponse =
-        unaryCallable.futureCall(accumulatedBatch.builder.build());
+    final ApiFuture<ResponseT> batchResponse;
+    if (unaryCallable instanceof TracedBatchingContextCallable) {
+      BatchingCallContext batchingCallContext =
+          BatchingCallContext.create(
+              accumulatedBatch.elementCounter,
+              accumulatedBatch.byteCounter,
+              accumulatedBatch.totalThrottledTimeMs);
+      batchResponse =
+          ((TracedBatchingContextCallable) unaryCallable)
+              .futureCall(accumulatedBatch.builder.build(), batchingCallContext);
+    } else {
+      batchResponse = unaryCallable.futureCall(accumulatedBatch.builder.build());
+    }
 
     numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(
@@ -312,6 +327,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     private long elementCounter = 0;
     private long byteCounter = 0;
+    private long totalThrottledTimeMs = 0;
 
     private Batch(
         RequestT prototype,
@@ -328,11 +344,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       this.batcherStats = batcherStats;
     }
 
-    void add(ElementT element, SettableApiFuture<ElementResultT> result) {
+    void add(ElementT element, SettableApiFuture<ElementResultT> result, long throttledTimeMs) {
       builder.add(element);
       entries.add(BatchEntry.create(element, result));
       elementCounter++;
       byteCounter += descriptor.countBytes(element);
+      totalThrottledTimeMs += throttledTimeMs;
     }
 
     void onBatchSuccess(ResponseT response) {
