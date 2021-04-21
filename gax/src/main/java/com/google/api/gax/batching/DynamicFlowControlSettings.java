@@ -115,11 +115,14 @@ public abstract class DynamicFlowControlSettings {
     }
 
     private void verifyElementCountSettings(DynamicFlowControlSettings settings) {
-      boolean isEnabled =
-          settings.getInitialOutstandingElementCount() != null
-              || settings.getMinOutstandingElementCount() != null
-              || settings.getMaxOutstandingElementCount() != null;
-      if (!isEnabled) {
+      // If LimitExceededBehavior is Ignore, dynamic flow control is disabled, there's no need to
+      // check element count limit settings
+      if (settings.getLimitExceededBehavior() == LimitExceededBehavior.Ignore) {
+        return;
+      }
+      if (settings.getInitialOutstandingElementCount() == null
+          && settings.getMinOutstandingElementCount() == null
+          && settings.getMaxOutstandingElementCount() == null) {
         return;
       }
       Preconditions.checkState(
@@ -141,11 +144,14 @@ public abstract class DynamicFlowControlSettings {
     }
 
     private void verifyRequestBytesSettings(DynamicFlowControlSettings settings) {
-      boolean isEnabled =
-          settings.getInitialOutstandingRequestBytes() != null
-              || settings.getMinOutstandingRequestBytes() != null
-              || settings.getMaxOutstandingRequestBytes() != null;
-      if (!isEnabled) {
+      // If LimitExceededBehavior is Ignore, dynamic flow control is disabled, there's no need to
+      // check request bytes limit settings
+      if (settings.getLimitExceededBehavior() == LimitExceededBehavior.Ignore) {
+        return;
+      }
+      if (settings.getInitialOutstandingRequestBytes() == null
+          && settings.getMinOutstandingRequestBytes() == null
+          && settings.getMaxOutstandingRequestBytes() == null) {
         return;
       }
       Preconditions.checkState(
