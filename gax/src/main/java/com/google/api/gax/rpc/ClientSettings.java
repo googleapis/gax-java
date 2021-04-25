@@ -64,7 +64,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   }
 
   public final ExecutorProvider getExecutorProvider() {
-    return stubSettings.getExecutorProvider();
+    return stubSettings.getWorkerExecutorProvider();
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
@@ -162,6 +162,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      */
     public B setExecutorProvider(ExecutorProvider executorProvider) {
       stubSettings.setExecutorProvider(executorProvider);
+      stubSettings.setWorkerExecutorProvider(executorProvider);
       return self();
     }
 
@@ -240,7 +241,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
 
     /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
-      return stubSettings.getExecutorProvider();
+      return stubSettings.getWorkerExecutorProvider();
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */

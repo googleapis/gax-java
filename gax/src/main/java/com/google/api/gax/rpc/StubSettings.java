@@ -45,6 +45,7 @@ import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -64,6 +65,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
 
   private final ExecutorProvider executorProvider;
+  private final ExecutorProvider workerExecutorProvider;
   private final CredentialsProvider credentialsProvider;
   private final HeaderProvider headerProvider;
   private final HeaderProvider internalHeaderProvider;
@@ -87,6 +89,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   /** Constructs an instance of StubSettings. */
   protected StubSettings(Builder builder) {
     this.executorProvider = builder.executorProvider;
+    this.workerExecutorProvider = builder.workerExecutorProvider;
     this.transportChannelProvider = builder.transportChannelProvider;
     this.credentialsProvider = builder.credentialsProvider;
     this.headerProvider = builder.headerProvider;
@@ -101,8 +104,14 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.tracerFactory = builder.tracerFactory;
   }
 
+  /** @deprecated Please use {@link #getWorkerExecutorProvider()}. */
+  @Deprecated
   public final ExecutorProvider getExecutorProvider() {
     return executorProvider;
+  }
+
+  public final ExecutorProvider getWorkerExecutorProvider() {
+    return workerExecutorProvider;
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
@@ -169,6 +178,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
+        .add("workerExecutorProvider", workerExecutorProvider)
         .add("transportChannelProvider", transportChannelProvider)
         .add("credentialsProvider", credentialsProvider)
         .add("headerProvider", headerProvider)
@@ -190,6 +200,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
     private ExecutorProvider executorProvider;
+    private ExecutorProvider workerExecutorProvider;
     private CredentialsProvider credentialsProvider;
     private HeaderProvider headerProvider;
     private HeaderProvider internalHeaderProvider;
@@ -213,6 +224,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Create a builder from a StubSettings object. */
     protected Builder(StubSettings settings) {
       this.executorProvider = settings.executorProvider;
+      this.workerExecutorProvider = settings.workerExecutorProvider;
       this.transportChannelProvider = settings.transportChannelProvider;
       this.credentialsProvider = settings.credentialsProvider;
       this.headerProvider = settings.headerProvider;
@@ -246,7 +258,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     protected Builder(ClientContext clientContext) {
       if (clientContext == null) {
-        this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
+        this.executorProvider = null;
+        this.workerExecutorProvider = InstantiatingExecutorProvider.newBuilder().build();
         this.transportChannelProvider = null;
         this.credentialsProvider = NoCredentialsProvider.create();
         this.headerProvider = new NoHeaderProvider();
@@ -260,6 +273,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.tracerFactory = BaseApiTracerFactory.getInstance();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        this.workerExecutorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
             FixedTransportChannelProvider.create(clientContext.getTransportChannel());
         this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
@@ -289,13 +303,29 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     /**
-     * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API
-     * call logic (such as retries and long-running operations), and also to pass to the transport
-     * settings if an executor is needed for the transport and it doesn't have its own executor
-     * provider.
+     * @deprecated Please use {@link #setWorkerExecutorProvider(ExecutorProvider)} for setting
+     *     executor to use for running asynchronous API call logic. To set executor for {@link
+     *     TransportChannelProvider}, please use {@link
+     *     TransportChannelProvider#withExecutor(Executor)} instead.
      */
+    @Deprecated
     public B setExecutorProvider(ExecutorProvider executorProvider) {
+      // For backward compatibility, this will set both executorProvider and workerExecutorProvider.
+      // ExecutorProvider is null by default. In ClientContext#create(), if TransportChannelProvider
+      // doesn't have an executor, executorProvider will be used as TransportChannelProvider's
+      // executor. After this method is deprecated, TransportChannelProvider's executor can only be
+      // set with TransportChannelProvider#withExecutor.
       this.executorProvider = executorProvider;
+      this.workerExecutorProvider = executorProvider;
+      return self();
+    }
+
+    /**
+     * Sets the executor to use for running asynchronous API call logic (such as retries and
+     * long-running operations).
+     */
+    public B setWorkerExecutorProvider(ExecutorProvider workerExecutorProvider) {
+      this.workerExecutorProvider = workerExecutorProvider;
       return self();
     }
 
@@ -416,9 +446,15 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
-    /** Gets the ExecutorProvider that was previously set on this Builder. */
+    /** @deprecated Please use {@link #getWorkerExecutorProvider()}. */
+    @Deprecated
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
+    }
+
+    /** Gets the ExecutorProvider that was previously set on this Builder. */
+    public ExecutorProvider getWorkerExecutorProvider() {
+      return workerExecutorProvider;
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */
@@ -494,6 +530,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", executorProvider)
+          .add("workerExecutorProvider", workerExecutorProvider)
           .add("transportChannelProvider", transportChannelProvider)
           .add("credentialsProvider", credentialsProvider)
           .add("headerProvider", headerProvider)

@@ -64,6 +64,7 @@ public interface TransportChannelProvider {
   boolean shouldAutoClose();
 
   /** True if the TransportProvider needs an executor. */
+  @Deprecated
   boolean needsExecutor();
 
   /**

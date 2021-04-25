@@ -111,6 +111,8 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
     Truth.assertThat(builder.getExecutorProvider())
         .isInstanceOf(InstantiatingExecutorProvider.class);
+    Truth.assertThat(builder.getStubSettings().getWorkerExecutorProvider())
+        .isSameInstanceAs(builder.getExecutorProvider());
     Truth.assertThat(builder.getTransportChannelProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
@@ -124,6 +126,8 @@ public class ClientSettingsTest {
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider())
         .isSameInstanceAs(builder.getExecutorProvider());
+    Truth.assertThat(settings.getStubSettings().getWorkerExecutorProvider())
+        .isSameInstanceAs(settings.getExecutorProvider());
     Truth.assertThat(settings.getTransportChannelProvider())
         .isSameInstanceAs(builder.getTransportChannelProvider());
     Truth.assertThat(settings.getCredentialsProvider())
@@ -173,6 +177,8 @@ public class ClientSettingsTest {
     builder.setQuotaProjectId(quotaProjectId);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameInstanceAs(executorProvider);
+    Truth.assertThat(builder.getStubSettings().getWorkerExecutorProvider())
+        .isSameInstanceAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
     Truth.assertThat(builder.getCredentialsProvider()).isSameInstanceAs(credentialsProvider);
     Truth.assertThat(builder.getClock()).isSameInstanceAs(clock);
@@ -223,6 +229,8 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
 
     Truth.assertThat(builder.getExecutorProvider()).isInstanceOf(FixedExecutorProvider.class);
+    Truth.assertThat(builder.getStubSettings().getWorkerExecutorProvider())
+        .isSameInstanceAs(builder.getExecutorProvider());
     Truth.assertThat(builder.getTransportChannelProvider())
         .isInstanceOf(FixedTransportChannelProvider.class);
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(FixedCredentialsProvider.class);
@@ -263,6 +271,8 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
 
     Truth.assertThat(newBuilder.getExecutorProvider()).isSameInstanceAs(executorProvider);
+    Truth.assertThat(newBuilder.getStubSettings().getWorkerExecutorProvider())
+        .isSameInstanceAs(executorProvider);
     Truth.assertThat(newBuilder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
     Truth.assertThat(newBuilder.getCredentialsProvider()).isSameInstanceAs(credentialsProvider);
     Truth.assertThat(newBuilder.getClock()).isSameInstanceAs(clock);

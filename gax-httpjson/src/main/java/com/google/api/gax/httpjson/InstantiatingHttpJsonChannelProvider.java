@@ -93,6 +93,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     this.mtlsProvider = mtlsProvider;
   }
 
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
@@ -149,9 +150,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
-    } else if (needsHeaders()) {
+    if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
       try {

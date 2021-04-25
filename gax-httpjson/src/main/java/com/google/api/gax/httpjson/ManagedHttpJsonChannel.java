@@ -39,10 +39,13 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -50,6 +53,12 @@ import javax.annotation.Nullable;
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
   private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+  private static final ExecutorService DEFAULT_EXECUTOR =
+      Executors.newCachedThreadPool(
+          new ThreadFactoryBuilder()
+              .setDaemon(true)
+              .setNameFormat("http-default-executor-%d")
+              .build());
 
   private final Executor executor;
   private final String endpoint;
@@ -134,7 +143,9 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public void close() {}
 
   public static Builder newBuilder() {
-    return new Builder().setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
+    return new Builder()
+        .setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>())
+        .setExecutor(DEFAULT_EXECUTOR);
   }
 
   public static class Builder {
@@ -147,7 +158,11 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
-      this.executor = executor;
+      if (executor != null) {
+        this.executor = executor;
+      } else {
+        this.executor = DEFAULT_EXECUTOR;
+      }
       return this;
     }
 

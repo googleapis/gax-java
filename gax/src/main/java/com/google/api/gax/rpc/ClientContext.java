@@ -50,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -163,8 +162,13 @@ public abstract class ClientContext {
   public static ClientContext create(StubSettings settings) throws IOException {
     ApiClock clock = settings.getClock();
 
-    ExecutorProvider executorProvider = settings.getExecutorProvider();
-    final ScheduledExecutorService executor = executorProvider.getExecutor();
+    ExecutorProvider workerExecutorProvider = settings.getWorkerExecutorProvider();
+    final ScheduledExecutorService workerExecutor = workerExecutorProvider.getExecutor();
+
+    final ScheduledExecutorService executor =
+        settings.getExecutorProvider() == null
+            ? null
+            : settings.getExecutorProvider().getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
@@ -177,8 +181,11 @@ public abstract class ClientContext {
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
-    if (transportChannelProvider.needsExecutor()) {
-      transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
+    // After needsExecutor and StubSettings#setExecutor are deprecated, transport channel executor
+    // can only be set from TransportChannelProvider#withExecutor directly, and all providers will
+    // have default executors.
+    if (transportChannelProvider.needsExecutor() && executor != null) {
+      transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }
     Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
@@ -216,7 +223,7 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
       if (watchdogProvider.needsExecutor()) {
-        watchdogProvider = watchdogProvider.withExecutor(executor);
+        watchdogProvider = watchdogProvider.withExecutor(workerExecutor);
       }
       watchdog = watchdogProvider.getWatchdog();
     }
@@ -226,8 +233,8 @@ public abstract class ClientContext {
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
     }
-    if (executorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    if (workerExecutorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(workerExecutor));
     }
     if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
       backgroundResources.add(watchdog);
@@ -235,7 +242,7 @@ public abstract class ClientContext {
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
-        .setExecutor(executor)
+        .setExecutor(workerExecutor)
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
