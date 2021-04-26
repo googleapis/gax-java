@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.63.1](https://www.github.com/googleapis/gax-java/compare/v1.63.0...v1.63.1) (2021-04-26)
+
+
+### Bug Fixes
+
+* fix dynamic flow control setting checks ([#1347](https://www.github.com/googleapis/gax-java/issues/1347)) ([69458b4](https://www.github.com/googleapis/gax-java/commit/69458b4deefe5b9c2c33a3b51389face968ff52f))
+* fix watchdog NPE red herring ([#1344](https://www.github.com/googleapis/gax-java/issues/1344)) ([06dbf12](https://www.github.com/googleapis/gax-java/commit/06dbf129ce63d28430e1022137679c9cfdf433ee))
+
 ## [1.63.0](https://www.github.com/googleapis/gax-java/compare/v1.62.0...v1.63.0) (2021-04-05)
 
 
