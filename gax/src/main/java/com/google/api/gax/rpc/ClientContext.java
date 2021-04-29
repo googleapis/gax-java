@@ -162,13 +162,12 @@ public abstract class ClientContext {
   public static ClientContext create(StubSettings settings) throws IOException {
     ApiClock clock = settings.getClock();
 
-    ExecutorProvider workerExecutorProvider = settings.getWorkerExecutorProvider();
-    final ScheduledExecutorService workerExecutor = workerExecutorProvider.getExecutor();
+    ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
+    final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
+    ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor =
-        settings.getExecutorProvider() == null
-            ? null
-            : settings.getExecutorProvider().getExecutor();
+        executorProvider == null ? null : executorProvider.getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
@@ -223,7 +222,7 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
       if (watchdogProvider.needsExecutor()) {
-        watchdogProvider = watchdogProvider.withExecutor(workerExecutor);
+        watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor);
       }
       watchdog = watchdogProvider.getWatchdog();
     }
@@ -233,16 +232,22 @@ public abstract class ClientContext {
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
     }
-    if (workerExecutorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(workerExecutor));
+    if (backgroundExecutorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(backgroundExecutor));
     }
     if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
       backgroundResources.add(watchdog);
     }
+    if (executorProvider != null
+        && executor != null
+        && executorProvider.shouldAutoClose()
+        && executor != backgroundExecutor) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    }
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
-        .setExecutor(workerExecutor)
+        .setExecutor(backgroundExecutor)
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
