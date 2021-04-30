@@ -98,6 +98,7 @@ public class ProtoMessageRequestFormatterTest {
     Map<String, List<String>> queryParamNames = formatter.getQueryParamNames(field);
     Map<String, List<String>> expected = new HashMap<>();
     expected.put("number", Arrays.asList("2"));
+    expected.put("typeUrl", Arrays.asList(""));
     Truth.assertThat(queryParamNames).isEqualTo(expected);
   }
 
