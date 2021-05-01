@@ -50,6 +50,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -538,6 +539,9 @@ public class FlowControllerTest {
     testBlockingReserveRelease(flowController, 0, expectedValue);
   }
 
+  // This test is very flaky. Remove @Ignore once https://github.com/googleapis/gax-java/issues/1359
+  // is fixed.
+  @Ignore
   @Test
   public void testConcurrentUpdateThresholds_nonBlocking() throws Exception {
     int initialValue = 5000;
