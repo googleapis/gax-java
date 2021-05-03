@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
@@ -37,9 +38,13 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -64,6 +69,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   private final HeaderProvider headerProvider;
   private final String endpoint;
   private final HttpTransport httpTransport;
+  private final MtlsProvider mtlsProvider;
 
   private InstantiatingHttpJsonChannelProvider(
       Executor executor, HeaderProvider headerProvider, String endpoint) {
@@ -71,17 +77,20 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     this.headerProvider = headerProvider;
     this.endpoint = endpoint;
     this.httpTransport = null;
+    this.mtlsProvider = new MtlsProvider();
   }
 
   private InstantiatingHttpJsonChannelProvider(
       Executor executor,
       HeaderProvider headerProvider,
       String endpoint,
-      HttpTransport httpTransport) {
+      HttpTransport httpTransport,
+      MtlsProvider mtlsProvider) {
     this.executor = executor;
     this.headerProvider = headerProvider;
     this.endpoint = endpoint;
     this.httpTransport = httpTransport;
+    this.mtlsProvider = mtlsProvider;
   }
 
   @Override
@@ -160,6 +169,20 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
         "InstantiatingHttpJsonChannelProvider doesn't need credentials");
   }
 
+  HttpTransport createHttpTransport() throws IOException {
+    if (mtlsProvider.useMtlsClientCertificate()) {
+      try {
+        KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
+        if (mtlsKeyStore != null) {
+          return new NetHttpTransport.Builder().trustCertificates(null, mtlsKeyStore, "").build();
+        }
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e.toString());
+      }
+    }
+    return null;
+  }
+
   private TransportChannel createChannel() throws IOException {
     Map<String, String> headers = headerProvider.getHeaders();
 
@@ -168,12 +191,17 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       headerEnhancers.add(HttpJsonHeaderEnhancers.create(header.getKey(), header.getValue()));
     }
 
+    HttpTransport httpTransportToUse = httpTransport;
+    if (httpTransportToUse == null) {
+      httpTransportToUse = createHttpTransport();
+    }
+
     ManagedHttpJsonChannel channel =
         ManagedHttpJsonChannel.newBuilder()
             .setEndpoint(endpoint)
             .setHeaderEnhancers(headerEnhancers)
             .setExecutor(executor)
-            .setHttpTransport(httpTransport)
+            .setHttpTransport(httpTransportToUse)
             .build();
 
     return HttpJsonTransportChannel.newBuilder().setManagedChannel(channel).build();
@@ -202,6 +230,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     private HeaderProvider headerProvider;
     private String endpoint;
     private HttpTransport httpTransport;
+    private MtlsProvider mtlsProvider = new MtlsProvider();
 
     private Builder() {}
 
@@ -210,6 +239,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
       this.httpTransport = provider.httpTransport;
+      this.mtlsProvider = provider.mtlsProvider;
     }
 
     /**
@@ -259,9 +289,15 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       return endpoint;
     }
 
+    @VisibleForTesting
+    Builder setMtlsProvider(MtlsProvider mtlsProvider) {
+      this.mtlsProvider = mtlsProvider;
+      return this;
+    }
+
     public InstantiatingHttpJsonChannelProvider build() {
       return new InstantiatingHttpJsonChannelProvider(
-          executor, headerProvider, endpoint, httpTransport);
+          executor, headerProvider, endpoint, httpTransport, mtlsProvider);
     }
   }
 }

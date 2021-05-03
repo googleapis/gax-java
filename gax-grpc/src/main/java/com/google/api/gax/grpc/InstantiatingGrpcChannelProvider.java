@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -46,16 +47,22 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.grpc.ChannelCredentials;
+import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.TlsChannelCredentials;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManagerFactory;
 import org.threeten.bp.Duration;
 
 /**
@@ -96,6 +103,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
+  @Nullable private final MtlsProvider mtlsProvider;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -105,6 +113,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executor = builder.executor;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.mtlsProvider = builder.mtlsProvider;
     this.envProvider = builder.envProvider;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
@@ -264,6 +273,24 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return false;
   }
 
+  @VisibleForTesting
+  ChannelCredentials createMtlsChannelCredentials() throws IOException {
+    if (mtlsProvider.useMtlsClientCertificate()) {
+      try {
+        KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
+        if (mtlsKeyStore != null) {
+          KeyManagerFactory factory =
+              KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+          factory.init(mtlsKeyStore, new char[] {});
+          return TlsChannelCredentials.newBuilder().keyManager(factory.getKeyManagers()).build();
+        }
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e.toString());
+      }
+    }
+    return null;
+  }
+
   private ManagedChannel createSingleChannel() throws IOException {
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
@@ -290,7 +317,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       builder.defaultServiceConfig(directPathServiceConfig);
     } else {
-      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+      ChannelCredentials mTlsChannelCredentials = createMtlsChannelCredentials();
+      if (mTlsChannelCredentials != null) {
+        builder = Grpc.newChannelBuilder(endpoint, mTlsChannelCredentials);
+      } else {
+        builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+      }
     }
     builder =
         builder
@@ -376,6 +408,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private HeaderProvider headerProvider;
     private String endpoint;
     private EnvironmentProvider envProvider;
+    private MtlsProvider mtlsProvider = new MtlsProvider();
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Integer maxInboundMetadataSize;
@@ -412,6 +445,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.channelPrimer = provider.channelPrimer;
       this.attemptDirectPath = provider.attemptDirectPath;
       this.directPathServiceConfig = provider.directPathServiceConfig;
+      this.mtlsProvider = provider.mtlsProvider;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -455,6 +489,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public Builder setEndpoint(String endpoint) {
       validateEndpoint(endpoint);
       this.endpoint = endpoint;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setMtlsProvider(MtlsProvider mtlsProvider) {
+      this.mtlsProvider = mtlsProvider;
       return this;
     }
 

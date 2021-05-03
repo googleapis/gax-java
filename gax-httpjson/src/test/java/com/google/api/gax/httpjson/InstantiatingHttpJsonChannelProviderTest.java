@@ -32,7 +32,10 @@ package com.google.api.gax.httpjson;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.Executor;
@@ -41,9 +44,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class InstantiatingHttpJsonChannelProviderTest {
+public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransportChannelTest {
 
   @Test
   public void basicTest() throws IOException {
@@ -93,5 +97,16 @@ public class InstantiatingHttpJsonChannelProviderTest {
 
     // Make sure we can create channels OK.
     provider.getTransportChannel().shutdownNow();
+  }
+
+  @Override
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider) throws IOException {
+    return InstantiatingHttpJsonChannelProvider.newBuilder()
+        .setEndpoint("localhost:8080")
+        .setMtlsProvider(provider)
+        .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+        .setExecutor(Mockito.mock(Executor.class))
+        .build()
+        .createHttpTransport();
   }
 }
