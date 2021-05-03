@@ -44,13 +44,13 @@ import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -500,7 +500,6 @@ public class FlowControllerTest {
     }
 
     flowController.release(1, 1);
-
     flowController.reserve(maxElementCount, maxNumBytes);
     flowController.release(maxElementCount, maxNumBytes);
   }
@@ -523,11 +522,11 @@ public class FlowControllerTest {
     final AtomicInteger totalDecreased = new AtomicInteger(0);
     final AtomicInteger releasedCounter = new AtomicInteger(0);
 
-    List<Thread> reserveThreads =
+    List<Future> reserveThreads =
         testConcurrentUpdates(
-            flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
-    for (Thread t : reserveThreads) {
-      t.join(200);
+            flowController, 100, 100, 10, totalIncreased, totalDecreased, releasedCounter);
+    for (Future t : reserveThreads) {
+      t.get(200, TimeUnit.MILLISECONDS);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
@@ -539,9 +538,6 @@ public class FlowControllerTest {
     testBlockingReserveRelease(flowController, 0, expectedValue);
   }
 
-  // This test is very flaky. Remove @Ignore once https://github.com/googleapis/gax-java/issues/1359
-  // is fixed.
-  @Ignore
   @Test
   public void testConcurrentUpdateThresholds_nonBlocking() throws Exception {
     int initialValue = 5000;
@@ -559,11 +555,11 @@ public class FlowControllerTest {
     AtomicInteger totalIncreased = new AtomicInteger(0);
     AtomicInteger totalDecreased = new AtomicInteger(0);
     AtomicInteger releasedCounter = new AtomicInteger(0);
-    List<Thread> reserveThreads =
+    List<Future> reserveThreads =
         testConcurrentUpdates(
             flowController, 100, 100, 100, totalIncreased, totalDecreased, releasedCounter);
-    for (Thread t : reserveThreads) {
-      t.join(200);
+    for (Future t : reserveThreads) {
+      t.get(200, TimeUnit.MILLISECONDS);
     }
     assertEquals(reserveThreads.size(), releasedCounter.get());
     assertTrue(totalIncreased.get() > 0);
@@ -698,8 +694,7 @@ public class FlowControllerTest {
         };
     // blocked by element. Reserve all 5 elements first, reserve in the runnable will be blocked
     flowController.reserve(5, 1);
-    ExecutorService executor = Executors.newCachedThreadPool();
-    Future<?> finished1 = executor.submit(runnable);
+    Future<?> finished1 = Executors.newSingleThreadExecutor().submit(runnable);
     try {
       finished1.get(50, TimeUnit.MILLISECONDS);
       fail("reserve should block");
@@ -722,7 +717,7 @@ public class FlowControllerTest {
 
     // Similar to blocked by element, test blocking by bytes.
     flowController.reserve(1, 5);
-    Future<?> finished2 = executor.submit(runnable);
+    Future<?> finished2 = Executors.newSingleThreadExecutor().submit(runnable);
     try {
       finished2.get(50, TimeUnit.MILLISECONDS);
       fail("reserve should block");
@@ -739,7 +734,7 @@ public class FlowControllerTest {
         .isAtLeast(currentTime);
   }
 
-  private List<Thread> testConcurrentUpdates(
+  private List<Future> testConcurrentUpdates(
       final FlowController flowController,
       final int increaseStepRange,
       final int decreaseStepRange,
@@ -747,7 +742,7 @@ public class FlowControllerTest {
       final AtomicInteger totalIncreased,
       final AtomicInteger totalDecreased,
       final AtomicInteger releasedCounter)
-      throws InterruptedException {
+      throws InterruptedException, TimeoutException, ExecutionException {
     final Random random = new Random();
     Runnable increaseRunnable =
         new Runnable() {
@@ -779,22 +774,19 @@ public class FlowControllerTest {
             }
           }
         };
-    List<Thread> updateThreads = new ArrayList<>();
-    List<Thread> reserveReleaseThreads = new ArrayList<>();
-    for (int i = 0; i < 20; i++) {
-      Thread increase = new Thread(increaseRunnable);
-      Thread decrease = new Thread(decreaseRunnable);
-      Thread reserveRelease = new Thread(reserveReleaseRunnable);
-      updateThreads.add(increase);
-      updateThreads.add(decrease);
-      reserveReleaseThreads.add(reserveRelease);
-      increase.start();
-      decrease.start();
-      reserveRelease.start();
+    List<Future> updateFuture = new ArrayList<>();
+    List<Future> reserveReleaseFuture = new ArrayList<>();
+    ExecutorService executors = Executors.newFixedThreadPool(10);
+    ExecutorService reserveExecutor = Executors.newFixedThreadPool(10);
+    for (int i = 0; i < 5; i++) {
+      updateFuture.add(executors.submit(increaseRunnable));
+      updateFuture.add(executors.submit(decreaseRunnable));
+      reserveReleaseFuture.add(reserveExecutor.submit(reserveReleaseRunnable));
     }
-    for (Thread t : updateThreads) {
-      t.join(10);
+    for (Future t : updateFuture) {
+      t.get(50, TimeUnit.MILLISECONDS);
     }
-    return reserveReleaseThreads;
+    executors.shutdown();
+    return reserveReleaseFuture;
   }
 }
