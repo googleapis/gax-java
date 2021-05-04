@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,14 +39,18 @@ import io.grpc.MethodDescriptor;
 import io.grpc.stub.ClientCalls;
 
 /**
- * {@code GrpcDirectCallable} creates gRPC calls.
+ * {@code GrpcEagerDirectCallable} creates gRPC calls.
+ *
+ * <p>Unlike {@link GrpcDirectCallable}, this variant won't wait for trailers before resolving the
+ * future.
  *
  * <p>Package-private for internal use.
  */
-class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+class GrpcEagerDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
-  public GrpcDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
+  public GrpcEagerDirectCallable(
+      MethodDescriptor<RequestT, ResponseT> descriptor) {
 
     this.descriptor = Preconditions.checkNotNull(descriptor);
   }
@@ -57,8 +61,7 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     Preconditions.checkNotNull(inputContext);
 
     ClientCall<RequestT, ResponseT> clientCall = GrpcClientCalls.newCall(descriptor, inputContext);
-    return new ListenableFutureToApiFuture<>(
-        ClientCalls.futureUnaryCall(GrpcClientCalls.newCall(descriptor, inputContext), request));
+    return GrpcClientCalls.eagerFutureUnaryCall(clientCall, request);
   }
 
   @Override
