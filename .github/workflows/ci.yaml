@@ -19,10 +19,7 @@ jobs:
       - run: .kokoro/build.sh
         env:
           JOB_TYPE: test
-      - name: coverage
-        uses: codecov/codecov-action@v1
-        with:
-          name: actions ${{ matrix.java }}
+
   bazel:
     runs-on: ubuntu-latest
     container: gcr.io/gapic-images/googleapis-bazel:20210105
@@ -64,11 +61,6 @@ jobs:
           name: test-artifacts
           path: ~/.cache/bazel/*/*/*/gax-java/bazel-out/*/testlogs/*
           retention-days: 5
-
-      - name: coverage
-        uses: codecov/codecov-action@v1
-        with:
-          name: actions bazel
 
   linkage-monitor:
     runs-on: ubuntu-latest

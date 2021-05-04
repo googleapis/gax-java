@@ -115,7 +115,9 @@ public class ProtoRestSerializerTest {
 
     Map<String, String> expectedFields = new HashMap<>();
     expectedFields.put("optName1", "1");
+    expectedFields.put("optName2", "0");
     expectedFields.put("optName3", "three");
+    expectedFields.put("optName4", "");
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }
@@ -131,7 +133,9 @@ public class ProtoRestSerializerTest {
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
+    expectedFields.put("optName2", Arrays.asList("0"));
     expectedFields.put("optName3", Arrays.asList("three"));
+    expectedFields.put("optName4", Arrays.asList(""));
     expectedFields.put("optName5", Arrays.asList("four", "five"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
