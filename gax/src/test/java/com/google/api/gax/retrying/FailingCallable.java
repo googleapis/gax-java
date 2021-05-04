@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.gax.tracing.ApiTracer;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.threeten.bp.Duration;
 
@@ -42,16 +43,27 @@ class FailingCallable implements Callable<String> {
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(8L))
           .setInitialRpcTimeout(Duration.ofMillis(8L))
-          .setJittered(false)
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(400L))
+          .build();
+  static final RetrySettings FAILING_RETRY_SETTINGS =
+      RetrySettings.newBuilder()
+          .setMaxAttempts(2)
+          .setInitialRetryDelay(Duration.ofNanos(1L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.ofNanos(1L))
+          .setInitialRpcTimeout(Duration.ofNanos(1L))
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.ofNanos(1L))
+          .setTotalTimeout(Duration.ofNanos(1L))
           .build();
 
   private AtomicInteger attemptsCount = new AtomicInteger(0);
   private final ApiTracer tracer;
   private final int expectedFailuresCount;
   private final String result;
+  private final CountDownLatch firstAttemptFinished = new CountDownLatch(1);
 
   FailingCallable(int expectedFailuresCount, String result, ApiTracer tracer) {
     this.tracer = tracer;
@@ -59,17 +71,25 @@ class FailingCallable implements Callable<String> {
     this.result = result;
   }
 
+  CountDownLatch getFirstAttemptFinishedLatch() {
+    return firstAttemptFinished;
+  }
+
   @Override
   public String call() throws Exception {
-    int attemptNumber = attemptsCount.getAndIncrement();
+    try {
+      int attemptNumber = attemptsCount.getAndIncrement();
 
-    tracer.attemptStarted(attemptNumber);
+      tracer.attemptStarted(attemptNumber);
 
-    if (attemptNumber < expectedFailuresCount) {
-      throw new CustomException();
+      if (attemptNumber < expectedFailuresCount) {
+        throw new CustomException();
+      }
+
+      return result;
+    } finally {
+      firstAttemptFinished.countDown();
     }
-
-    return result;
   }
 
   static class CustomException extends RuntimeException {

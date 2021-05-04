@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,30 +29,32 @@
  */
 package com.google.api.gax.retrying;
 
-import java.util.concurrent.CancellationException;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 
-/**
- * Same as {@link ResultRetryAlgorithmWithContext}, but without methods that accept a {@link
- * RetryingContext}. Use {@link ResultRetryAlgorithmWithContext} instead of this interface when
- * possible.
- */
-public interface ResultRetryAlgorithm<ResponseT> {
-  /**
-   * Same as {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
-   * Object, TimedAttemptSettings)}, but without a {@link RetryingContext}.
-   *
-   * <p>Use {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
-   * Object, TimedAttemptSettings)} instead of this method when possible.
-   */
-  TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings);
+import com.google.api.gax.tracing.NoopApiTracer;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-  /**
-   * Same as {@link ResultRetryAlgorithmWithContext#shouldRetry(Throwable, Object)}, but without a
-   * {@link RetryingContext}.
-   *
-   * <p>Use {@link ResultRetryAlgorithmWithContext#shouldRetry(RetryingContext, Throwable, Object)}
-   * instead of this method when possible.
-   */
-  boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) throws CancellationException;
+@RunWith(JUnit4.class)
+public class NoopRetryingContextTest {
+
+  @Test
+  public void testGetTracer() {
+    RetryingContext context = NoopRetryingContext.create();
+    assertSame(NoopApiTracer.getInstance(), context.getTracer());
+  }
+
+  @Test
+  public void testGetRetrySettings() {
+    RetryingContext context = NoopRetryingContext.create();
+    assertNull(context.getRetrySettings());
+  }
+
+  @Test
+  public void testGetRetryableCodes() {
+    RetryingContext context = NoopRetryingContext.create();
+    assertNull(context.getRetryableCodes());
+  }
 }

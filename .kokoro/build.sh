@@ -25,8 +25,3 @@ echo $JOB_TYPE
 
 ./gradlew assemble
 ./gradlew build install
-
-if [ "${REPORT_COVERAGE}" == "true" ]
-then
-  bash ${KOKORO_GFILE_DIR}/codecov.sh
-fi
