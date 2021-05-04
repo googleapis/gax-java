@@ -80,7 +80,7 @@ class NonBlockingSemaphore implements Semaphore64 {
     checkNotNegative(permits);
     // To allow individual oversized requests to be sent, clamp the requested permits to the maximum
     // limit. This will allow individual large requests to be sent. Please note that this behavior
-    // will result in availablePermits going negative.
+    // will result in acquiredPermits going over limit.
     while (true) {
       long old = acquiredPermits.get();
       if (old + permits > limit.get() && old > 0) {
