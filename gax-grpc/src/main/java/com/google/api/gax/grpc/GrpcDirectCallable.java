@@ -55,8 +55,7 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(inputContext);
-
-    ClientCall<RequestT, ResponseT> clientCall = GrpcClientCalls.newCall(descriptor, inputContext);
+    
     return new ListenableFutureToApiFuture<>(
         ClientCalls.futureUnaryCall(GrpcClientCalls.newCall(descriptor, inputContext), request));
   }
