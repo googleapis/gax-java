@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.63.3](https://www.github.com/googleapis/gax-java/compare/v1.63.2...v1.63.3) (2021-05-04)
+
+
+### Bug Fixes
+
+* fix flaky tests and non blocking semaphore ([#1365](https://www.github.com/googleapis/gax-java/issues/1365)) ([fc8e520](https://www.github.com/googleapis/gax-java/commit/fc8e520acfaf843ac61e806bdb4b5fe393d0b447))
+* Remove a flacky test in FlowControllerTest ([#1360](https://www.github.com/googleapis/gax-java/issues/1360)) ([2cca0bf](https://www.github.com/googleapis/gax-java/commit/2cca0bf9e96271dd52e8bffa00b8f2d45d358d35))
+
 ### [1.63.2](https://www.github.com/googleapis/gax-java/compare/v1.63.1...v1.63.2) (2021-04-30)
 
 
