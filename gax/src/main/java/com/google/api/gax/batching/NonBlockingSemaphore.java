@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /** A {@link Semaphore64} that immediately returns with failure if permits are not available. */
 class NonBlockingSemaphore implements Semaphore64 {
-  private AtomicLong availablePermits;
+  private AtomicLong acquiredPermits;
   private AtomicLong limit;
 
   private static void checkNotNegative(long l) {
@@ -44,7 +44,7 @@ class NonBlockingSemaphore implements Semaphore64 {
 
   NonBlockingSemaphore(long permits) {
     checkNotNegative(permits);
-    this.availablePermits = new AtomicLong(permits);
+    this.acquiredPermits = new AtomicLong(0);
     this.limit = new AtomicLong(permits);
   }
 
@@ -52,9 +52,10 @@ class NonBlockingSemaphore implements Semaphore64 {
   public void release(long permits) {
     checkNotNegative(permits);
     while (true) {
-      long old = availablePermits.get();
+      long old = acquiredPermits.get();
       // TODO: throw exceptions when the permits overflow
-      if (availablePermits.compareAndSet(old, Math.min(old + permits, limit.get()))) {
+      long newAcquired = Math.max(0, old - permits);
+      if (acquiredPermits.compareAndSet(old, newAcquired)) {
         return;
       }
     }
@@ -64,11 +65,11 @@ class NonBlockingSemaphore implements Semaphore64 {
   public boolean acquire(long permits) {
     checkNotNegative(permits);
     while (true) {
-      long old = availablePermits.get();
-      if (old < permits) {
+      long old = acquiredPermits.get();
+      if (old + permits > limit.get()) {
         return false;
       }
-      if (availablePermits.compareAndSet(old, old - permits)) {
+      if (acquiredPermits.compareAndSet(old, old + permits)) {
         return true;
       }
     }
@@ -79,13 +80,13 @@ class NonBlockingSemaphore implements Semaphore64 {
     checkNotNegative(permits);
     // To allow individual oversized requests to be sent, clamp the requested permits to the maximum
     // limit. This will allow individual large requests to be sent. Please note that this behavior
-    // will result in availablePermits going negative.
+    // will result in acquiredPermits going over limit.
     while (true) {
-      long old = availablePermits.get();
-      if (old < Math.min(limit.get(), permits)) {
+      long old = acquiredPermits.get();
+      if (old + permits > limit.get() && old > 0) {
         return false;
       }
-      if (availablePermits.compareAndSet(old, old - permits)) {
+      if (acquiredPermits.compareAndSet(old, old + permits)) {
         return true;
       }
     }
@@ -94,7 +95,6 @@ class NonBlockingSemaphore implements Semaphore64 {
   @Override
   public void increasePermitLimit(long permits) {
     checkNotNegative(permits);
-    availablePermits.addAndGet(permits);
     limit.addAndGet(permits);
   }
 
@@ -106,7 +106,6 @@ class NonBlockingSemaphore implements Semaphore64 {
       long oldLimit = limit.get();
       Preconditions.checkState(oldLimit - reduction > 0, "permit limit underflow");
       if (limit.compareAndSet(oldLimit, oldLimit - reduction)) {
-        availablePermits.addAndGet(-reduction);
         return;
       }
     }

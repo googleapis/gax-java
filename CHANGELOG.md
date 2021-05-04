@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.63.2](https://www.github.com/googleapis/gax-java/compare/v1.63.1...v1.63.2) (2021-04-30)
+
+
+### Bug Fixes
+
+* Remove default value handling ([#1353](https://www.github.com/googleapis/gax-java/issues/1353)) ([ed0fc79](https://www.github.com/googleapis/gax-java/commit/ed0fc791b22db45bd20de890b0abecd1839d2d86))
+
+
+### Dependencies
+
+* remove codecov.io ([#1354](https://www.github.com/googleapis/gax-java/issues/1354)) ([06a53ac](https://www.github.com/googleapis/gax-java/commit/06a53aca36ed0825122be160479b1ea0ba8635a0))
+
 ### [1.63.1](https://www.github.com/googleapis/gax-java/compare/v1.63.0...v1.63.1) (2021-04-26)
 
 
