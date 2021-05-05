@@ -36,8 +36,6 @@ import static org.junit.Assert.fail;
 
 import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
 import com.google.api.gax.batching.FlowController.MaxOutstandingRequestBytesReachedException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,27 +69,14 @@ public class FlowControlEventStatsTest {
   }
 
   @Test
-  public void testGetLastEvent() throws InterruptedException {
-    final FlowControlEventStats stats = new FlowControlEventStats();
-    final long currentTime = System.currentTimeMillis();
+  public void testGetLastEvent() {
+    FlowControlEventStats stats = new FlowControlEventStats();
+    long currentTime = System.currentTimeMillis();
 
-    List<Thread> threads = new ArrayList<>();
     for (int i = 1; i <= 10; i++) {
-      final int timeElapsed = i;
-      Thread t =
-          new Thread() {
-            @Override
-            public void run() {
-              stats.recordFlowControlEvent(
-                  FlowControlEvent.createReserveDelayed(currentTime + timeElapsed, timeElapsed));
-            }
-          };
-      threads.add(t);
-      t.start();
-    }
-
-    for (Thread t : threads) {
-      t.join(10);
+      int timeElapsed = i;
+      stats.recordFlowControlEvent(
+          FlowControlEvent.createReserveDelayed(currentTime + timeElapsed, timeElapsed));
     }
 
     assertEquals(currentTime + 10, stats.getLastFlowControlEvent().getTimestampMs());
