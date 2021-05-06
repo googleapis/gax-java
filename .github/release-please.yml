@@ -1,2 +1,6 @@
 releaseType: java-yoshi
 bumpMinorPreMajor: true
+branches:
+  - releaseType: java-lts
+    bumpMinorPreMajor: true
+    branch: 1.63.0-sp
