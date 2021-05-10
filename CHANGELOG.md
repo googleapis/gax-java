@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.63.0-sp.1](https://www.github.com/googleapis/gax-java/compare/1.63.0...v1.63.0-sp.1) (2021-05-10)
+
+
+### Features
+
+* configure initial sp version ([#1368](https://www.github.com/googleapis/gax-java/issues/1368)) ([1358a6b](https://www.github.com/googleapis/gax-java/commit/1358a6b42be7938b1c9b680e7bbebf0906d05223))
+
 ## [1.63.0](https://www.github.com/googleapis/gax-java/compare/v1.62.0...v1.63.0) (2021-04-05)
 
 
