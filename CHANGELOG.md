@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.64.0](https://www.github.com/googleapis/gax-java/compare/v1.63.4...v1.64.0) (2021-05-10)
+
+
+### Features
+
+* release 1.64.0 ([#1375](https://www.github.com/googleapis/gax-java/issues/1375)) ([499682e](https://www.github.com/googleapis/gax-java/commit/499682ec3b96ddeaac75f6e71cc3bc85a854da97))
+
 ### [1.63.4](https://www.github.com/googleapis/gax-java/compare/v1.63.3...v1.63.4) (2021-05-07)
 
 
