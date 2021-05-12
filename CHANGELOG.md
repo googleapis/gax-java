@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.64.0](https://www.github.com/googleapis/gax-java/compare/v1.63.4...v1.64.0) (2021-05-10)
+
+
+### Features
+
+* release 1.64.0 ([#1375](https://www.github.com/googleapis/gax-java/issues/1375)) ([499682e](https://www.github.com/googleapis/gax-java/commit/499682ec3b96ddeaac75f6e71cc3bc85a854da97))
+
+### [1.63.4](https://www.github.com/googleapis/gax-java/compare/v1.63.3...v1.63.4) (2021-05-07)
+
+
+### Bug Fixes
+
+* Make x-goog-api-client header report rest-based transport clients with `rest/` token instead of `httpson/`. ([#1370](https://www.github.com/googleapis/gax-java/issues/1370)) ([b1b0b49](https://www.github.com/googleapis/gax-java/commit/b1b0b498ba188a51b17d179988074bcf34fb7590))
+
 ### [1.63.3](https://www.github.com/googleapis/gax-java/compare/v1.63.2...v1.63.3) (2021-05-04)
 
 
