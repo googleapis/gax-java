@@ -141,7 +141,7 @@ public abstract class ClientContext {
       MtlsProvider mtlsProvider)
       throws IOException {
     if (switchToMtlsEndpointAllowed) {
-      switch (mtlsProvider.useMtlsEndpoint()) {
+      switch (mtlsProvider.getMtlsEndpointUsagePolicy()) {
         case ALWAYS:
           return mtlsEndpoint;
         case NEVER:
@@ -150,6 +150,7 @@ public abstract class ClientContext {
           if (mtlsProvider.useMtlsClientCertificate() && mtlsProvider.getKeyStore() != null) {
             return mtlsEndpoint;
           }
+          return endpoint;
       }
     }
     return endpoint;

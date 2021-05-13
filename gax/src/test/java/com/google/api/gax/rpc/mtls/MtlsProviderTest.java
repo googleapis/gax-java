@@ -125,7 +125,8 @@ public class MtlsProviderTest {
             new TestEnvironmentProvider("false", "always"),
             new TestProcessProvider(0),
             "/path/to/missing/file");
-    assertEquals(MtlsProvider.UseMtlsEndpoint.ALWAYS, mtlsProvider.useMtlsEndpoint());
+    assertEquals(
+        MtlsProvider.MtlsEndpointUsagePolicy.ALWAYS, mtlsProvider.getMtlsEndpointUsagePolicy());
   }
 
   @Test
@@ -135,7 +136,8 @@ public class MtlsProviderTest {
             new TestEnvironmentProvider("false", "auto"),
             new TestProcessProvider(0),
             "/path/to/missing/file");
-    assertEquals(MtlsProvider.UseMtlsEndpoint.AUTO, mtlsProvider.useMtlsEndpoint());
+    assertEquals(
+        MtlsProvider.MtlsEndpointUsagePolicy.AUTO, mtlsProvider.getMtlsEndpointUsagePolicy());
   }
 
   @Test
@@ -145,7 +147,8 @@ public class MtlsProviderTest {
             new TestEnvironmentProvider("false", "never"),
             new TestProcessProvider(0),
             "/path/to/missing/file");
-    assertEquals(MtlsProvider.UseMtlsEndpoint.NEVER, mtlsProvider.useMtlsEndpoint());
+    assertEquals(
+        MtlsProvider.MtlsEndpointUsagePolicy.NEVER, mtlsProvider.getMtlsEndpointUsagePolicy());
   }
 
   @Test

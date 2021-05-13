@@ -41,19 +41,19 @@ import java.security.KeyStore;
 @InternalApi("for testing")
 public class FakeMtlsProvider extends MtlsProvider {
   private boolean useClientCertificate;
-  private UseMtlsEndpoint useMtlsEndpoint;
+  private MtlsEndpointUsagePolicy mtlsEndpointUsagePolicy;
   private KeyStore keyStore;
   private boolean throwExceptionForGetKeyStore;
 
   public FakeMtlsProvider(
       boolean useClientCertificate,
-      UseMtlsEndpoint useMtlsEndpoint,
+      MtlsEndpointUsagePolicy mtlsEndpointUsagePolicy,
       KeyStore keystore,
       String keyStorePassword,
       boolean throwExceptionForGetKeyStore) {
     super();
     this.useClientCertificate = useClientCertificate;
-    this.useMtlsEndpoint = useMtlsEndpoint;
+    this.mtlsEndpointUsagePolicy = mtlsEndpointUsagePolicy;
     this.keyStore = keystore;
     this.throwExceptionForGetKeyStore = throwExceptionForGetKeyStore;
   }
@@ -64,8 +64,8 @@ public class FakeMtlsProvider extends MtlsProvider {
   }
 
   @Override
-  public UseMtlsEndpoint useMtlsEndpoint() {
-    return useMtlsEndpoint;
+  public MtlsEndpointUsagePolicy getMtlsEndpointUsagePolicy() {
+    return mtlsEndpointUsagePolicy;
   }
 
   @Override

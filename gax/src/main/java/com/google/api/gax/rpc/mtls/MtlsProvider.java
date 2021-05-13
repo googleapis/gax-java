@@ -77,13 +77,19 @@ public class MtlsProvider {
   }
 
   private static final String DEFAULT_CONTEXT_AWARE_METADATA_PATH =
-      System.getProperty("user.home") + "/.secureConnect/context_aware_metadata.json";
+      String.format(
+          "%s/.secureConnect/context_aware_metadata.json", System.getProperty("user.home"));
 
   private String metadataPath;
   private EnvironmentProvider envProvider;
   private ProcessProvider processProvider;
 
-  public enum UseMtlsEndpoint {
+  /**
+   * The policy for mutual TLS endpoint usage. NEVER means always use regular endpoint; ALWAYS means
+   * always use mTLS endpoint; AUTO means auto switch to mTLS endpoint if client certificate exists
+   * and should be used.
+   */
+  public enum MtlsEndpointUsagePolicy {
     NEVER,
     AUTO,
     ALWAYS;
@@ -113,19 +119,15 @@ public class MtlsProvider {
     return "true".equals(useClientCertificate);
   }
 
-  /**
-   * Returns AUTO, NEVER or ALWAYS. NEVER means always use regular endpoint; ALWAYS means always use
-   * mTLS endpoint; AUTO means auto switch to mTLS endpoint if client certificate exists and should
-   * be used.
-   */
-  public UseMtlsEndpoint useMtlsEndpoint() {
-    String useMtlsEndpoint = envProvider.getenv("GOOGLE_API_USE_MTLS_ENDPOINT");
-    if ("never".equals(useMtlsEndpoint)) {
-      return UseMtlsEndpoint.NEVER;
-    } else if ("always".equals(useMtlsEndpoint)) {
-      return UseMtlsEndpoint.ALWAYS;
+  /** Returns the current mutual TLS endpoint usage policy. */
+  public MtlsEndpointUsagePolicy getMtlsEndpointUsagePolicy() {
+    String mtlsEndpointUsagePolicy = envProvider.getenv("GOOGLE_API_USE_MTLS_ENDPOINT");
+    if ("never".equals(mtlsEndpointUsagePolicy)) {
+      return MtlsEndpointUsagePolicy.NEVER;
+    } else if ("always".equals(mtlsEndpointUsagePolicy)) {
+      return MtlsEndpointUsagePolicy.ALWAYS;
     }
-    return UseMtlsEndpoint.AUTO;
+    return MtlsEndpointUsagePolicy.AUTO;
   }
 
   /** The mutual TLS key store created with the default client certificate on device. */
@@ -173,6 +175,8 @@ public class MtlsProvider {
     long startTime = System.currentTimeMillis();
     long remainTime = timeoutMilliseconds;
 
+    // In the while loop, keep checking if the process is terminated every 100 milliseconds
+    // until timeout is reached or process is terminated.
     while (remainTime > 0) {
       Thread.sleep(Math.min(remainTime + 1, 100));
       remainTime -= System.currentTimeMillis() - startTime;

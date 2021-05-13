@@ -82,7 +82,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
    * should always be used as it is. Client libraries can set it via {@link
    * Builder#setSwitchToMtlsEndpointAllowed} method.
    */
-  private boolean switchToMtlsEndpointAllowed = false;
+  private final boolean switchToMtlsEndpointAllowed;
 
   /** Constructs an instance of StubSettings. */
   protected StubSettings(Builder builder) {

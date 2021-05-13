@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.gax.rpc.mtls.MtlsProvider.UseMtlsEndpoint;
+import com.google.api.gax.rpc.mtls.MtlsProvider.MtlsEndpointUsagePolicy;
 import com.google.api.gax.rpc.testing.FakeMtlsProvider;
 import java.io.IOException;
 import org.junit.Test;
@@ -52,7 +52,8 @@ public abstract class AbstractMtlsTransportChannelTest {
 
   @Test
   public void testNotUseClientCertificate() throws IOException {
-    MtlsProvider provider = new FakeMtlsProvider(false, UseMtlsEndpoint.AUTO, null, "", false);
+    MtlsProvider provider =
+        new FakeMtlsProvider(false, MtlsEndpointUsagePolicy.AUTO, null, "", false);
     assertNull(getMtlsObjectFromTransportChannel(provider));
   }
 
@@ -60,20 +61,26 @@ public abstract class AbstractMtlsTransportChannelTest {
   public void testUseClientCertificate() throws IOException {
     MtlsProvider provider =
         new FakeMtlsProvider(
-            true, UseMtlsEndpoint.AUTO, FakeMtlsProvider.createTestMtlsKeyStore(), "", false);
+            true,
+            MtlsEndpointUsagePolicy.AUTO,
+            FakeMtlsProvider.createTestMtlsKeyStore(),
+            "",
+            false);
     assertNotNull(getMtlsObjectFromTransportChannel(provider));
   }
 
   @Test
   public void testNoClientCertificate() throws IOException {
-    MtlsProvider provider = new FakeMtlsProvider(true, UseMtlsEndpoint.AUTO, null, "", false);
+    MtlsProvider provider =
+        new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", false);
     assertNull(getMtlsObjectFromTransportChannel(provider));
   }
 
   @Test
   public void testGetKeyStoreThrows() {
     // Test the case where provider.getKeyStore() throws.
-    MtlsProvider provider = new FakeMtlsProvider(true, UseMtlsEndpoint.AUTO, null, "", true);
+    MtlsProvider provider =
+        new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", true);
     try {
       getMtlsObjectFromTransportChannel(provider);
       fail("should throw and exception");

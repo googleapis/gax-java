@@ -42,7 +42,7 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
-import com.google.api.gax.rpc.mtls.MtlsProvider.UseMtlsEndpoint;
+import com.google.api.gax.rpc.mtls.MtlsProvider.MtlsEndpointUsagePolicy;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.api.gax.rpc.testing.FakeMtlsProvider;
@@ -615,7 +615,11 @@ public class ClientContextTest {
     boolean switchToMtlsEndpointAllowed = true;
     MtlsProvider provider =
         new FakeMtlsProvider(
-            true, UseMtlsEndpoint.AUTO, FakeMtlsProvider.createTestMtlsKeyStore(), "", false);
+            true,
+            MtlsEndpointUsagePolicy.AUTO,
+            FakeMtlsProvider.createTestMtlsKeyStore(),
+            "",
+            false);
     String endpointSelected =
         ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
     assertEquals(mtlsEndpoint, endpointSelected);
@@ -628,7 +632,11 @@ public class ClientContextTest {
     boolean switchToMtlsEndpointAllowed = false;
     MtlsProvider provider =
         new FakeMtlsProvider(
-            true, UseMtlsEndpoint.AUTO, FakeMtlsProvider.createTestMtlsKeyStore(), "", false);
+            true,
+            MtlsEndpointUsagePolicy.AUTO,
+            FakeMtlsProvider.createTestMtlsKeyStore(),
+            "",
+            false);
     String endpointSelected =
         ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
     assertEquals(endpoint, endpointSelected);
@@ -638,7 +646,8 @@ public class ClientContextTest {
   public void testNoClientCertificate() throws IOException {
     // Test the case that client certificates doesn't exists so the original endpoint is selected.
     boolean switchToMtlsEndpointAllowed = true;
-    MtlsProvider provider = new FakeMtlsProvider(true, UseMtlsEndpoint.AUTO, null, "", false);
+    MtlsProvider provider =
+        new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", false);
     String endpointSelected =
         ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
     assertEquals(endpoint, endpointSelected);
@@ -648,7 +657,8 @@ public class ClientContextTest {
   public void testAlwaysUseMtlsEndpoint() throws IOException {
     // Test the case that mTLS endpoint is always used.
     boolean switchToMtlsEndpointAllowed = true;
-    MtlsProvider provider = new FakeMtlsProvider(false, UseMtlsEndpoint.ALWAYS, null, "", false);
+    MtlsProvider provider =
+        new FakeMtlsProvider(false, MtlsEndpointUsagePolicy.ALWAYS, null, "", false);
     String endpointSelected =
         ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
     assertEquals(mtlsEndpoint, endpointSelected);
@@ -660,7 +670,11 @@ public class ClientContextTest {
     boolean switchToMtlsEndpointAllowed = true;
     MtlsProvider provider =
         new FakeMtlsProvider(
-            true, UseMtlsEndpoint.NEVER, FakeMtlsProvider.createTestMtlsKeyStore(), "", false);
+            true,
+            MtlsEndpointUsagePolicy.NEVER,
+            FakeMtlsProvider.createTestMtlsKeyStore(),
+            "",
+            false);
     String endpointSelected =
         ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
     assertEquals(endpoint, endpointSelected);
@@ -671,7 +685,8 @@ public class ClientContextTest {
     // Test the case that getKeyStore throws exceptions.
     try {
       boolean switchToMtlsEndpointAllowed = true;
-      MtlsProvider provider = new FakeMtlsProvider(true, UseMtlsEndpoint.AUTO, null, "", true);
+      MtlsProvider provider =
+          new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", true);
       ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
       fail("should throw an exception");
     } catch (IOException e) {
