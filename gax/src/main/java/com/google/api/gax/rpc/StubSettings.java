@@ -371,6 +371,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     public B setEndpoint(String endpoint) {
       this.endpoint = endpoint;
+      this.switchToMtlsEndpointAllowed = false;
       if (this.endpoint != null && this.mtlsEndpoint == null) {
         this.mtlsEndpoint = this.endpoint.replace("googleapis.com", "mtls.googleapis.com");
       }

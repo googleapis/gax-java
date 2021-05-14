@@ -707,5 +707,14 @@ public class ClientContextTest {
             .build();
     assertTrue(settings.getSwitchToMtlsEndpointAllowed());
     assertEquals(endpoint, settings.getEndpoint());
+
+    // Test setEndpoint sets the switchToMtlsEndpointAllowed value to false.
+    settings =
+        new FakeStubSettings.Builder()
+            .setSwitchToMtlsEndpointAllowed(true)
+            .setEndpoint(endpoint)
+            .build();
+    assertFalse(settings.getSwitchToMtlsEndpointAllowed());
+    assertEquals(endpoint, settings.getEndpoint());
   }
 }
