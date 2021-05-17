@@ -4,3 +4,6 @@ branches:
   - releaseType: java-lts
     bumpMinorPreMajor: true
     branch: 1.63.0-sp
+  - releaseType: java-lts
+    bumpMinorPreMajor: true
+    branch: 1.64.0-sp
