@@ -285,7 +285,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           return TlsChannelCredentials.newBuilder().keyManager(factory.getKeyManagers()).build();
         }
       } catch (GeneralSecurityException e) {
-        throw new IOException(e.toString());
+        throw new IOException(e);
       }
     }
     return null;
