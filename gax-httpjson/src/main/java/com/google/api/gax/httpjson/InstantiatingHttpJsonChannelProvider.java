@@ -154,7 +154,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     } else if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
-      return createChannel();
+      try {
+        return createChannel();
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e);
+      }
     }
   }
 
@@ -179,7 +183,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     return null;
   }
 
-  private TransportChannel createChannel() throws IOException {
+  private TransportChannel createChannel() throws IOException, GeneralSecurityException {
     Map<String, String> headers = headerProvider.getHeaders();
 
     List<HttpJsonHeaderEnhancer> headerEnhancers = Lists.newArrayList();
@@ -189,11 +193,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
     HttpTransport httpTransportToUse = httpTransport;
     if (httpTransportToUse == null) {
-      try {
-        httpTransportToUse = createHttpTransport();
-      } catch (GeneralSecurityException e) {
-        throw new IOException(e);
-      }
+      httpTransportToUse = createHttpTransport();
     }
 
     ManagedHttpJsonChannel channel =
