@@ -425,11 +425,12 @@ clean {
 task javadocCombinedV3(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-  destinationDir = new File(projectDir, 'tmp_docs')
+  destinationDir = new File(projectDir, 'tmp_docs/docfx-yml')
 
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/docfx-doclet-1.0-SNAPSHOT-jar-with-dependencies-172556.jar")]
+  options.addStringOption("projectname", "gax")
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.0.jar")]
 }
 
 clean {
