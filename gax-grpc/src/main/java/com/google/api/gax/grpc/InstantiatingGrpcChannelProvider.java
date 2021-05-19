@@ -274,18 +274,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @VisibleForTesting
-  ChannelCredentials createMtlsChannelCredentials() throws IOException {
+  ChannelCredentials createMtlsChannelCredentials() throws IOException, GeneralSecurityException {
     if (mtlsProvider.useMtlsClientCertificate()) {
-      try {
-        KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
-        if (mtlsKeyStore != null) {
-          KeyManagerFactory factory =
-              KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-          factory.init(mtlsKeyStore, new char[] {});
-          return TlsChannelCredentials.newBuilder().keyManager(factory.getKeyManagers()).build();
-        }
-      } catch (GeneralSecurityException e) {
-        throw new IOException(e);
+      KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
+      if (mtlsKeyStore != null) {
+        KeyManagerFactory factory =
+            KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        factory.init(mtlsKeyStore, new char[] {});
+        return TlsChannelCredentials.newBuilder().keyManager(factory.getKeyManagers()).build();
       }
     }
     return null;
@@ -317,11 +313,15 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       builder.defaultServiceConfig(directPathServiceConfig);
     } else {
-      ChannelCredentials mTlsChannelCredentials = createMtlsChannelCredentials();
-      if (mTlsChannelCredentials != null) {
-        builder = Grpc.newChannelBuilder(endpoint, mTlsChannelCredentials);
-      } else {
-        builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+      try {
+        ChannelCredentials mTlsChannelCredentials = createMtlsChannelCredentials();
+        if (mTlsChannelCredentials != null) {
+          builder = Grpc.newChannelBuilder(endpoint, mTlsChannelCredentials);
+        } else {
+          builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+        }
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e);
       }
     }
     builder =

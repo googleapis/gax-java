@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -100,7 +101,8 @@ public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransp
   }
 
   @Override
-  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider) throws IOException {
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
+      throws IOException, GeneralSecurityException {
     return InstantiatingHttpJsonChannelProvider.newBuilder()
         .setEndpoint("localhost:8080")
         .setMtlsProvider(provider)

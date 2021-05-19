@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -182,7 +183,8 @@ public class MtlsProviderTest {
   }
 
   @Test
-  public void testGetKeyStoreNonZeroExitCode() throws IOException {
+  public void testGetKeyStoreNonZeroExitCode()
+      throws IOException, InterruptedException, GeneralSecurityException {
     try {
       InputStream metadata =
           this.getClass()

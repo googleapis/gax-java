@@ -690,7 +690,9 @@ public class ClientContextTest {
       ClientContext.getEndpoint(endpoint, mtlsEndpoint, switchToMtlsEndpointAllowed, provider);
       fail("should throw an exception");
     } catch (IOException e) {
-      assertTrue("expected to fail", e.getMessage().contains("getKeyStore throws exception"));
+      assertTrue(
+          "expected getKeyStore to throw an exception",
+          e.getMessage().contains("getKeyStore throws exception"));
     }
   }
 

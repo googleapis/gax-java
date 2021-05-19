@@ -38,6 +38,7 @@ import static org.junit.Assert.fail;
 import com.google.api.gax.rpc.mtls.MtlsProvider.MtlsEndpointUsagePolicy;
 import com.google.api.gax.rpc.testing.FakeMtlsProvider;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import org.junit.Test;
 
 public abstract class AbstractMtlsTransportChannelTest {
@@ -48,17 +49,17 @@ public abstract class AbstractMtlsTransportChannelTest {
    * if and only if the related mTLS object is not null.
    */
   protected abstract Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
-      throws IOException;
+      throws IOException, GeneralSecurityException;
 
   @Test
-  public void testNotUseClientCertificate() throws IOException {
+  public void testNotUseClientCertificate() throws IOException, GeneralSecurityException {
     MtlsProvider provider =
         new FakeMtlsProvider(false, MtlsEndpointUsagePolicy.AUTO, null, "", false);
     assertNull(getMtlsObjectFromTransportChannel(provider));
   }
 
   @Test
-  public void testUseClientCertificate() throws IOException {
+  public void testUseClientCertificate() throws IOException, GeneralSecurityException {
     MtlsProvider provider =
         new FakeMtlsProvider(
             true,
@@ -70,23 +71,23 @@ public abstract class AbstractMtlsTransportChannelTest {
   }
 
   @Test
-  public void testNoClientCertificate() throws IOException {
+  public void testNoClientCertificate() throws IOException, GeneralSecurityException {
     MtlsProvider provider =
         new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", false);
     assertNull(getMtlsObjectFromTransportChannel(provider));
   }
 
   @Test
-  public void testGetKeyStoreThrows() {
+  public void testGetKeyStoreThrows() throws GeneralSecurityException {
     // Test the case where provider.getKeyStore() throws.
     MtlsProvider provider =
         new FakeMtlsProvider(true, MtlsEndpointUsagePolicy.AUTO, null, "", true);
     try {
       getMtlsObjectFromTransportChannel(provider);
-      fail("should throw and exception");
+      fail("should throw an exception");
     } catch (IOException e) {
       assertTrue(
-          "expected to fail with exception",
+          "expected getKeyStore to throw an exception",
           e.getMessage().contains("getKeyStore throws exception"));
     }
   }

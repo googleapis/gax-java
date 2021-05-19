@@ -77,8 +77,7 @@ public class MtlsProvider {
   }
 
   private static final String DEFAULT_CONTEXT_AWARE_METADATA_PATH =
-      String.format(
-          "%s/.secureConnect/context_aware_metadata.json", System.getProperty("user.home"));
+      System.getProperty("user.home") + "/.secureConnect/context_aware_metadata.json";
 
   private String metadataPath;
   private EnvironmentProvider envProvider;
@@ -134,6 +133,10 @@ public class MtlsProvider {
   public KeyStore getKeyStore() throws IOException {
     try (InputStream stream = new FileInputStream(metadataPath)) {
       return getKeyStore(stream, processProvider);
+    } catch (InterruptedException e) {
+      throw new IOException("Interrupted executing certificate provider command", e);
+    } catch (GeneralSecurityException e) {
+      throw new IOException("Failed to get key store", e);
     } catch (FileNotFoundException exception) {
       // If the metadata file doesn't exist, then there is no key store, just return null.
       return null;
@@ -142,23 +145,17 @@ public class MtlsProvider {
 
   @VisibleForTesting
   static KeyStore getKeyStore(InputStream metadata, ProcessProvider processProvider)
-      throws IOException {
-    try {
-      Process process = processProvider.createProcess(metadata);
+      throws IOException, InterruptedException, GeneralSecurityException {
+    Process process = processProvider.createProcess(metadata);
 
-      // Run the command and timeout after 1000 milliseconds.
-      int exitCode = runCertificateProviderCommand(process, 1000);
-      if (exitCode != 0) {
-        throw new IOException("Cert provider command failed with exit code: " + exitCode);
-      }
-
-      // Create mTLS key store with the input certificates from shell command.
-      return SecurityUtils.createMtlsKeyStore(process.getInputStream());
-    } catch (InterruptedException e) {
-      throw new IOException("Interrupted executing certificate provider command", e);
-    } catch (GeneralSecurityException e) {
-      throw new IOException("Failed to get key store", e);
+    // Run the command and timeout after 1000 milliseconds.
+    int exitCode = runCertificateProviderCommand(process, 1000);
+    if (exitCode != 0) {
+      throw new IOException("Cert provider command failed with exit code: " + exitCode);
     }
+
+    // Create mTLS key store with the input certificates from shell command.
+    return SecurityUtils.createMtlsKeyStore(process.getInputStream());
   }
 
   @VisibleForTesting
@@ -176,14 +173,18 @@ public class MtlsProvider {
     long remainTime = timeoutMilliseconds;
 
     // In the while loop, keep checking if the process is terminated every 100 milliseconds
-    // until timeout is reached or process is terminated.
+    // until timeout is reached or process is terminated. In getKeyStore we set timeout to
+    // 1000 milliseconds, so 100 millisecond is a good number for the sleep.
     while (remainTime > 0) {
       Thread.sleep(Math.min(remainTime + 1, 100));
       remainTime -= System.currentTimeMillis() - startTime;
 
       try {
-        // Check if process is terminated by polling the exitValue, which throws
-        // IllegalThreadStateException if not terminated.
+        // exitValue throws IllegalThreadStateException if process has not yet terminated.
+        // Once the process is terminated, exitValue no longer throws exception. Therefore
+        // in the while loop, we use exitValue to check if process is terminated. See
+        // https://docs.oracle.com/javase/7/docs/api/java/lang/Process.html#exitValue()
+        // for more details.
         return commandProcess.exitValue();
       } catch (IllegalThreadStateException ignored) {
       }

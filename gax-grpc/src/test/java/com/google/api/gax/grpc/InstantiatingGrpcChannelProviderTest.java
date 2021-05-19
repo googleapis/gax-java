@@ -48,6 +48,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -502,7 +503,8 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
   }
 
   @Override
-  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider) throws IOException {
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
+      throws IOException, GeneralSecurityException {
     return InstantiatingGrpcChannelProvider.newBuilder()
         .setEndpoint("localhost:8080")
         .setMtlsProvider(provider)

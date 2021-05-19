@@ -169,15 +169,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
         "InstantiatingHttpJsonChannelProvider doesn't need credentials");
   }
 
-  HttpTransport createHttpTransport() throws IOException {
+  HttpTransport createHttpTransport() throws IOException, GeneralSecurityException {
     if (mtlsProvider.useMtlsClientCertificate()) {
-      try {
-        KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
-        if (mtlsKeyStore != null) {
-          return new NetHttpTransport.Builder().trustCertificates(null, mtlsKeyStore, "").build();
-        }
-      } catch (GeneralSecurityException e) {
-        throw new IOException(e.toString());
+      KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
+      if (mtlsKeyStore != null) {
+        return new NetHttpTransport.Builder().trustCertificates(null, mtlsKeyStore, "").build();
       }
     }
     return null;
@@ -193,7 +189,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
     HttpTransport httpTransportToUse = httpTransport;
     if (httpTransportToUse == null) {
-      httpTransportToUse = createHttpTransport();
+      try {
+        httpTransportToUse = createHttpTransport();
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e);
+      }
     }
 
     ManagedHttpJsonChannel channel =
