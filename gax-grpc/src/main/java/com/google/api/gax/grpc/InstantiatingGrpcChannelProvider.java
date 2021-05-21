@@ -226,7 +226,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ChannelFactory channelFactory =
         new ChannelFactory() {
           public ManagedChannel createSingleChannel() throws IOException {
-            return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+            try {
+              return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+            } catch (GeneralSecurityException e) {
+              throw new IOException(e);
+            }
           }
         };
     ManagedChannel outerChannel;
@@ -287,7 +291,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return null;
   }
 
-  private ManagedChannel createSingleChannel() throws IOException {
+  private ManagedChannel createSingleChannel() throws IOException, GeneralSecurityException {
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
     GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
@@ -313,15 +317,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       builder.defaultServiceConfig(directPathServiceConfig);
     } else {
-      try {
-        ChannelCredentials mTlsChannelCredentials = createMtlsChannelCredentials();
-        if (mTlsChannelCredentials != null) {
-          builder = Grpc.newChannelBuilder(endpoint, mTlsChannelCredentials);
-        } else {
-          builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
-        }
-      } catch (GeneralSecurityException e) {
-        throw new IOException(e);
+      ChannelCredentials channelCredentials = createMtlsChannelCredentials();
+      if (channelCredentials != null) {
+        builder = Grpc.newChannelBuilder(endpoint, channelCredentials);
+      } else {
+        builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
       }
     }
     builder =

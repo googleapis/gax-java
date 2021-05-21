@@ -103,12 +103,13 @@ public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransp
   @Override
   protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
       throws IOException, GeneralSecurityException {
-    return InstantiatingHttpJsonChannelProvider.newBuilder()
-        .setEndpoint("localhost:8080")
-        .setMtlsProvider(provider)
-        .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-        .setExecutor(Mockito.mock(Executor.class))
-        .build()
-        .createHttpTransport();
+    InstantiatingHttpJsonChannelProvider channelProvider =
+        InstantiatingHttpJsonChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setMtlsProvider(provider)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
+            .build();
+    return channelProvider.createHttpTransport();
   }
 }

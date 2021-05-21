@@ -505,12 +505,13 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
   @Override
   protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
       throws IOException, GeneralSecurityException {
-    return InstantiatingGrpcChannelProvider.newBuilder()
-        .setEndpoint("localhost:8080")
-        .setMtlsProvider(provider)
-        .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-        .setExecutor(Mockito.mock(Executor.class))
-        .build()
-        .createMtlsChannelCredentials();
+    InstantiatingGrpcChannelProvider channelProvider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setMtlsProvider(provider)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
+            .build();
+    return channelProvider.createMtlsChannelCredentials();
   }
 }
