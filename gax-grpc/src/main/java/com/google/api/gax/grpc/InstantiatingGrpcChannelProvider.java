@@ -225,6 +225,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int realPoolSize = MoreObjects.firstNonNull(poolSize, 1);
     ChannelFactory channelFactory =
         new ChannelFactory() {
+          @Override
           public ManagedChannel createSingleChannel() throws IOException {
             try {
               return InstantiatingGrpcChannelProvider.this.createSingleChannel();

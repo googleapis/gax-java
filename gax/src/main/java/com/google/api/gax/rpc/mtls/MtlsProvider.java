@@ -136,7 +136,8 @@ public class MtlsProvider {
     } catch (InterruptedException e) {
       throw new IOException("Interrupted executing certificate provider command", e);
     } catch (GeneralSecurityException e) {
-      throw new IOException("Failed to get key store", e);
+      // Return null as if the file doesn't exist.
+      return null;
     } catch (FileNotFoundException exception) {
       // If the metadata file doesn't exist, then there is no key store, just return null.
       return null;
