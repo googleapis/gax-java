@@ -50,6 +50,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StubSettings;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -83,6 +84,7 @@ public class SettingsTest {
     public static final int DEFAULT_SERVICE_PORT = 443;
     public static final String DEFAULT_SERVICE_ENDPOINT =
         DEFAULT_SERVICE_ADDRESS + ':' + DEFAULT_SERVICE_PORT;
+    public static final MtlsProvider DEFAULT_MTLS_PROVIDER = new MtlsProvider();
     public static final ImmutableList<String> DEFAULT_SERVICE_SCOPES =
         ImmutableList.<String>builder()
             .add("https://www.googleapis.com/auth/pubsub")
@@ -148,7 +150,9 @@ public class SettingsTest {
 
     /** Returns a builder for the default TransportChannelProvider for this service. */
     public static InstantiatingGrpcChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
+      return InstantiatingGrpcChannelProvider.newBuilder()
+          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
+          .setMtlsProvider(DEFAULT_MTLS_PROVIDER);
     }
 
     public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
