@@ -51,6 +51,10 @@ java_library(
     srcs = glob(["src/test/java/**/*.java"]),
     javacopts = _JAVA_COPTS,
     plugins = ["//:auto_value_plugin"],
+    resources = glob([
+        "src/test/resources/com/google/api/gax/rpc/mtls/mtls_context_aware_metadata.json",
+        "src/test/resources/com/google/api/gax/rpc/mtls/mtlsCertAndKey.pem",
+    ]),
     visibility = ["//visibility:public"],
     deps = [":gax"] + _COMPILE_DEPS + _TEST_COMPILE_DEPS,
 )
