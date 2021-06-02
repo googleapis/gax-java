@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.65.0](https://www.github.com/googleapis/gax-java/compare/v1.64.0...v1.65.0) (2021-06-02)
+
+
+### Features
+
+* add mtls feature to http and grpc transport provider ([#1249](https://www.github.com/googleapis/gax-java/issues/1249)) ([b863041](https://www.github.com/googleapis/gax-java/commit/b863041bc4c03c8766e0feca8cb10f531373dc44))
+
 ## [1.64.0](https://www.github.com/googleapis/gax-java/compare/v1.63.4...v1.64.0) (2021-05-10)
 
 
