@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -28,20 +28,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.api.gax.httpjson;
+package com.google.api.gax.rpc.mtls;
 
-import static org.junit.Assert.assertTrue;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.util.Key;
+import com.google.api.core.BetaApi;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 
-import org.junit.Test;
+/** Data class representing context_aware_metadata.json file. */
+@BetaApi
+public class ContextAwareMetadataJson extends GenericJson {
+  /** Cert provider command */
+  @Key("cert_provider_command")
+  private List<String> commands;
 
-public class GaxHttpJsonPropertiesTest {
-  private static final String X_GOOG_API_CLIENT = "x-goog-api-client";
-
-  @Test
-  public void testDefaultHeaderPattern() {
-    assertTrue(
-        GaxHttpJsonProperties.getDefaultApiClientHeaderPattern()
-            .matcher("gl-java/1.8_00 gapic/1.2.3-alpha gax/1.5.0 rest/1.7.0")
-            .matches());
+  /** Returns the cert provider command. */
+  public final ImmutableList<String> getCommands() {
+    return ImmutableList.copyOf(commands);
   }
 }

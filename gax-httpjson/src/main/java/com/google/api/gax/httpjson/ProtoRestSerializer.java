@@ -101,9 +101,6 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putPathParam(Map<String, String> fields, String fieldName, Object fieldValue) {
-    if (isDefaultValue(fieldName, fieldValue)) {
-      return;
-    }
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
@@ -116,11 +113,6 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
-    // Avoids empty query parameter
-    if (isDefaultValue(fieldName, fieldValue)) {
-      return;
-    }
-
     ImmutableList.Builder<String> paramValueList = ImmutableList.builder();
     if (fieldValue instanceof List<?>) {
       for (Object fieldValueItem : (List<?>) fieldValue) {
@@ -141,16 +133,5 @@ public class ProtoRestSerializer<RequestT extends Message> {
    */
   public String toBody(String fieldName, RequestT fieldValue) {
     return toJson(fieldValue);
-  }
-
-  private boolean isDefaultValue(String fieldName, Object fieldValue) {
-    // TODO: Revisit this approach to ensure proper default-value handling as per design.
-    if (fieldValue instanceof Number) {
-      return ((Number) fieldValue).longValue() == 0L;
-    } else if (fieldValue instanceof String) {
-      return ((String) fieldValue).isEmpty();
-    }
-
-    return false;
   }
 }
