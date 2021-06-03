@@ -315,11 +315,12 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      */
     @Deprecated
     public B setExecutorProvider(ExecutorProvider executorProvider) {
-      // For backward compatibility, this will set both executorProvider and workerExecutorProvider.
-      // ExecutorProvider is null by default. In ClientContext#create(), if TransportChannelProvider
-      // doesn't have an executor, executorProvider will be used as TransportChannelProvider's
-      // executor. After this method is deprecated, TransportChannelProvider's executor can only be
-      // set with TransportChannelProvider#withExecutor.
+      // For backward compatibility, this will set both executorProvider and
+      // backgroundExecutorProvider. ExecutorProvider is null by default. In ClientContext#create(),
+      // if TransportChannelProvider doesn't have an executor, executorProvider will be used as
+      // TransportChannelProvider's executor. After this method is deprecated,
+      // TransportChannelProvider's executor can only be set with
+      // TransportChannelProvider#withExecutor.
       this.executorProvider = executorProvider;
       this.backgroundExecutorProvider = executorProvider;
       return self();
@@ -535,7 +536,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", executorProvider)
-          .add("workerExecutorProvider", backgroundExecutorProvider)
+          .add("backgroundExecutorProvider", backgroundExecutorProvider)
           .add("transportChannelProvider", transportChannelProvider)
           .add("credentialsProvider", credentialsProvider)
           .add("headerProvider", headerProvider)
