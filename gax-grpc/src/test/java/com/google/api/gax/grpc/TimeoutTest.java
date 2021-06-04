@@ -146,9 +146,9 @@ public class TimeoutTest {
     // with non-retryable settings.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(newTimeout.toSecondsPart() - 1, TimeUnit.SECONDS));
+        .isGreaterThan(Deadline.after(toSecondsPart(newTimeout) - 1, TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(newTimeout.toSecondsPart(), TimeUnit.SECONDS));
+        .isLessThan(Deadline.after(toSecondsPart(newTimeout), TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
@@ -257,9 +257,9 @@ public class TimeoutTest {
     // with non-retryable settings.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(newTimeout.toSecondsPart() - 1, TimeUnit.SECONDS));
+        .isGreaterThan(Deadline.after(toSecondsPart(newTimeout) - 1, TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(newTimeout.toSecondsPart(), TimeUnit.SECONDS));
+        .isLessThan(Deadline.after(toSecondsPart(newTimeout), TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
@@ -433,5 +433,17 @@ public class TimeoutTest {
     Mockito.verify(managedChannel, times(1))
         .newCall(ArgumentMatchers.eq(methodDescriptor), callOptionsArgumentCaptor.capture());
     return callOptionsArgumentCaptor.getValue();
+  }
+
+  /**
+   * Compatibility wrapper for Duration's toSecondsPart, which is not supported before Java 9. This
+   * codebase must continue to support Java 7 and up, in alignment with client libraries that depend
+   * on gax-java.
+   */
+  private int toSecondsPart(Duration duration) {
+    return (int)
+        (duration.getSeconds()
+            - TimeUnit.MINUTES.toSeconds(1)
+                * (int) Math.floor(duration.getSeconds() / TimeUnit.MINUTES.toSeconds(1)));
   }
 }
