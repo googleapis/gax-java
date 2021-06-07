@@ -49,12 +49,11 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * <pre><code>
  * TransportChannelProvider transportChannelProvider = ...;
- * if (transportChannelProvider.needsExecutor()) {
- *   transportChannelProvider = transportChannelProvider.withExecutor(executor);
- * }
  * if (transportChannelProvider.needsHeaders()) {
  *   transportChannelProvider = transportChannelProvider.withHeaders(headers);
  * }
+ * // optional: set executor for TransportChannel
+ * transportChannelProvider.withExecutor(executor);
  * TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
  * </code></pre>
  */
@@ -66,17 +65,12 @@ public interface TransportChannelProvider {
   /**
    * True if the TransportProvider needs an executor.
    *
-   * @deprecated Channel providers will all have default executors and callers don't need to set
-   *     executors for a channel provider.
+   * @deprecated Channel providers will have default executors if they need one.
    */
   @Deprecated
   boolean needsExecutor();
 
-  /**
-   * Sets the executor to use when constructing a new {@link TransportChannel}..
-   *
-   * <p>This method should only be called if {@link #needsExecutor()} returns true.
-   */
+  /** Sets the executor to use when constructing a new {@link TransportChannel}. */
   TransportChannelProvider withExecutor(Executor executor);
 
   /** @deprecated Please use {@link #withExecutor(Executor)}. */
@@ -88,7 +82,7 @@ public interface TransportChannelProvider {
   boolean needsHeaders();
 
   /**
-   * Sets the headers to use when constructing a new {@link TransportChannel}..
+   * Sets the headers to use when constructing a new {@link TransportChannel}.
    *
    * <p>This method should only be called if {@link #needsHeaders()} returns true.
    */

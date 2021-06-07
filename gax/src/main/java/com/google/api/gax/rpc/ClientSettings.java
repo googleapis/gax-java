@@ -281,8 +281,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     /**
      * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
      * to use for running asynchronous API call logic (such as retries and long-running operations).
-     * This ExecutorProvider is not used to set the executor providers in {@link
-     * TransportChannelProvider}.
+     * This ExecutorProvider is not used to set the executor in {@link TransportChannelProvider}.
      */
     public ExecutorProvider getBackgroundExecutorProvider() {
       return stubSettings.getBackgroundExecutorProvider();

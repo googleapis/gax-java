@@ -181,8 +181,8 @@ public abstract class ClientContext {
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     // After needsExecutor and StubSettings#setExecutor are deprecated, transport channel executor
-    // can only be set from TransportChannelProvider#withExecutor directly, and all providers will
-    // have default executors.
+    // can only be set from TransportChannelProvider#withExecutor directly, and a provider will
+    // have a default executor if it needs one.
     if (transportChannelProvider.needsExecutor() && executor != null) {
       transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }

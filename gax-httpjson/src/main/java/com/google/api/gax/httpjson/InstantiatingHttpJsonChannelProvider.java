@@ -94,8 +94,8 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   /**
-   * @deprecated By default, channel provider will use the default executor defined in {@link
-   *     ManagedHttpJsonChannel}.
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     executor defined in {@link ManagedHttpJsonChannel}.
    */
   @Deprecated
   @Override
