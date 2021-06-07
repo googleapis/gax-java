@@ -272,8 +272,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
         this.tracerFactory = BaseApiTracerFactory.getInstance();
       } else {
-        this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
-        this.backgroundExecutorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        ExecutorProvider fixedExecutorProvider =
+            FixedExecutorProvider.create(clientContext.getExecutor());
+        this.executorProvider = fixedExecutorProvider;
+        this.backgroundExecutorProvider = fixedExecutorProvider;
         this.transportChannelProvider =
             FixedTransportChannelProvider.create(clientContext.getTransportChannel());
         this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());

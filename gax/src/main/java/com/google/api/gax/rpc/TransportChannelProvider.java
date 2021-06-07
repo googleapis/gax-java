@@ -63,7 +63,12 @@ public interface TransportChannelProvider {
   /** Indicates whether the TransportChannel should be closed by the containing client class. */
   boolean shouldAutoClose();
 
-  /** True if the TransportProvider needs an executor. */
+  /**
+   * True if the TransportProvider needs an executor.
+   *
+   * @deprecated Channel providers will all have default executors and callers don't need to set
+   *     executors for a channel provider.
+   */
   @Deprecated
   boolean needsExecutor();
 

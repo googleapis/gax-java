@@ -93,6 +93,10 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     this.mtlsProvider = mtlsProvider;
   }
 
+  /**
+   * @deprecated By default, channel provider will use the default executor defined in {@link
+   *     ManagedHttpJsonChannel}.
+   */
   @Deprecated
   @Override
   public boolean needsExecutor() {

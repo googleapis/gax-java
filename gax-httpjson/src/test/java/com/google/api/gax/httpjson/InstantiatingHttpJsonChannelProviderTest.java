@@ -31,34 +31,21 @@ package com.google.api.gax.httpjson;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.gax.httpjson.testing.MockHttpService;
-import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransportChannelTest {
@@ -124,86 +111,5 @@ public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransp
             .setExecutor(Mockito.mock(Executor.class))
             .build();
     return channelProvider.createHttpTransport();
-  }
-
-  @Test
-  public void testDefaultExecutor() throws Exception {
-    // Create a mock service that will always return errors. We just want to inspect the thread that
-    // those errors are returned on
-    MockHttpService mockHttpService =
-        new MockHttpService(Collections.<ApiMethodDescriptor>emptyList(), "/");
-    mockHttpService.addException(new RuntimeException("Fake error"));
-    InstantiatingHttpJsonChannelProvider channelProvider =
-        InstantiatingHttpJsonChannelProvider.newBuilder()
-            .setEndpoint("localhost:1234")
-            .setHeaderProvider(FixedHeaderProvider.create())
-            .setHttpTransport(mockHttpService)
-            .build();
-
-    assertThat(getThreadName(channelProvider)).contains("http-default-executor");
-  }
-
-  @Test
-  public void testExecutorOverride() throws IOException, ExecutionException, InterruptedException {
-    MockHttpService mockHttpService =
-        new MockHttpService(Collections.<ApiMethodDescriptor>emptyList(), "/");
-    mockHttpService.addException(new RuntimeException("Fake error"));
-
-    final String expectedThreadName = "testExecutorOverrideExecutor";
-
-    ExecutorService executor =
-        Executors.newFixedThreadPool(
-            1,
-            new ThreadFactoryBuilder().setDaemon(true).setNameFormat(expectedThreadName).build());
-    try {
-      InstantiatingHttpJsonChannelProvider channelProvider =
-          InstantiatingHttpJsonChannelProvider.newBuilder()
-              .setExecutor(executor)
-              .setEndpoint("localhost:1234")
-              .setHeaderProvider(FixedHeaderProvider.create())
-              .setHttpTransport(mockHttpService)
-              .build();
-
-      assertThat(getThreadName(channelProvider)).isEqualTo(expectedThreadName);
-    } finally {
-      executor.shutdown();
-      executor.awaitTermination(10, TimeUnit.SECONDS);
-    }
-  }
-
-  private static String getThreadName(InstantiatingHttpJsonChannelProvider provider)
-      throws IOException, InterruptedException, ExecutionException {
-    @SuppressWarnings("unchecked")
-    ApiMethodDescriptor<Object, Object> apiMethodDescriptor =
-        mock(
-            ApiMethodDescriptor.class,
-            new Answer() {
-              @Override
-              public Object answer(InvocationOnMock invocation) {
-                throw new UnsupportedOperationException("fake error");
-              }
-            });
-
-    HttpJsonTransportChannel transportChannel =
-        (HttpJsonTransportChannel) provider.getTransportChannel();
-    final SettableFuture<String> threadNameFuture = SettableFuture.create();
-    try {
-      HttpJsonChannel channel = transportChannel.getChannel();
-      ApiFuture<Object> rpcFuture =
-          channel.issueFutureUnaryCall(
-              HttpJsonCallOptions.newBuilder().build(), new Object(), apiMethodDescriptor);
-      rpcFuture.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              threadNameFuture.set(Thread.currentThread().getName());
-            }
-          },
-          MoreExecutors.directExecutor());
-    } finally {
-      transportChannel.shutdown();
-      transportChannel.awaitTermination(10, TimeUnit.SECONDS);
-    }
-    return threadNameFuture.get();
   }
 }

@@ -158,11 +158,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
-      if (executor != null) {
-        this.executor = executor;
-      } else {
-        this.executor = DEFAULT_EXECUTOR;
-      }
+      this.executor = executor;
       return this;
     }
 
@@ -182,8 +178,10 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     }
 
     public ManagedHttpJsonChannel build() {
-      Preconditions.checkNotNull(executor);
       Preconditions.checkNotNull(endpoint);
+      if (executor == null) {
+        this.executor = DEFAULT_EXECUTOR;
+      }
       return new ManagedHttpJsonChannel(
           executor, endpoint, jsonFactory, headerEnhancers, httpTransport);
     }

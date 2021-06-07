@@ -36,8 +36,6 @@ import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
-import com.google.api.gax.grpc.testing.FakeServiceGrpc;
-import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
@@ -46,17 +44,9 @@ import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.type.Color;
-import com.google.type.Money;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
-import io.grpc.stub.ClientCalls;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -64,11 +54,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -455,62 +443,6 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     assertThat(childPolicies).hasSize(1);
     Map<String, ?> childPolicy = childPolicies.get(0);
     assertThat(childPolicy.keySet()).containsExactly("pick_first");
-  }
-
-  @Test
-  public void testDefaultExecutor() throws Exception {
-    InstantiatingGrpcChannelProvider provider =
-        InstantiatingGrpcChannelProvider.newBuilder()
-            .setEndpoint("localhost:1234")
-            .setHeaderProvider(FixedHeaderProvider.create())
-            .build();
-
-    // The default name thread name for grpc threads configured in GrpcUtil
-    assertThat(extractExecutorThreadName(provider)).contains("grpc-default-executor");
-  }
-
-  /**
-   * Extract the name of the channel executor thread by instantiating a channel and issuing a fake
-   * call.
-   */
-  private static String extractExecutorThreadName(InstantiatingGrpcChannelProvider channelProvider)
-      throws IOException, ExecutionException, InterruptedException {
-    GrpcTransportChannel transportChannel =
-        (GrpcTransportChannel) channelProvider.getTransportChannel();
-    try {
-      Channel channel = transportChannel.getChannel();
-
-      ClientCall<com.google.type.Color, Money> call =
-          channel.newCall(FakeServiceGrpc.METHOD_RECOGNIZE, CallOptions.DEFAULT);
-      Color request = Color.getDefaultInstance();
-
-      final SettableFuture<String> threadNameFuture = SettableFuture.create();
-
-      // Issue a call just to get the thread name of the channel executor
-      ClientCalls.asyncUnaryCall(
-          call,
-          request,
-          new StreamObserver<Money>() {
-            @Override
-            public void onNext(Money ignored) {
-              threadNameFuture.set(Thread.currentThread().getName());
-            }
-
-            @Override
-            public void onError(Throwable ignored) {
-              threadNameFuture.set(Thread.currentThread().getName());
-            }
-
-            @Override
-            public void onCompleted() {
-              threadNameFuture.set(Thread.currentThread().getName());
-            }
-          });
-      return threadNameFuture.get();
-    } finally {
-      transportChannel.shutdown();
-      transportChannel.awaitTermination(10, TimeUnit.SECONDS);
-    }
   }
 
   @Nullable

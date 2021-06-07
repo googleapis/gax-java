@@ -109,10 +109,9 @@ public class ClientSettingsTest {
   @Test
   public void testEmptyBuilder() throws Exception {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
-    Truth.assertThat(builder.getExecutorProvider())
-        .isInstanceOf(InstantiatingExecutorProvider.class);
+    Truth.assertThat(builder.getExecutorProvider()).isNull();
     Truth.assertThat(builder.getStubSettings().getBackgroundExecutorProvider())
-        .isSameInstanceAs(builder.getExecutorProvider());
+        .isInstanceOf(InstantiatingExecutorProvider.class);
     Truth.assertThat(builder.getTransportChannelProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
@@ -127,7 +126,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getExecutorProvider())
         .isSameInstanceAs(builder.getExecutorProvider());
     Truth.assertThat(settings.getStubSettings().getBackgroundExecutorProvider())
-        .isSameInstanceAs(settings.getExecutorProvider());
+        .isSameInstanceAs(settings.getBackgroundExecutorProvider());
     Truth.assertThat(settings.getTransportChannelProvider())
         .isSameInstanceAs(builder.getTransportChannelProvider());
     Truth.assertThat(settings.getCredentialsProvider())
@@ -143,6 +142,7 @@ public class ClientSettingsTest {
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
+    Truth.assertThat(settingsString).contains("backgroundExecutorProvider");
     Truth.assertThat(settingsString).contains("transportChannelProvider");
     Truth.assertThat(settingsString).contains("credentialsProvider");
     Truth.assertThat(settingsString).contains("clock");
