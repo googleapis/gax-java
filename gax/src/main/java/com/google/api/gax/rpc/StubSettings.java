@@ -489,7 +489,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       }
     }
 
-    public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
+    public abstract SettingsT build() throws IOException;
 
     public String toString() {
       return MoreObjects.toStringHelper(this)
