@@ -178,7 +178,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
-        .add("workerExecutorProvider", backgroundExecutorProvider)
+        .add("backgroundExecutorProvider", backgroundExecutorProvider)
         .add("transportChannelProvider", transportChannelProvider)
         .add("credentialsProvider", credentialsProvider)
         .add("headerProvider", headerProvider)

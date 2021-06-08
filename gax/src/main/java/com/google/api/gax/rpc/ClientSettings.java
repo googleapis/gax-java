@@ -64,8 +64,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings;
   }
 
-  @Deprecated
   /** @deprecated Please use {@link #getBackgroundExecutorProvider()} */
+  @Deprecated
   public final ExecutorProvider getExecutorProvider() {
     return stubSettings.getExecutorProvider();
   }
@@ -264,7 +264,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    @Deprecated
     /**
      * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
      * to use for running asynchronous API call logic (such as retries and long-running operations),
@@ -274,6 +273,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * @deprecated Please use {@link #getBackgroundExecutorProvider()} for getting the executor
      *     provider that's used for running scheduled API call logic.
      */
+    @Deprecated
     public ExecutorProvider getExecutorProvider() {
       return stubSettings.getExecutorProvider();
     }
@@ -347,6 +347,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", getExecutorProvider())
+          .add("backgroundExecutorProvider", getBackgroundExecutorProvider())
           .add("transportChannelProvider", getTransportChannelProvider())
           .add("credentialsProvider", getCredentialsProvider())
           .add("headerProvider", getHeaderProvider())

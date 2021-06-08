@@ -72,6 +72,10 @@ public abstract class ClientContext {
    */
   public abstract List<BackgroundResource> getBackgroundResources();
 
+  /**
+   * Gets the executor to use for running scheduled API call logic (such as retries and long-running
+   * operations).
+   */
   public abstract ScheduledExecutorService getExecutor();
 
   @Nullable
@@ -301,6 +305,10 @@ public abstract class ClientContext {
 
     public abstract Builder setBackgroundResources(List<BackgroundResource> backgroundResources);
 
+    /**
+     * Sets the executor to use for running scheduled API call logic (such as retries and
+     * long-running operations).
+     */
     public abstract Builder setExecutor(ScheduledExecutorService value);
 
     public abstract Builder setCredentials(Credentials value);
