@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.65.1](https://www.github.com/googleapis/gax-java/compare/v1.65.0...v1.65.1) (2021-06-08)
+
+
+### Bug Fixes
+
+* fix grammar in StubSetting comment ([#1397](https://www.github.com/googleapis/gax-java/issues/1397)) ([b015910](https://www.github.com/googleapis/gax-java/commit/b0159102b52fd4b778a9bde15b1acd2e9fa6958e))
+
 ## [1.65.0](https://www.github.com/googleapis/gax-java/compare/v1.64.0...v1.65.0) (2021-06-02)
 
 
