@@ -79,7 +79,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   /**
    * Indicate when creating transport whether it is allowed to use mTLS endpoint instead of the
    * default endpoint. Only the endpoint set by client libraries is allowed. User provided endpoint
-   * should always be used as it is. Client libraries can set it via {@link
+   * should always be used as it is. Client libraries can set it via the {@link
    * Builder#setSwitchToMtlsEndpointAllowed} method.
    */
   private final boolean switchToMtlsEndpointAllowed;
@@ -205,7 +205,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /**
      * Indicate when creating transport whether it is allowed to use mTLS endpoint instead of the
      * default endpoint. Only the endpoint set by client libraries is allowed. User provided
-     * endpoint should always be used as it is. Client libraries can set it via {@link
+     * endpoint should always be used as it is. Client libraries can set it via the {@link
      * Builder#setSwitchToMtlsEndpointAllowed} method.
      */
     private boolean switchToMtlsEndpointAllowed = false;
