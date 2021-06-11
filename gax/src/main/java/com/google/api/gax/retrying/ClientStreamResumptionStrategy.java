@@ -50,10 +50,18 @@ public interface ClientStreamResumptionStrategy<RequestT, ResponseT> {
    *       should contain some extra metadata. Please note that all messages (even for the first
    *       attempt) will be passed through this method.
    * </ol>
+   *
+   * This is only called by ResumableRequestObserver.onRequest.
    */
   @Nonnull
   RequestT processRequest(RequestT request);
 
-  /** If the error is resumable or if the stream should be resumed. */
+  /**
+   * If the error is resumable or if the stream should be resumed. This could be based on the error
+   * that the server reports, or based on some internal state the ClientStreamResumptionStrategy
+   * maintains that informs when to stop attempting resumption or when it is no longer possible.
+   *
+   * <p>This is only called by ResumableResponseObserver.onError.
+   */
   boolean resumable(Throwable t);
 }
