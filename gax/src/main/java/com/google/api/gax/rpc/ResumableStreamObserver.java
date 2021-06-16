@@ -84,7 +84,7 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
 
     @Override
     public void onError(Throwable t) {
-      // TODO(noahdietz): Should we resume when the client has already closed 
+      // TODO(noahdietz): Should we resume when the client has already closed
       // the send side? Does this matter?
       if (!resumptionStrategy.resumable(t)) {
         innerResponseObserver.onError(t);
