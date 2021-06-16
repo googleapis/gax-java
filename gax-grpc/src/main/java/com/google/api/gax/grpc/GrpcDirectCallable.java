@@ -47,7 +47,7 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
   private final boolean awaitTrailers;
 
-  public GrpcDirectCallable(
+  GrpcDirectCallable(
       MethodDescriptor<RequestT, ResponseT> descriptor, boolean awaitTrailers) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
     this.awaitTrailers = awaitTrailers;
