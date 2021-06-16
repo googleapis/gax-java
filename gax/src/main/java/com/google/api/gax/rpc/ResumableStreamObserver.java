@@ -38,8 +38,6 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
   private ClientStreamingCallable<RequestT, ResponseT> originalCallable;
   private ClientStreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-  private boolean sendClosed;
-
   public ResumableStreamObserver(
       ClientStreamingCallable<RequestT, ResponseT> originalCallable,
       ApiCallContext originalContext,
@@ -69,13 +67,11 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
 
     @Override
     public void onError(Throwable t) {
-      sendClosed = true;
       innerRequestObserver.onError(t);
     }
 
     @Override
     public void onCompleted() {
-      sendClosed = true;
       innerRequestObserver.onCompleted();
     }
   }
@@ -88,7 +84,9 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
 
     @Override
     public void onError(Throwable t) {
-      if (!resumptionStrategy.resumable(t) || !sendClosed) {
+      // TODO(noahdietz): Should we resume when the client has already closed 
+      // the send side? Does this matter?
+      if (!resumptionStrategy.resumable(t)) {
         innerResponseObserver.onError(t);
         return;
       }
