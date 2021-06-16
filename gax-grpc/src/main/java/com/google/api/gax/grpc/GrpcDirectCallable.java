@@ -34,6 +34,7 @@ import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
+import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 import io.grpc.stub.ClientCalls;
 
@@ -44,10 +45,12 @@ import io.grpc.stub.ClientCalls;
  */
 class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
+  private final boolean awaitTrailers;
 
-  public GrpcDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-
+  public GrpcDirectCallable(
+      MethodDescriptor<RequestT, ResponseT> descriptor, boolean awaitTrailers) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
+    this.awaitTrailers = awaitTrailers;
   }
 
   @Override
@@ -55,8 +58,13 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(inputContext);
 
-    return new ListenableFutureToApiFuture<>(
-        ClientCalls.futureUnaryCall(GrpcClientCalls.newCall(descriptor, inputContext), request));
+    ClientCall<RequestT, ResponseT> clientCall = GrpcClientCalls.newCall(descriptor, inputContext);
+
+    if (awaitTrailers) {
+      return new ListenableFutureToApiFuture<>(ClientCalls.futureUnaryCall(clientCall, request));
+    } else {
+      return GrpcClientCalls.eagerFutureUnaryCall(clientCall, request);
+    }
   }
 
   @Override
