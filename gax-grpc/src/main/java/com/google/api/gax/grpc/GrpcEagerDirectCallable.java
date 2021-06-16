@@ -30,13 +30,11 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
 
 /**
  * {@code GrpcEagerDirectCallable} creates gRPC calls.
@@ -49,8 +47,7 @@ import io.grpc.stub.ClientCalls;
 class GrpcEagerDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
-  public GrpcEagerDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> descriptor) {
+  public GrpcEagerDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
 
     this.descriptor = Preconditions.checkNotNull(descriptor);
   }

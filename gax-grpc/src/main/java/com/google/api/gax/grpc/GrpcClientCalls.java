@@ -121,7 +121,7 @@ class GrpcClientCalls {
       // Request an extra message to detect misconfigured servers
       clientCall.request(2);
     } catch (Throwable sendError) {
-      // Cancel if anything goes wrong and
+      // Cancel if anything goes wrong
       try {
         clientCall.cancel(null, sendError);
       } catch (Throwable cancelError) {
@@ -192,7 +192,7 @@ class GrpcClientCalls {
       }
       if (!status.isOk()) {
         LOGGER.log(
-            Level.SEVERE, "Received error for unary call after receiving a successful response");
+            Level.WARNING, "Received error for unary call after receiving a successful response");
       }
     }
   }

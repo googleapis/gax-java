@@ -34,7 +34,6 @@ import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 import io.grpc.stub.ClientCalls;
 
@@ -55,7 +54,7 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(inputContext);
-    
+
     return new ListenableFutureToApiFuture<>(
         ClientCalls.futureUnaryCall(GrpcClientCalls.newCall(descriptor, inputContext), request));
   }

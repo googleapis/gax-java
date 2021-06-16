@@ -61,7 +61,7 @@ public class GrpcCallSettings<RequestT, ResponseT> {
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+    return new Builder<RequestT, ResponseT>().setShouldAwaitTrailers(true);
   }
 
   public static <RequestT, ResponseT> GrpcCallSettings<RequestT, ResponseT> create(
@@ -80,9 +80,7 @@ public class GrpcCallSettings<RequestT, ResponseT> {
     private RequestParamsExtractor<RequestT> paramsExtractor;
     private boolean shouldAwaitTrailers;
 
-    private Builder() {
-      shouldAwaitTrailers = true;
-    }
+    private Builder() {}
 
     private Builder(GrpcCallSettings<RequestT, ResponseT> settings) {
       this.methodDescriptor = settings.methodDescriptor;
