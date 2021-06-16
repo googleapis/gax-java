@@ -30,6 +30,8 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiStreamObserver;
+
 import javax.annotation.Nonnull;
 
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -64,4 +66,11 @@ public interface ClientStreamResumptionStrategy<RequestT, ResponseT> {
    * <p>This is only called by ResumableResponseObserver.onError.
    */
   boolean resumable(Throwable t);
+
+  /**
+   * Called by the ResumableStreamObserver with the new client-side ApiStreamObserver
+   * when the stream is resumed. This allows the resumption strategy to rewrite buffered data,
+   * send a required initial message on behalf of the client, or do nothing.
+  */
+  void resume(ApiStreamObserver<RequestT> requestObserver);
 }

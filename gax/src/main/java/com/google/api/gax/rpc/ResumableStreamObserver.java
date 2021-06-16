@@ -103,5 +103,6 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
   private void resume() {
     this.innerRequestObserver =
         this.originalCallable.clientStreamingCall(innerResponseObserver, originalContext);
+    this.resumptionStrategy.resume(this.innerRequestObserver);
   }
 }
