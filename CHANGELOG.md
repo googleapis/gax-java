@@ -1,5 +1,41 @@
 # Changelog
 
+### [1.65.1](https://www.github.com/googleapis/gax-java/compare/v1.65.0...v1.65.1) (2021-06-08)
+
+
+### Bug Fixes
+
+* fix grammar in StubSetting comment ([#1397](https://www.github.com/googleapis/gax-java/issues/1397)) ([b015910](https://www.github.com/googleapis/gax-java/commit/b0159102b52fd4b778a9bde15b1acd2e9fa6958e))
+
+## [1.65.0](https://www.github.com/googleapis/gax-java/compare/v1.64.0...v1.65.0) (2021-06-02)
+
+
+### Features
+
+* add mtls feature to http and grpc transport provider ([#1249](https://www.github.com/googleapis/gax-java/issues/1249)) ([b863041](https://www.github.com/googleapis/gax-java/commit/b863041bc4c03c8766e0feca8cb10f531373dc44))
+
+## [1.64.0](https://www.github.com/googleapis/gax-java/compare/v1.63.4...v1.64.0) (2021-05-10)
+
+
+### Features
+
+* release 1.64.0 ([#1375](https://www.github.com/googleapis/gax-java/issues/1375)) ([499682e](https://www.github.com/googleapis/gax-java/commit/499682ec3b96ddeaac75f6e71cc3bc85a854da97))
+
+### [1.63.4](https://www.github.com/googleapis/gax-java/compare/v1.63.3...v1.63.4) (2021-05-07)
+
+
+### Bug Fixes
+
+* Make x-goog-api-client header report rest-based transport clients with `rest/` token instead of `httpson/`. ([#1370](https://www.github.com/googleapis/gax-java/issues/1370)) ([b1b0b49](https://www.github.com/googleapis/gax-java/commit/b1b0b498ba188a51b17d179988074bcf34fb7590))
+
+### [1.63.3](https://www.github.com/googleapis/gax-java/compare/v1.63.2...v1.63.3) (2021-05-04)
+
+
+### Bug Fixes
+
+* fix flaky tests and non blocking semaphore ([#1365](https://www.github.com/googleapis/gax-java/issues/1365)) ([fc8e520](https://www.github.com/googleapis/gax-java/commit/fc8e520acfaf843ac61e806bdb4b5fe393d0b447))
+* Remove a flacky test in FlowControllerTest ([#1360](https://www.github.com/googleapis/gax-java/issues/1360)) ([2cca0bf](https://www.github.com/googleapis/gax-java/commit/2cca0bf9e96271dd52e8bffa00b8f2d45d358d35))
+
 ### [1.63.2](https://www.github.com/googleapis/gax-java/compare/v1.63.1...v1.63.2) (2021-04-30)
 
 

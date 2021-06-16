@@ -38,6 +38,8 @@ import com.google.api.core.ApiFunction;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.collect.ImmutableList;
@@ -46,6 +48,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,8 +66,7 @@ import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class InstantiatingGrpcChannelProviderTest {
-
+public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportChannelTest {
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
@@ -498,5 +500,18 @@ public class InstantiatingGrpcChannelProviderTest {
 
     ImmutableMap<String, ?> defaultServiceConfig = provider.directPathServiceConfig;
     assertThat(defaultServiceConfig).isEqualTo(passedServiceConfig);
+  }
+
+  @Override
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
+      throws IOException, GeneralSecurityException {
+    InstantiatingGrpcChannelProvider channelProvider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setMtlsProvider(provider)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
+            .build();
+    return channelProvider.createMtlsChannelCredentials();
   }
 }
