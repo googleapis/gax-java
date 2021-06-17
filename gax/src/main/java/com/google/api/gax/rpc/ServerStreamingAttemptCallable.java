@@ -37,7 +37,6 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import javax.annotation.concurrent.GuardedBy;
-import org.threeten.bp.Duration;
 
 /**
  * A callable that generates Server Streaming attempts. At any one time, it is responsible for at
@@ -181,15 +180,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     }
     isStarted = true;
 
-    // Propagate the totalTimeout as the overall stream deadline, so long as the user
-    // has not provided a timeout via the ApiCallContext. If they have, retain it.
-    Duration totalTimeout =
-        outerRetryingFuture.getAttemptSettings().getGlobalSettings().getTotalTimeout();
-
-    if (totalTimeout != null && context != null && context.getTimeout() == null) {
-      context = context.withTimeout(totalTimeout);
-    }
-
     // Call the inner callable
     call();
   }
@@ -218,14 +208,12 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
 
     ApiCallContext attemptContext = context;
 
-    // Set the streamWaitTimeout to the attempt RPC Timeout, only if the context
-    // does not already have a timeout set by a user via withStreamWaitTimeout.
-    if (!outerRetryingFuture.getAttemptSettings().getRpcTimeout().isZero()
-        && attemptContext.getStreamWaitTimeout() == null) {
-      attemptContext =
-          attemptContext.withStreamWaitTimeout(
-              outerRetryingFuture.getAttemptSettings().getRpcTimeout());
-    }
+    if (attemptContext.getStreamWaitTimeout() == null && outerObserver)
+      if (!outerRetryingFuture.getAttemptSettings().getRpcTimeout().isZero()
+          && attemptContext.getTimeout() == null) {
+        attemptContext =
+            attemptContext.withTimeout(outerRetryingFuture.getAttemptSettings().getRpcTimeout());
+      }
 
     attemptContext
         .getTracer()

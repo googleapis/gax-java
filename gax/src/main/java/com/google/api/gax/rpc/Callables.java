@@ -117,7 +117,8 @@ public class Callables {
         callable.withDefaultCallContext(
             clientContext
                 .getDefaultCallContext()
-                .withStreamIdleTimeout(callSettings.getIdleTimeout()));
+                .withStreamIdleTimeout(callSettings.getIdleTimeout())
+                .withStreamWaitTimeout(callSettings.getWaitTimeout()));
 
     return callable;
   }
