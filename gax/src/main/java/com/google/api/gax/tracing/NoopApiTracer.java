@@ -51,7 +51,6 @@ public class NoopApiTracer implements ApiTracer {
 
   public NoopApiTracer() {}
 
-  @InternalApi
   public static ApiTracer getInstance() {
     return INSTANCE;
   }

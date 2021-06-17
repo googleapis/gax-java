@@ -40,7 +40,6 @@ import com.google.api.core.InternalApi;
 public class NoopApiTracerFactory implements ApiTracerFactory {
   private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
 
-  @InternalApi
   public static NoopApiTracerFactory getInstance() {
     return INSTANCE;
   }
