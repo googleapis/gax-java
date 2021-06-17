@@ -36,15 +36,16 @@ import com.google.api.core.InternalApi;
  *
  * <p>For internal use only.
  */
-@InternalApi
-public final class NoopApiTracerFactory implements ApiTracerFactory {
+@InternalApi("For internal use by google-cloud-java clients only")
+public class NoopApiTracerFactory implements ApiTracerFactory {
   private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
 
+  @InternalApi
   public static NoopApiTracerFactory getInstance() {
     return INSTANCE;
   }
 
-  private NoopApiTracerFactory() {}
+  public NoopApiTracerFactory() {}
 
   /** {@inheritDoc} */
   @Override

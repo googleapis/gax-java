@@ -37,8 +37,8 @@ import org.threeten.bp.Duration;
  *
  * <p>For internal use only.
  */
-@InternalApi
-public final class NoopApiTracer implements ApiTracer {
+@InternalApi("For internal use by google-cloud-java clients only")
+public class NoopApiTracer implements ApiTracer {
   private static final ApiTracer INSTANCE = new NoopApiTracer();
 
   private static final Scope NOOP_SCOPE =
@@ -49,8 +49,9 @@ public final class NoopApiTracer implements ApiTracer {
         }
       };
 
-  private NoopApiTracer() {}
+  public NoopApiTracer() {}
 
+  @InternalApi
   public static ApiTracer getInstance() {
     return INSTANCE;
   }
