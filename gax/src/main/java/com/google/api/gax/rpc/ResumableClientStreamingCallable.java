@@ -51,7 +51,7 @@ public class ResumableClientStreamingCallable<RequestT, ResponseT>
     // Initialize a resumable observer with the original callable and call contenxt (for
     // resumption), as well as the resumption strategy.
     ResumableStreamObserver<RequestT, ResponseT> observer =
-        new ResumableStreamObserver<>(originalCallable, context, resumptionStrategy);
+        new ResumableStreamObserver<>(originalCallable, context, resumptionStrategy.createNew());
 
     // Wrap user-provided response observer.
     responseObserver = observer.asResponseObserver(responseObserver);
