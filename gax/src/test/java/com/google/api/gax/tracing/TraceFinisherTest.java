@@ -47,7 +47,7 @@ import org.mockito.quality.Strictness;
 @RunWith(JUnit4.class)
 public class TraceFinisherTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
-  @Mock private ApiTracer mockTracer;
+  @Mock private AbstractApiTracer mockTracer;
 
   @Test
   public void testSuccess() {

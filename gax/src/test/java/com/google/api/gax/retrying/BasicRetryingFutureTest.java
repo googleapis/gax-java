@@ -31,7 +31,7 @@ package com.google.api.gax.retrying;
 
 import static org.mockito.Mockito.mock;
 
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -66,7 +66,7 @@ public class BasicRetryingFutureTest {
     @SuppressWarnings("unchecked")
     RetryAlgorithm<Integer> retryAlgorithm = mock(RetryAlgorithm.class);
     RetryingContext retryingContext = mock(RetryingContext.class);
-    ApiTracer tracer = mock(ApiTracer.class);
+    AbstractApiTracer tracer = mock(AbstractApiTracer.class);
     TimedAttemptSettings timedAttemptSettings = mock(TimedAttemptSettings.class);
 
     Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
@@ -107,7 +107,7 @@ public class BasicRetryingFutureTest {
     @SuppressWarnings("unchecked")
     RetryAlgorithm<Integer> retryAlgorithm = mock(RetryAlgorithm.class);
     RetryingContext retryingContext = mock(RetryingContext.class);
-    ApiTracer tracer = mock(ApiTracer.class);
+    AbstractApiTracer tracer = mock(AbstractApiTracer.class);
     TimedAttemptSettings timedAttemptSettings = mock(TimedAttemptSettings.class);
     Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
 

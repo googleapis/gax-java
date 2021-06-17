@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,38 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.tracing.AbstractApiTracer;
-import com.google.api.gax.tracing.ApiTracer;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+package com.google.api.gax.tracing;
 
-/**
- * Context for a retryable operation.
- *
- * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
- */
-@BetaApi("The surface for passing per operation state is not yet stable")
-public interface RetryingContext {
-  /** Returns the {@link ApiTracer} associated with the current operation. */
-  @Nonnull
-  AbstractApiTracer getTracer();
+import com.google.api.core.InternalApi;
+
+/** {@inheritDoc} */
+@InternalApi("For internal use by google-cloud-java clients only")
+public abstract class AbstractApiTracer implements ApiTracer {
 
   /**
-   * Returns the {@link RetrySettings} to use with this context, or <code>null</code> if the default
-   * {@link RetrySettings} should be used.
+   * Adds an annotation of total throttled time of a batch.
+   *
+   * @param throttledTimeMs total throttled time of this batch.
    */
-  @Nullable
-  RetrySettings getRetrySettings();
-
-  /**
-   * Returns the retryable codes to use with this context, or <code>null</code> if the default
-   * retryable codes should be used.
-   */
-  @Nullable
-  Set<StatusCode.Code> getRetryableCodes();
+  public abstract void batchRequestThrottled(long throttledTimeMs);
 }

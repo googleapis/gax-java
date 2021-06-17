@@ -67,7 +67,8 @@ public class TracedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<Requ
    */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiTracer tracer = tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Unary);
+    AbstractApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Unary);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {

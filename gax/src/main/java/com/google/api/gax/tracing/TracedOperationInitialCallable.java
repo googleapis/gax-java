@@ -48,7 +48,7 @@ public class TracedOperationInitialCallable<RequestT>
 
   public TracedOperationInitialCallable(
       UnaryCallable<RequestT, OperationSnapshot> innerCallable,
-      ApiTracerFactory tracedFactory,
+      AbstractApiTracerFactory tracedFactory,
       SpanName spanName) {
     super(innerCallable, tracedFactory, spanName);
   }
@@ -71,7 +71,7 @@ public class TracedOperationInitialCallable<RequestT>
   private static class InitialCallableFinisher implements ApiFutureCallback<OperationSnapshot> {
     private final ApiTracer operationTracer;
 
-    private InitialCallableFinisher(ApiTracer operationTracer) {
+    private InitialCallableFinisher(AbstractApiTracer operationTracer) {
       this.operationTracer = operationTracer;
     }
 

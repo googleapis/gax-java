@@ -47,7 +47,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import com.google.common.base.Stopwatch;
 import java.util.Arrays;
 import java.util.Collection;
@@ -80,7 +80,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock protected ApiTracer tracer;
+  @Mock protected AbstractApiTracer tracer;
   protected RetryingContext retryingContext;
 
   protected abstract RetryingExecutorWithContext<String> getExecutor(

@@ -207,7 +207,7 @@ import org.threeten.bp.Duration;
  * com.google.api.gax.rpc.ApiStreamObserver} for more information.
  */
 @BetaApi("Surface for tracing is not yet stable")
-public class OpencensusTracer implements ApiTracer {
+public class OpencensusTracer extends AbstractApiTracer {
   private final Tracer tracer;
   private final Span span;
   private final OperationType operationType;
@@ -400,6 +400,11 @@ public class OpencensusTracer implements ApiTracer {
   public void batchRequestSent(long elementCount, long requestSize) {
     span.putAttribute("batch count", AttributeValue.longAttributeValue(elementCount));
     span.putAttribute("batch size", AttributeValue.longAttributeValue(requestSize));
+  }
+
+  @Override
+  public void batchRequestThrottled(long throttledTimeMs) {
+    span.putAttribute("batch throttled time", AttributeValue.longAttributeValue(throttledTimeMs));
   }
 
   private Map<String, AttributeValue> baseOperationAttributes() {

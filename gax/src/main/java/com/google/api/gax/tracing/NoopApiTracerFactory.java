@@ -37,7 +37,7 @@ import com.google.api.core.InternalApi;
  * <p>For internal use only.
  */
 @InternalApi
-public final class NoopApiTracerFactory implements ApiTracerFactory {
+public final class NoopApiTracerFactory extends AbstractApiTracerFactory {
   private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
 
   public static NoopApiTracerFactory getInstance() {
@@ -48,7 +48,14 @@ public final class NoopApiTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc} */
   @Override
-  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+  public AbstractApiTracer newTracer(
+      ApiTracer parent, SpanName spanName, OperationType operationType) {
     return NoopApiTracer.getInstance();
+  }
+
+  @Override
+  public AbstractApiTracer newAbstractApiTracer(
+      ApiTracer parent, SpanName spanName, OperationType operationType) {
+    return newTracer(parent, spanName, operationType);
   }
 }

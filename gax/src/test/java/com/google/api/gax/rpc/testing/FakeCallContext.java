@@ -36,7 +36,7 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -57,7 +57,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
-  private final ApiTracer tracer;
+  private final AbstractApiTracer tracer;
   private final RetrySettings retrySettings;
   private final ImmutableSet<StatusCode.Code> retryableCodes;
 
@@ -68,7 +68,7 @@ public class FakeCallContext implements ApiCallContext {
       Duration streamWaitTimeout,
       Duration streamIdleTimeout,
       ImmutableMap<String, List<String>> extraHeaders,
-      ApiTracer tracer,
+      AbstractApiTracer tracer,
       RetrySettings retrySettings,
       Set<StatusCode.Code> retryableCodes) {
     this.credentials = credentials;
@@ -140,7 +140,7 @@ public class FakeCallContext implements ApiCallContext {
       newStreamIdleTimeout = streamIdleTimeout;
     }
 
-    ApiTracer newTracer = fakeCallContext.tracer;
+    AbstractApiTracer newTracer = fakeCallContext.tracer;
     if (newTracer == null) {
       newTracer = this.tracer;
     }
@@ -344,7 +344,7 @@ public class FakeCallContext implements ApiCallContext {
   /** {@inheritDoc} */
   @Override
   @Nonnull
-  public ApiTracer getTracer() {
+  public AbstractApiTracer getTracer() {
     if (tracer == null) {
       return NoopApiTracer.getInstance();
     }
@@ -353,7 +353,7 @@ public class FakeCallContext implements ApiCallContext {
 
   /** {@inheritDoc} */
   @Override
-  public ApiCallContext withTracer(@Nonnull ApiTracer tracer) {
+  public ApiCallContext withTracer(@Nonnull AbstractApiTracer tracer) {
     Preconditions.checkNotNull(tracer);
 
     return new FakeCallContext(

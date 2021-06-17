@@ -33,13 +33,13 @@ import com.google.api.core.InternalApi;
 import org.threeten.bp.Duration;
 
 /**
- * An implementation of {@link ApiTracer} that does nothing.
+ * An implementation of {@link AbstractApiTracer} that does nothing.
  *
  * <p>For internal use only.
  */
 @InternalApi
-public final class NoopApiTracer implements ApiTracer {
-  private static final ApiTracer INSTANCE = new NoopApiTracer();
+public final class NoopApiTracer extends AbstractApiTracer {
+  private static final AbstractApiTracer INSTANCE = new NoopApiTracer();
 
   private static final Scope NOOP_SCOPE =
       new Scope() {
@@ -51,7 +51,7 @@ public final class NoopApiTracer implements ApiTracer {
 
   private NoopApiTracer() {}
 
-  public static ApiTracer getInstance() {
+  public static AbstractApiTracer getInstance() {
     return INSTANCE;
   }
 
@@ -133,6 +133,11 @@ public final class NoopApiTracer implements ApiTracer {
 
   @Override
   public void batchRequestSent(long elementCount, long requestSize) {
+    // noop
+  }
+
+  @Override
+  public void batchRequestThrottled(long throttledTimeMs) {
     // noop
   }
 }

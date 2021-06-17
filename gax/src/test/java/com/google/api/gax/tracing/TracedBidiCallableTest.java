@@ -64,9 +64,9 @@ public class TracedBidiCallableTest {
   private FakeBidiObserver outerObserver;
   private FakeCallContext outerCallContext;
 
-  @Mock private ApiTracerFactory tracerFactory;
-  private ApiTracer parentTracer = NoopApiTracer.getInstance();
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  private AbstractApiTracer parentTracer = NoopApiTracer.getInstance();
+  @Mock private AbstractApiTracer tracer;
 
   private TracedBidiCallable<String, String> tracedCallable;
 

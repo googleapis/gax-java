@@ -48,14 +48,14 @@ import com.google.common.util.concurrent.MoreExecutors;
 @InternalApi("For internal use by google-cloud-java clients only")
 public class TracedBatchingCallable<RequestT, ResponseT>
     extends UnaryCallable<RequestT, ResponseT> {
-  private final ApiTracerFactory tracerFactory;
+  private final AbstractApiTracerFactory tracerFactory;
   private final SpanName spanName;
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final UnaryCallable<RequestT, ResponseT> innerCallable;
 
   public TracedBatchingCallable(
       UnaryCallable<RequestT, ResponseT> innerCallable,
-      ApiTracerFactory tracerFactory,
+      AbstractApiTracerFactory tracerFactory,
       SpanName spanName,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
     this.tracerFactory = tracerFactory;
@@ -68,7 +68,7 @@ public class TracedBatchingCallable<RequestT, ResponseT>
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     // NOTE: This will be invoked asynchronously outside of the original caller's thread.
     // So this start a top level tracer.
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Batching);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 

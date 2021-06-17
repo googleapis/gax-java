@@ -44,17 +44,17 @@ import javax.annotation.Nonnull;
  */
 @InternalApi
 class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
-  private final ApiTracer tracer;
+  private final AbstractApiTracer tracer;
   private final ResponseObserver<ResponseT> innerObserver;
   private AtomicBoolean wasCancelled;
 
   TracedResponseObserver(
-      @Nonnull ApiTracer tracer, @Nonnull ResponseObserver<ResponseT> innerObserver) {
+      @Nonnull AbstractApiTracer tracer, @Nonnull ResponseObserver<ResponseT> innerObserver) {
     this(tracer, innerObserver, new AtomicBoolean());
   }
 
   TracedResponseObserver(
-      @Nonnull ApiTracer tracer,
+      @Nonnull AbstractApiTracer tracer,
       @Nonnull ResponseObserver<ResponseT> innerObserver,
       @Nonnull AtomicBoolean wasCancelled) {
     this.tracer = Preconditions.checkNotNull(tracer, "tracer");

@@ -59,9 +59,9 @@ public class TracedUnaryCallableTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  @Mock private ApiTracerFactory tracerFactory;
-  private ApiTracer parentTracer;
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  private AbstractApiTracer parentTracer;
+  @Mock private AbstractApiTracer tracer;
   @Mock private UnaryCallable<String, String> innerCallable;
   private SettableApiFuture<String> innerResult;
 

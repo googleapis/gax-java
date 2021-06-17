@@ -60,5 +60,5 @@ public interface ApiTracerFactory {
    * @param spanName the name of the new span
    * @param operationType the type of operation that the tracer will trace
    */
-  ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType);
+  AbstractApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType);
 }

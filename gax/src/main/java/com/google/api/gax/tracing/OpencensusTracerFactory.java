@@ -49,7 +49,7 @@ import javax.annotation.Nonnull;
  * <p>This class is thread safe.
  */
 @InternalApi("For google-cloud-java client use only")
-public final class OpencensusTracerFactory implements ApiTracerFactory {
+public final class OpencensusTracerFactory extends AbstractApiTracerFactory {
   @Nonnull private final Tracer internalTracer;
   @Nonnull private final Map<String, AttributeValue> spanAttributes;
 
@@ -95,7 +95,8 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+  public AbstractApiTracer newTracer(
+      ApiTracer parent, SpanName spanName, OperationType operationType) {
     // Default to the current in context span. This is used for outermost tracers that inherit
     // the caller's parent span.
     Span parentSpan = internalTracer.getCurrentSpan();
@@ -131,5 +132,11 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
   @Override
   public int hashCode() {
     return Objects.hashCode(internalTracer, spanAttributes);
+  }
+
+  @Override
+  public AbstractApiTracer newAbstractApiTracer(
+      ApiTracer parent, SpanName spanName, OperationType operationType) {
+    return newTracer(parent, spanName, operationType);
   }
 }

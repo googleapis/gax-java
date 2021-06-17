@@ -53,12 +53,12 @@ import javax.annotation.Nonnull;
 public class TracedClientStreamingCallable<RequestT, ResponseT>
     extends ClientStreamingCallable<RequestT, ResponseT> {
   private final ClientStreamingCallable<RequestT, ResponseT> innerCallable;
-  private final ApiTracerFactory tracerFactory;
+  private final AbstractApiTracerFactory tracerFactory;
   private final SpanName spanName;
 
   public TracedClientStreamingCallable(
       @Nonnull ClientStreamingCallable<RequestT, ResponseT> innerCallable,
-      @Nonnull ApiTracerFactory tracerFactory,
+      @Nonnull AbstractApiTracerFactory tracerFactory,
       @Nonnull SpanName spanName) {
     this.tracerFactory = Preconditions.checkNotNull(tracerFactory, "tracerFactory can't be null");
     this.spanName = Preconditions.checkNotNull(spanName, "spanName can't be null");
@@ -69,7 +69,7 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> clientStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), spanName, OperationType.ClientStreaming);
     context = context.withTracer(tracer);
 

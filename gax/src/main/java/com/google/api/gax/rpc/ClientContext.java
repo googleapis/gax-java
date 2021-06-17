@@ -37,6 +37,7 @@ import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
+import com.google.api.gax.tracing.AbstractApiTracerFactory;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.Credentials;
@@ -108,7 +109,7 @@ public abstract class ClientContext {
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
-  public abstract ApiTracerFactory getTracerFactory();
+  public abstract AbstractApiTracerFactory getTracerFactory();
 
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
@@ -316,12 +317,12 @@ public abstract class ClientContext {
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
     /**
-     * Set the {@link ApiTracerFactory} that will be used to generate traces for operations.
+     * Set the {@link AbstractApiTracerFactory} that will be used to generate traces for operations.
      *
-     * @param tracerFactory an instance {@link ApiTracerFactory}.
+     * @param tracerFactory an instance {@link AbstractApiTracerFactory}.
      */
     @BetaApi("The surface for tracing is not stable yet and may change in the future.")
-    public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
+    public abstract Builder setTracerFactory(AbstractApiTracerFactory tracerFactory);
 
     public abstract ClientContext build();
   }

@@ -62,9 +62,9 @@ public class TracedClientStreamingCallableTest {
   private static final SpanName SPAN_NAME = SpanName.of("fake-client", "fake-method");
   public @Rule MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  @Mock private ApiTracerFactory tracerFactory;
-  private ApiTracer parentTracer = NoopApiTracer.getInstance();
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  private AbstractApiTracer parentTracer = NoopApiTracer.getInstance();
+  @Mock private AbstractApiTracer tracer;
 
   private FakeClientCallable innerCallable;
   private TracedClientStreamingCallable<String, String> tracedCallable;

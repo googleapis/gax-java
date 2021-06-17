@@ -35,7 +35,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -66,7 +66,7 @@ import org.threeten.bp.Duration;
  */
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 public final class GrpcCallContext implements ApiCallContext {
-  static final CallOptions.Key<ApiTracer> TRACER_KEY = Key.create("gax.tracer");
+  static final CallOptions.Key<AbstractApiTracer> TRACER_KEY = Key.create("gax.tracer");
 
   private final Channel channel;
   private final CallOptions callOptions;
@@ -332,7 +332,7 @@ public final class GrpcCallContext implements ApiCallContext {
       newCallCredentials = this.callOptions.getCredentials();
     }
 
-    ApiTracer newTracer = grpcCallContext.callOptions.getOption(TRACER_KEY);
+    AbstractApiTracer newTracer = grpcCallContext.callOptions.getOption(TRACER_KEY);
     if (newTracer == null) {
       newTracer = this.callOptions.getOption(TRACER_KEY);
     }
@@ -476,8 +476,8 @@ public final class GrpcCallContext implements ApiCallContext {
   /** {@inheritDoc} */
   @Override
   @Nonnull
-  public ApiTracer getTracer() {
-    ApiTracer tracer = callOptions.getOption(TRACER_KEY);
+  public AbstractApiTracer getTracer() {
+    AbstractApiTracer tracer = callOptions.getOption(TRACER_KEY);
     if (tracer == null) {
       tracer = NoopApiTracer.getInstance();
     }
@@ -486,7 +486,7 @@ public final class GrpcCallContext implements ApiCallContext {
 
   /** {@inheritDoc} */
   @Override
-  public GrpcCallContext withTracer(@Nonnull ApiTracer tracer) {
+  public GrpcCallContext withTracer(@Nonnull AbstractApiTracer tracer) {
     Preconditions.checkNotNull(tracer);
     return withCallOptions(callOptions.withOption(TRACER_KEY, tracer));
   }

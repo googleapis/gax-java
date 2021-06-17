@@ -35,7 +35,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -65,7 +65,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final Instant deadline;
   private final Credentials credentials;
   private final ImmutableMap<String, List<String>> extraHeaders;
-  private final ApiTracer tracer;
+  private final AbstractApiTracer tracer;
   private final RetrySettings retrySettings;
   private final ImmutableSet<StatusCode.Code> retryableCodes;
 
@@ -81,7 +81,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
       Instant deadline,
       Credentials credentials,
       ImmutableMap<String, List<String>> extraHeaders,
-      ApiTracer tracer,
+      AbstractApiTracer tracer,
       RetrySettings defaultRetrySettings,
       Set<StatusCode.Code> defaultRetryableCodes) {
     this.channel = channel;
@@ -152,7 +152,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
 
-    ApiTracer newTracer = httpJsonCallContext.tracer;
+    AbstractApiTracer newTracer = httpJsonCallContext.tracer;
     if (newTracer == null) {
       newTracer = this.tracer;
     }
@@ -350,7 +350,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   @Nonnull
   @Override
-  public ApiTracer getTracer() {
+  public AbstractApiTracer getTracer() {
     if (tracer == null) {
       return NoopApiTracer.getInstance();
     }
@@ -359,7 +359,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   /** {@inheritDoc} */
   @Override
-  public HttpJsonCallContext withTracer(@Nonnull ApiTracer newTracer) {
+  public HttpJsonCallContext withTracer(@Nonnull AbstractApiTracer newTracer) {
     Preconditions.checkNotNull(newTracer);
 
     return new HttpJsonCallContext(

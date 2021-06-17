@@ -66,14 +66,14 @@ public class TracedServerStreamingCallableTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  @Mock private ApiTracerFactory tracerFactory;
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  @Mock private AbstractApiTracer tracer;
 
   private MockServerStreamingCallable<String, String> innerCallable;
   private TracedServerStreamingCallable<String, String> tracedCallable;
   private MockResponseObserver<String> responseObserver;
   private ApiCallContext callContext;
-  @Mock private ApiTracer parentTracer;
+  @Mock private AbstractApiTracer parentTracer;
 
   @Before
   public void setUp() {

@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -44,7 +44,7 @@ class GrpcChannelUUIDInterceptor implements ClientInterceptor {
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, Channel channel) {
 
-    ApiTracer apiTracer = callOptions.getOption(GrpcCallContext.TRACER_KEY);
+    AbstractApiTracer apiTracer = callOptions.getOption(GrpcCallContext.TRACER_KEY);
     if (apiTracer != null) {
       apiTracer.connectionSelected(uuid);
     }

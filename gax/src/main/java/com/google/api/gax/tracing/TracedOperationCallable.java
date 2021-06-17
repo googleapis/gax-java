@@ -49,12 +49,12 @@ public class TracedOperationCallable<RequestT, ResponseT, MetadataT>
     extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
   private @Nonnull OperationCallable<RequestT, ResponseT, MetadataT> innerCallable;
-  private @Nonnull ApiTracerFactory tracerFactory;
+  private @Nonnull AbstractApiTracerFactory tracerFactory;
   private @Nonnull SpanName spanName;
 
   public TracedOperationCallable(
       @Nonnull OperationCallable<RequestT, ResponseT, MetadataT> innerCallable,
-      @Nonnull ApiTracerFactory tracerFactory,
+      @Nonnull AbstractApiTracerFactory tracerFactory,
       @Nonnull SpanName spanName) {
     this.innerCallable = innerCallable;
     this.tracerFactory = tracerFactory;
@@ -69,7 +69,7 @@ public class TracedOperationCallable<RequestT, ResponseT, MetadataT>
   public OperationFuture<ResponseT, MetadataT> futureCall(
       RequestT request, ApiCallContext context) {
 
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), spanName, OperationType.LongRunning);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
@@ -92,7 +92,7 @@ public class TracedOperationCallable<RequestT, ResponseT, MetadataT>
   @Override
   public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
       String operationName, ApiCallContext context) {
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), spanName, OperationType.LongRunning);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
@@ -115,7 +115,7 @@ public class TracedOperationCallable<RequestT, ResponseT, MetadataT>
     SpanName cancelSpanName =
         SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".Cancel");
 
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), cancelSpanName, OperationType.Unary);
     TraceFinisher<Void> finisher = new TraceFinisher<>(tracer);
 

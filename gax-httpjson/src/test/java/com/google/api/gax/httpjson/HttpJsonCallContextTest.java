@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.api.gax.tracing.AbstractApiTracer;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
@@ -183,7 +184,7 @@ public class HttpJsonCallContextTest {
 
   @Test
   public void testMergeWithTracer() {
-    ApiTracer explicitTracer = Mockito.mock(ApiTracer.class);
+    AbstractApiTracer explicitTracer = Mockito.mock(AbstractApiTracer.class);
     HttpJsonCallContext ctxWithExplicitTracer =
         HttpJsonCallContext.createDefault().withTracer(explicitTracer);
 

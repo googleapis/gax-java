@@ -65,9 +65,9 @@ public class TracedOperationCallableTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  @Mock private ApiTracerFactory tracerFactory;
-  private ApiTracer parentTracer;
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  private AbstractApiTracer parentTracer;
+  @Mock private AbstractApiTracer tracer;
   @Mock private OperationCallable<String, String, Long> innerCallable;
   private FakeOperationFuture innerResult;
 

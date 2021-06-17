@@ -58,8 +58,8 @@ public class TracedBatchingCallableTest {
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  @Mock private ApiTracerFactory tracerFactory;
-  @Mock private ApiTracer tracer;
+  @Mock private AbstractApiTracerFactory tracerFactory;
+  @Mock private AbstractApiTracer tracer;
   @Mock private BatchingDescriptor<String, String> batchingDescriptor;
   @Mock private UnaryCallable<String, String> innerCallable;
   private SettableApiFuture<String> innerResult;

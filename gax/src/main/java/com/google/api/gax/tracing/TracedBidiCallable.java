@@ -52,13 +52,13 @@ import javax.annotation.Nonnull;
 public class TracedBidiCallable<RequestT, ResponseT>
     extends BidiStreamingCallable<RequestT, ResponseT> {
 
-  @Nonnull private final ApiTracerFactory tracerFactory;
+  @Nonnull private final AbstractApiTracerFactory tracerFactory;
   @Nonnull private final SpanName spanName;
   @Nonnull private final BidiStreamingCallable<RequestT, ResponseT> innerCallable;
 
   public TracedBidiCallable(
       @Nonnull BidiStreamingCallable<RequestT, ResponseT> innerCallable,
-      @Nonnull ApiTracerFactory tracerFactory,
+      @Nonnull AbstractApiTracerFactory tracerFactory,
       @Nonnull SpanName spanName) {
     this.tracerFactory = Preconditions.checkNotNull(tracerFactory, "tracerFactory can't be null");
     this.spanName = Preconditions.checkNotNull(spanName, "spanName can't be null");
@@ -71,7 +71,7 @@ public class TracedBidiCallable<RequestT, ResponseT>
       ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
 
-    ApiTracer tracer =
+    AbstractApiTracer tracer =
         tracerFactory.newTracer(context.getTracer(), spanName, OperationType.BidiStreaming);
     context = context.withTracer(tracer);
 

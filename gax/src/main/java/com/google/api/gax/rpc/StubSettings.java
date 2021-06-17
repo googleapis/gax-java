@@ -39,7 +39,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
-import com.google.api.gax.tracing.ApiTracerFactory;
+import com.google.api.gax.tracing.AbstractApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
@@ -74,7 +74,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final String quotaProjectId;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
-  @Nonnull private final ApiTracerFactory tracerFactory;
+  @Nonnull private final AbstractApiTracerFactory tracerFactory;
 
   /**
    * Indicate when creating transport whether it is allowed to use mTLS endpoint instead of the
@@ -157,12 +157,12 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   }
 
   /**
-   * Gets the configured {@link ApiTracerFactory} that will be used to generate traces for
+   * Gets the configured {@link AbstractApiTracerFactory} that will be used to generate traces for
    * operations.
    */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
-  public ApiTracerFactory getTracerFactory() {
+  public AbstractApiTracerFactory getTracerFactory() {
     return tracerFactory;
   }
 
@@ -200,7 +200,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private String quotaProjectId;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
-    @Nonnull private ApiTracerFactory tracerFactory;
+    @Nonnull private AbstractApiTracerFactory tracerFactory;
 
     /**
      * Indicate when creating transport whether it is allowed to use mTLS endpoint instead of the
@@ -405,12 +405,13 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     /**
-     * Configures the {@link ApiTracerFactory} that will be used to generate traces.
+     * Configures the {@link com.google.api.gax.tracing.AbstractApiTracerFactory} that will be used
+     * to generate traces.
      *
-     * @param tracerFactory an instance of {@link ApiTracerFactory} to set.
+     * @param tracerFactory an instance of {@link AbstractApiTracerFactory} to set.
      */
     @BetaApi("The surface for tracing is not stable yet and may change in the future.")
-    public B setTracerFactory(@Nonnull ApiTracerFactory tracerFactory) {
+    public B setTracerFactory(@Nonnull AbstractApiTracerFactory tracerFactory) {
       Preconditions.checkNotNull(tracerFactory);
       this.tracerFactory = tracerFactory;
       return self();
@@ -476,7 +477,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     @Nonnull
-    public ApiTracerFactory getTracerFactory() {
+    public AbstractApiTracerFactory getTracerFactory() {
       return tracerFactory;
     }
 
