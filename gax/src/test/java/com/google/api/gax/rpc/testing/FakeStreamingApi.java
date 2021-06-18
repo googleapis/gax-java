@@ -269,7 +269,12 @@ public class FakeStreamingApi {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;
       this.context = context;
-      this.requestObserver = new AccumulatingStreamObserver<>();
+      
+      // For resumption testing, do not overwrite the existing request observer,
+      // just reuse the same one.
+      if (this.requestObserver == null) {
+        this.requestObserver = new AccumulatingStreamObserver<>();
+      }
       return requestObserver;
     }
 
