@@ -244,7 +244,12 @@ public class TimeoutTest {
             .build();
     Duration newTimeout = Duration.ofSeconds(5);
     RetrySettings contextRetrySettings =
-        retrySettings.toBuilder().setTotalTimeout(newTimeout).setMaxAttempts(3).build();
+        retrySettings
+            .toBuilder()
+            .setInitialRpcTimeout(newTimeout)
+            .setMaxRpcTimeout(newTimeout)
+            .setMaxAttempts(3)
+            .build();
     GrpcCallContext retryingContext =
         defaultCallContext
             .withRetrySettings(contextRetrySettings)

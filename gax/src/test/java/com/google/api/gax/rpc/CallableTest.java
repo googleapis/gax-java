@@ -137,7 +137,7 @@ public class CallableTest {
     ServerStreamingCallable<Object, Object> callable =
         Callables.retrying(innerServerStreamingCallable, callSettings, clientContext);
 
-    Duration timeout = retrySettings.getTotalTimeout();
+    Duration timeout = retrySettings.getInitialRpcTimeout();
 
     callable.call("Is your refrigerator running?", callContextWithRetrySettings);
 

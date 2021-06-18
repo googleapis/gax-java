@@ -61,7 +61,8 @@ public class ServerStreamingAttemptCallableTest {
   private AccumulatingObserver observer;
   private FakeRetryingFuture fakeRetryingFuture;
   private StreamResumptionStrategy<String, String> resumptionStrategy;
-  private static Duration totalTimeout = Duration.ofHours(1);
+  private static final Duration totalTimeout = Duration.ofHours(1);
+  private static final Duration attemptTimeout = Duration.ofMinutes(1);
   private FakeCallContext mockedCallContext;
 
   @Before
@@ -100,7 +101,6 @@ public class ServerStreamingAttemptCallableTest {
     // Ensure that the callable did not overwrite the user provided timeouts
     Mockito.verify(mockedCallContext, Mockito.times(1)).getTimeout();
     Mockito.verify(mockedCallContext, Mockito.never()).withTimeout(totalTimeout);
-    Mockito.verify(mockedCallContext, Mockito.times(1)).getStreamWaitTimeout();
     Mockito.verify(mockedCallContext, Mockito.never())
         .withStreamWaitTimeout(Mockito.any(Duration.class));
 
@@ -128,7 +128,7 @@ public class ServerStreamingAttemptCallableTest {
     Mockito.doReturn(NoopApiTracer.getInstance()).when(mockedCallContext).getTracer();
     Mockito.doReturn(null).when(mockedCallContext).getTimeout();
     Mockito.doReturn(null).when(mockedCallContext).getStreamWaitTimeout();
-    Mockito.doReturn(mockedCallContext).when(mockedCallContext).withTimeout(totalTimeout);
+    Mockito.doReturn(mockedCallContext).when(mockedCallContext).withTimeout(attemptTimeout);
     Mockito.doReturn(mockedCallContext)
         .when(mockedCallContext)
         .withStreamWaitTimeout(Mockito.any(Duration.class));
@@ -139,10 +139,7 @@ public class ServerStreamingAttemptCallableTest {
     // Ensure that the callable configured the timeouts via the Settings in the
     // absence of user-defined timeouts.
     Mockito.verify(mockedCallContext, Mockito.times(1)).getTimeout();
-    Mockito.verify(mockedCallContext, Mockito.times(1)).withTimeout(totalTimeout);
-    Mockito.verify(mockedCallContext, Mockito.times(1)).getStreamWaitTimeout();
-    Mockito.verify(mockedCallContext, Mockito.times(1))
-        .withStreamWaitTimeout(Mockito.any(Duration.class));
+    Mockito.verify(mockedCallContext, Mockito.times(1)).withTimeout(attemptTimeout);
 
     // Should notify outer observer
     Truth.assertThat(observer.controller).isNotNull();
