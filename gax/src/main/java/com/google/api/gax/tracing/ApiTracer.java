@@ -39,7 +39,7 @@ import org.threeten.bp.Duration;
  * its lifecycle. Constructing an instance of a subclass will implicitly signal the start of a new
  * operation.
  *
- * <p>For internal use only. google-cloud-java libraries should extend {@link NoopApiTracer}.
+ * <p>For internal use only. google-cloud-java libraries should extend {@link BaseApiTracer}.
  */
 @InternalApi
 public interface ApiTracer {

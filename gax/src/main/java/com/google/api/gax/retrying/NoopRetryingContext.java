@@ -34,7 +34,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
@@ -51,7 +51,7 @@ class NoopRetryingContext implements RetryingContext {
   @Nonnull
   @Override
   public ApiTracer getTracer() {
-    return NoopApiTracer.getInstance();
+    return BaseApiTracer.getInstance();
   }
 
   @Override

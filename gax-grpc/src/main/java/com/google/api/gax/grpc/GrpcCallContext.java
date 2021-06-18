@@ -36,7 +36,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -479,7 +479,7 @@ public final class GrpcCallContext implements ApiCallContext {
   public ApiTracer getTracer() {
     ApiTracer tracer = callOptions.getOption(TRACER_KEY);
     if (tracer == null) {
-      tracer = NoopApiTracer.getInstance();
+      tracer = BaseApiTracer.getInstance();
     }
     return tracer;
   }

@@ -38,7 +38,7 @@ import com.google.api.core.InternalExtensionOnly;
  * <p>In general a single instance of an {@link ApiTracer} will correspond to a single logical
  * operation.
  *
- * <p>For internal use only. google-cloud-java libraries should extend {@link NoopApiTracerFactory}.
+ * <p>For internal use only. google-cloud-java libraries should extend {@link BaseApiTracerFactory}.
  */
 @InternalApi
 @InternalExtensionOnly
