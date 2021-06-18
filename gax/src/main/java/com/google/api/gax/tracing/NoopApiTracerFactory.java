@@ -44,7 +44,7 @@ public class NoopApiTracerFactory implements ApiTracerFactory {
     return INSTANCE;
   }
 
-  public NoopApiTracerFactory() {}
+  protected NoopApiTracerFactory() {}
 
   /** {@inheritDoc} */
   @Override

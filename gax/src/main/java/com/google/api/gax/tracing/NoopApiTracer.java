@@ -49,7 +49,7 @@ public class NoopApiTracer implements ApiTracer {
         }
       };
 
-  public NoopApiTracer() {}
+  protected NoopApiTracer() {}
 
   public static ApiTracer getInstance() {
     return INSTANCE;
