@@ -330,6 +330,9 @@ public class GrpcCallableFactory {
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()));
 
+    // We musn't change StreamingCallSettings to ClientStreamingCallSettings
+    // in gax APIs for backwards compatibility, but the generator will be updated
+    // to always provide ClientStreamingCallSettings.
     if (streamingCallSettings instanceof ClientStreamingCallSettings) {
       ClientStreamingCallSettings<RequestT, ResponseT> settings =
           (ClientStreamingCallSettings<RequestT, ResponseT>) streamingCallSettings;
