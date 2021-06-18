@@ -44,6 +44,7 @@ public class ResumableStreamObserver<RequestT, ResponseT> {
       ClientStreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
     this.originalCallable = originalCallable;
     this.originalContext = originalContext;
+    this.resumptionStrategy = resumptionStrategy;
   }
 
   public ApiStreamObserver<RequestT> asRequestObserver(
