@@ -32,7 +32,7 @@ package com.google.api.gax.retrying;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,7 +43,7 @@ public class NoopRetryingContextTest {
   @Test
   public void testGetTracer() {
     RetryingContext context = NoopRetryingContext.create();
-    assertSame(NoopApiTracer.getInstance(), context.getTracer());
+    assertSame(BaseApiTracer.getInstance(), context.getTracer());
   }
 
   @Test

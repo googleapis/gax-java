@@ -38,7 +38,7 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
-import com.google.api.gax.tracing.NoopApiTracerFactory;
+import com.google.api.gax.tracing.BaseApiTracerFactory;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -119,7 +119,7 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
         .setStreamWatchdogCheckInterval(Duration.ZERO)
-        .setTracerFactory(NoopApiTracerFactory.getInstance())
+        .setTracerFactory(BaseApiTracerFactory.getInstance())
         .setQuotaProjectId(null);
   }
 
