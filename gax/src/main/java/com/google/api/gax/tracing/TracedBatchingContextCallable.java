@@ -109,4 +109,15 @@ public class TracedBatchingContextCallable<RequestT, ResponseT>
       throw e;
     }
   }
+
+  public UnaryCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new UnaryCallable<RequestT, ResponseT>() {
+      @Override
+      public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext thisCallContext) {
+        return TracedBatchingContextCallable.this.futureCall(
+            request, defaultCallContext.merge(thisCallContext).merge(baseCallContext));
+      }
+    };
+  }
 }
