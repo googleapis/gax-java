@@ -40,7 +40,7 @@ import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
-import com.google.api.gax.tracing.NoopApiTracerFactory;
+import com.google.api.gax.tracing.BaseApiTracerFactory;
 import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -257,7 +257,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.quotaProjectId = null;
         this.streamWatchdogProvider = InstantiatingWatchdogProvider.create();
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
-        this.tracerFactory = NoopApiTracerFactory.getInstance();
+        this.tracerFactory = BaseApiTracerFactory.getInstance();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
