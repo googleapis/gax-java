@@ -30,45 +30,30 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.InternalApi;
+import com.google.auto.value.AutoValue;
 
 /**
- * BatchingCallContext encapsulates context data in a batching call.
+ * BatchedCallContext encapsulates context data in a batch call.
  *
  * <p>For internal use only.
  */
 @InternalApi
-public class BatchingCallContext {
-
-  private long elementCount;
-  private long byteCount;
-  private long totalThrottledTimeMs;
+@AutoValue
+public abstract class BatchedCallContext {
 
   /**
-   * Creates a batching call context with this batch's element count, byte count and total throttled
-   * time.
+   * Creates a call context for a batch with its element count, byte count and total throttled time.
    */
-  static BatchingCallContext create(long elementCount, long byteCount, long totalThrottledTimeMs) {
-    return new BatchingCallContext(elementCount, byteCount, totalThrottledTimeMs);
-  }
-
-  private BatchingCallContext(long elementCount, long byteCount, long totalThrottledTimeMs) {
-    this.elementCount = elementCount;
-    this.byteCount = byteCount;
-    this.totalThrottledTimeMs = totalThrottledTimeMs;
+  static BatchedCallContext create(long elementCount, long byteCount, long totalThrottledTimeMs) {
+    return new AutoValue_BatchedCallContext(elementCount, byteCount, totalThrottledTimeMs);
   }
 
   /** Gets element count of the current batch. */
-  public long getElementCount() {
-    return elementCount;
-  }
+  public abstract long getElementCount();
 
   /** Gets byte count of the current batch. */
-  public long getByteCount() {
-    return byteCount;
-  }
+  public abstract long getByteCount();
 
   /** Gets total throttled time of the current batch. */
-  public long getTotalThrottledTimeMs() {
-    return totalThrottledTimeMs;
-  }
+  public abstract long getTotalThrottledTimeMs();
 }

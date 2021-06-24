@@ -32,7 +32,7 @@ package com.google.api.gax.tracing;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.api.gax.batching.BatchingCallContext;
+import com.google.api.gax.batching.BatchedCallContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
@@ -41,12 +41,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * This callable wraps a batching callable chain in an {@link ApiTracer} and annotates {@link
- * BatchingCallContext} batching context data.
+ * BatchedCallContext} batching context data.
  *
  * <p>For internal use only.
  */
 @InternalApi("For internal use by google-cloud-java clients only")
-public class TracedBatchingContextCallable<RequestT, ResponseT>
+public class TracedBatchedContextCallable<RequestT, ResponseT>
     extends UnaryCallable<RequestT, ResponseT> {
 
   private final ApiTracerFactory tracerFactory;
@@ -54,7 +54,7 @@ public class TracedBatchingContextCallable<RequestT, ResponseT>
   private final SpanName spanName;
   private final UnaryCallable<RequestT, ResponseT> innerCallable;
 
-  public TracedBatchingContextCallable(
+  public TracedBatchedContextCallable(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       ApiCallContext callContext,
       ApiTracerFactory tracerFactory,
@@ -69,16 +69,15 @@ public class TracedBatchingContextCallable<RequestT, ResponseT>
    * Creates an {@link ApiTracer} and annotates batching context data. And perform a call
    * asynchronously.
    */
-  public ApiFuture<ResponseT> futureCall(
-      RequestT request, BatchingCallContext batchingCallContext) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, BatchedCallContext batchedCallContext) {
     ApiTracer tracer =
         tracerFactory.newTracer(baseCallContext.getTracer(), spanName, OperationType.Batching);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {
-      tracer.batchRequestThrottled(batchingCallContext.getTotalThrottledTimeMs());
+      tracer.batchRequestThrottled(batchedCallContext.getTotalThrottledTimeMs());
       tracer.batchRequestSent(
-          batchingCallContext.getElementCount(), batchingCallContext.getByteCount());
+          batchedCallContext.getElementCount(), batchedCallContext.getByteCount());
       baseCallContext = baseCallContext.withTracer(tracer);
       ApiFuture<ResponseT> future = innerCallable.futureCall(request, baseCallContext);
       ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
@@ -90,6 +89,9 @@ public class TracedBatchingContextCallable<RequestT, ResponseT>
     }
   }
 
+  /**
+   * Calls the wrapped {@link UnaryCallable} within the context of a new trace.
+   */
   @Override
   public ApiFuture futureCall(RequestT request, ApiCallContext context) {
     ApiCallContext mergedContext = baseCallContext.merge(context);
@@ -112,12 +114,7 @@ public class TracedBatchingContextCallable<RequestT, ResponseT>
 
   public UnaryCallable<RequestT, ResponseT> withDefaultCallContext(
       final ApiCallContext defaultCallContext) {
-    return new UnaryCallable<RequestT, ResponseT>() {
-      @Override
-      public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext thisCallContext) {
-        return TracedBatchingContextCallable.this.futureCall(
-            request, defaultCallContext.merge(thisCallContext).merge(baseCallContext));
-      }
-    };
+    return new TracedBatchedContextCallable<>(
+        innerCallable, baseCallContext.merge(defaultCallContext), tracerFactory, spanName);
   }
 }

@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.batching.BatchingCallContext;
+import com.google.api.gax.batching.BatchedCallContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -51,7 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-public class TracedBatchingContextCallableTest {
+public class TracedBatchedContextCallableTest {
   private static final SpanName SPAN_NAME = SpanName.of("FakeClient", "FakeRpc");
 
   @Rule public final MockitoRule rule = MockitoJUnit.rule();
@@ -59,11 +59,11 @@ public class TracedBatchingContextCallableTest {
   @Mock private ApiTracerFactory tracerFactory;
   @Mock private ApiTracer tracer;
   @Mock private UnaryCallable<String, String> innerCallable;
-  @Mock private BatchingCallContext batchingCallContext;
+  @Mock private BatchedCallContext batchedCallContext;
   private SettableApiFuture<String> innerResult;
 
   private FakeCallContext callContext;
-  private TracedBatchingContextCallable<String, String> callable;
+  private TracedBatchedContextCallable<String, String> callable;
 
   @Before
   public void setUp() {
@@ -75,12 +75,12 @@ public class TracedBatchingContextCallableTest {
 
     callContext = FakeCallContext.createDefault();
     callable =
-        new TracedBatchingContextCallable(innerCallable, callContext, tracerFactory, SPAN_NAME);
+        new TracedBatchedContextCallable(innerCallable, callContext, tracerFactory, SPAN_NAME);
   }
 
   @Test
   public void testRootTracerCreated() {
-    callable.futureCall("test", batchingCallContext);
+    callable.futureCall("test", batchedCallContext);
     verify(tracerFactory, times(1))
         .newTracer(callContext.getTracer(), SPAN_NAME, OperationType.Batching);
   }
@@ -88,15 +88,15 @@ public class TracedBatchingContextCallableTest {
   @Test
   public void testThrottledTimeRecorded() {
     long throttledTime = new Random().nextLong();
-    when(batchingCallContext.getTotalThrottledTimeMs()).thenReturn(throttledTime);
-    callable.futureCall("test", batchingCallContext);
+    when(batchedCallContext.getTotalThrottledTimeMs()).thenReturn(throttledTime);
+    callable.futureCall("test", batchedCallContext);
     verify(tracer).batchRequestThrottled(throttledTime);
   }
 
   @Test
   public void testOperationFinish() {
     innerResult.set("success");
-    callable.futureCall("test", batchingCallContext);
+    callable.futureCall("test", batchedCallContext);
     verify(tracer, times(1)).operationSucceeded();
   }
 
@@ -104,7 +104,7 @@ public class TracedBatchingContextCallableTest {
   public void testOperationFailed() {
     RuntimeException fakeException = new RuntimeException("Exception");
     innerResult.setException(fakeException);
-    callable.futureCall("test", batchingCallContext);
+    callable.futureCall("test", batchedCallContext);
     verify(tracer, times(1)).operationFailed(fakeException);
   }
 }

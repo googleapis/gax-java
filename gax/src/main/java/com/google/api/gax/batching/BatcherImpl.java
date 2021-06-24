@@ -41,7 +41,7 @@ import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.tracing.TracedBatchingContextCallable;
+import com.google.api.gax.tracing.TracedBatchedContextCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -231,15 +231,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
 
     final ApiFuture<ResponseT> batchResponse;
-    if (unaryCallable instanceof TracedBatchingContextCallable) {
-      BatchingCallContext batchingCallContext =
-          BatchingCallContext.create(
+    if (unaryCallable instanceof TracedBatchedContextCallable) {
+      BatchedCallContext batchedCallContext =
+          BatchedCallContext.create(
               accumulatedBatch.elementCounter,
               accumulatedBatch.byteCounter,
               accumulatedBatch.totalThrottledTimeMs);
       batchResponse =
-          ((TracedBatchingContextCallable) unaryCallable)
-              .futureCall(accumulatedBatch.builder.build(), batchingCallContext);
+          ((TracedBatchedContextCallable) unaryCallable)
+              .futureCall(accumulatedBatch.builder.build(), batchedCallContext);
     } else {
       batchResponse = unaryCallable.futureCall(accumulatedBatch.builder.build());
     }
