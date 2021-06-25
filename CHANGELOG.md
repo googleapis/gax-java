@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.66.0](https://www.github.com/googleapis/gax-java/compare/v1.65.1...v1.66.0) (2021-06-24)
+
+
+### Features
+
+* make ApiTracer internal API ([#1414](https://www.github.com/googleapis/gax-java/issues/1414)) ([e3e8462](https://www.github.com/googleapis/gax-java/commit/e3e8462a2f9e866480ec2106dc59555d41ea4bb5))
+
 ### [1.65.1](https://www.github.com/googleapis/gax-java/compare/v1.65.0...v1.65.1) (2021-06-08)
 
 
