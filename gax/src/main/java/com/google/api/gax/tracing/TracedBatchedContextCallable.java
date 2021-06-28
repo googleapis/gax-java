@@ -66,7 +66,7 @@ public class TracedBatchedContextCallable<RequestT, ResponseT>
   }
 
   /**
-   * Creates an {@link ApiTracer} and annotates batching context data. And perform a call
+   * Creates an {@link ApiTracer} and annotates batching context data. Performs a call
    * asynchronously.
    */
   public ApiFuture<ResponseT> futureCall(RequestT request, BatchedCallContext batchedCallContext) {
@@ -89,9 +89,7 @@ public class TracedBatchedContextCallable<RequestT, ResponseT>
     }
   }
 
-  /**
-   * Calls the wrapped {@link UnaryCallable} within the context of a new trace.
-   */
+  /** Calls the wrapped {@link UnaryCallable} within the context of a new trace. */
   @Override
   public ApiFuture futureCall(RequestT request, ApiCallContext context) {
     ApiCallContext mergedContext = baseCallContext.merge(context);

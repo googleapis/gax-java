@@ -41,13 +41,6 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class BatchedCallContext {
 
-  /**
-   * Creates a call context for a batch with its element count, byte count and total throttled time.
-   */
-  static BatchedCallContext create(long elementCount, long byteCount, long totalThrottledTimeMs) {
-    return new AutoValue_BatchedCallContext(elementCount, byteCount, totalThrottledTimeMs);
-  }
-
   /** Gets element count of the current batch. */
   public abstract long getElementCount();
 
@@ -56,4 +49,23 @@ public abstract class BatchedCallContext {
 
   /** Gets total throttled time of the current batch. */
   public abstract long getTotalThrottledTimeMs();
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public static Builder newBuilder() {
+      return new AutoValue_BatchedCallContext.Builder();
+    }
+
+    /** Gets element count of the current batch. */
+    public abstract Builder setElementCount(long elementCount);
+
+    /** Gets byte count of the current batch. */
+    public abstract Builder setByteCount(long byteCount);
+
+    /** Gets total throttled time of the current batch. */
+    public abstract Builder setTotalThrottledTimeMs(long throttledTimeMs);
+
+    public abstract BatchedCallContext build();
+  }
 }

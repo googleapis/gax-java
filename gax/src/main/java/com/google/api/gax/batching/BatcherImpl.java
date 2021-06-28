@@ -233,10 +233,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     final ApiFuture<ResponseT> batchResponse;
     if (unaryCallable instanceof TracedBatchedContextCallable) {
       BatchedCallContext batchedCallContext =
-          BatchedCallContext.create(
-              accumulatedBatch.elementCounter,
-              accumulatedBatch.byteCounter,
-              accumulatedBatch.totalThrottledTimeMs);
+          BatchedCallContext.Builder.newBuilder()
+              .setElementCount(accumulatedBatch.elementCounter)
+              .setByteCount(accumulatedBatch.byteCounter)
+              .setTotalThrottledTimeMs(accumulatedBatch.totalThrottledTimeMs)
+              .build();
+
       batchResponse =
           ((TracedBatchedContextCallable) unaryCallable)
               .futureCall(accumulatedBatch.builder.build(), batchedCallContext);
