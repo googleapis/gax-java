@@ -80,6 +80,8 @@ import org.threeten.bp.Duration;
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+  private static final String DIRECT_PATH_ENV_DISABLE_DIRECT_PATH =
+      "GOOGLE_CLOUD_DISABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
   // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
@@ -243,17 +245,27 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
-  // TODO(weiranf): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
+  // TODO(mohanli): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
   //                and the env var is removed from client environment.
   private boolean isDirectPathEnabled(String serviceAddress) {
+    String disableDirectPathEnv = envProvider.getenv(DIRECT_PATH_ENV_DISABLE_DIRECT_PATH);
+    boolean isDirectPathDisabled = Boolean.parseBoolean(disableDirectPathEnv);
+    if (isDirectPathDisabled) {
+      return false;
+    }
+    // Only check attemptDirectPath when DIRECT_PATH_ENV_DISABLE_DIRECT_PATH is not set.
     if (attemptDirectPath != null) {
       return attemptDirectPath;
     }
     // Only check DIRECT_PATH_ENV_VAR when attemptDirectPath is not set.
     String whiteList = envProvider.getenv(DIRECT_PATH_ENV_VAR);
-    if (whiteList == null) return false;
+    if (whiteList == null) {
+      return false;
+    }
     for (String service : whiteList.split(",")) {
-      if (!service.isEmpty() && serviceAddress.contains(service)) return true;
+      if (!service.isEmpty() && serviceAddress.contains(service)) {
+        return true;
+      }
     }
     return false;
   }
