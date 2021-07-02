@@ -93,9 +93,10 @@ public class BatcherImplTest {
   public void tearDown() throws InterruptedException {
     if (underTest != null) {
       try {
+        // Close the batcher to avoid warnings of orphaned batchers
         underTest.close();
       } catch (BatchingException ignored) {
-
+        // Some tests intentionally inject failures into mutations
       }
     }
   }

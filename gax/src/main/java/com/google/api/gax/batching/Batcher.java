@@ -76,15 +76,15 @@ public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
   void sendOutstanding();
 
   /**
-   * Closes this Batcher by preventing new elements from being added and flushing the existing
+   * Closes this Batcher by preventing new elements from being added, and then flushing the existing
    * elements.
    */
   @Override
   void close() throws InterruptedException;
 
   /**
-   * Closes this Batcher by preventing new elements from being added and send outstanding elements.
-   * The returned future will be resolved when the last element completes
+   * Closes this Batcher by preventing new elements from being added, and then sending outstanding
+   * elements. The returned future will be resolved when the last element completes
    */
   ApiFuture<Void> closeAsync();
 }
