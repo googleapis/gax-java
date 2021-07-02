@@ -92,7 +92,11 @@ public class BatcherImplTest {
   @After
   public void tearDown() throws InterruptedException {
     if (underTest != null) {
-      underTest.close();
+      try {
+        underTest.close();
+      } catch (BatchingException ignored) {
+
+      }
     }
   }
 
