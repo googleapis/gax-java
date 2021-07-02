@@ -187,17 +187,17 @@ public class BatcherImplTest {
     underTest.add(1);
     underTest.closeAsync();
 
-    IllegalStateException e = Assert.assertThrows(IllegalStateException.class,
-        new ThrowingRunnable() {
-          @Override
-          public void run() throws Throwable {
-            underTest.add(1);
-          }
-        });
+    IllegalStateException e =
+        Assert.assertThrows(
+            IllegalStateException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                underTest.add(1);
+              }
+            });
 
-    assertThat(e)
-        .hasMessageThat()
-        .matches("Cannot add elements on a closed batcher");
+    assertThat(e).hasMessageThat().matches("Cannot add elements on a closed batcher");
   }
 
   @Test
@@ -672,8 +672,8 @@ public class BatcherImplTest {
   }
 
   /**
-   * Validates the absence of warning in case {@link BatcherImpl} is garbage collected after
-   * being closed.
+   * Validates the absence of warning in case {@link BatcherImpl} is garbage collected after being
+   * closed.
    *
    * <p>Note:This test cannot run concurrently with other tests that use Batchers.
    */
@@ -708,7 +708,6 @@ public class BatcherImplTest {
           }
         });
 
-
     try {
       // Create a bunch of batchers that will garbage collected after being closed
       for (int i = 0; i < 1_000; i++) {
@@ -716,7 +715,7 @@ public class BatcherImplTest {
             createDefaultBatcherImpl(batchingSettings, null);
         batcher.add(1);
 
-        if (i%2 == 0) {
+        if (i % 2 == 0) {
           batcher.close();
         } else {
           batcher.closeAsync();
