@@ -37,7 +37,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -346,7 +346,7 @@ public class FakeCallContext implements ApiCallContext {
   @Nonnull
   public ApiTracer getTracer() {
     if (tracer == null) {
-      return NoopApiTracer.getInstance();
+      return BaseApiTracer.getInstance();
     }
     return tracer;
   }
