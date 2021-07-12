@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,6 +32,7 @@ package com.google.api.gax.tracing;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.BatchedCallContext;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 
 /**
@@ -50,4 +51,10 @@ public abstract class BatchedContextCallable<RequestT, ResponseT>
    */
   public abstract ApiFuture<ResponseT> futureCall(
       RequestT request, BatchedCallContext batchedCallContext);
+
+  @Override
+  public UnaryCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    throw new UnsupportedOperationException("withDefaultCallContext() not implemented");
+  }
 }
