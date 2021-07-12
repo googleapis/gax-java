@@ -90,10 +90,10 @@ public interface OperationFuture<ResponseT, MetadataT> extends ApiFuture<Respons
    * DEPRECATED: Subsumed by getMetadata. Calling getMetadata.isDone() will return false if the
    * initial future has not yet completed.
    *
-   * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
-   * future hasn't completed yet this method returns {@code null}, otherwise it returns the latest
-   * metadata returned from the server (i.e. either initial call metadata or the metadata received
-   * from the latest completed poll iteration).
+   * <p>Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the
+   * initial future hasn't completed yet this method returns {@code null}, otherwise it returns the
+   * latest metadata returned from the server (i.e. either initial call metadata or the metadata
+   * received from the latest completed poll iteration).
    *
    * <p>If not {@code null}, the returned result is guaranteed to be an already completed future, so
    * {@link ApiFuture#isDone()} will always be {@code true} and {@link ApiFuture#get()} will always
