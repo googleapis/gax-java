@@ -397,7 +397,7 @@ public class OperationCallableImplTest {
     assertThat(future.getInitialFuture().isDone()).isTrue();
     assertThat(future.getInitialFuture().isCancelled()).isTrue();
 
-    assertFutureCancelMetaCancel(future);
+    assertFutureCancelMetaCancel(future, false);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -676,7 +676,7 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureCancelMetaCancel(future);
+    assertFutureCancelMetaCancel(future, true);
     assertThat(executor.getIterationsCount()).isEqualTo(5);
   }
 
@@ -707,7 +707,7 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureCancelMetaCancel(future);
+    assertFutureCancelMetaCancel(future, true);
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
   }
 
@@ -743,7 +743,7 @@ public class OperationCallableImplTest {
       LockSupport.parkNanos(1000L);
     }
 
-    assertFutureCancelMetaCancel(future);
+    assertFutureCancelMetaCancel(future, true);
     scheduler.shutdownNow();
   }
 
@@ -776,7 +776,7 @@ public class OperationCallableImplTest {
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
-    assertFutureCancelMetaCancel(future);
+    assertFutureCancelMetaCancel(future, true);
   }
 
   @Test
@@ -1081,7 +1081,8 @@ public class OperationCallableImplTest {
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
-  private void assertFutureCancelMetaCancel(OperationFuture<Color, Currency> future)
+  private void assertFutureCancelMetaCancel(
+      OperationFuture<Color, Currency> future, boolean initialDone)
       throws InterruptedException, ExecutionException, TimeoutException {
     Exception exception = null;
     try {
@@ -1111,7 +1112,8 @@ public class OperationCallableImplTest {
     assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(exception).isNotNull();
     assertThat(future.getMetadata().isDone()).isTrue();
-    assertThat(future.getMetadata().isCancelled()).isTrue();
+    // The metadata future will always be resolved immediately once the initial request resolves.
+    assertThat(future.getMetadata().isCancelled()).isEqualTo(!initialDone);
   }
 
   private Color getColor(float blueValue) {
