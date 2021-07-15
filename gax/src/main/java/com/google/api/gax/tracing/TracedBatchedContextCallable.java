@@ -70,23 +70,12 @@ public class TracedBatchedContextCallable<RequestT, ResponseT>
    * asynchronously.
    */
   public ApiFuture<ResponseT> futureCall(RequestT request, BatchedCallContext batchedCallContext) {
-    ApiTracer tracer =
-        tracerFactory.newTracer(baseCallContext.getTracer(), spanName, OperationType.Batching);
-    TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
-
-    try {
-      tracer.batchRequestThrottled(batchedCallContext.getTotalThrottledTimeMs());
-      tracer.batchRequestSent(
-          batchedCallContext.getElementCount(), batchedCallContext.getByteCount());
-      baseCallContext = baseCallContext.withTracer(tracer);
-      ApiFuture<ResponseT> future = innerCallable.futureCall(request, baseCallContext);
-      ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
-
-      return future;
-    } catch (RuntimeException e) {
-      finisher.onFailure(e);
-      throw e;
-    }
+    return futureCall(
+        request,
+        baseCallContext,
+        batchedCallContext.getTotalThrottledTimeMs(),
+        batchedCallContext.getElementCount(),
+        batchedCallContext.getByteCount());
   }
 
   /** Calls the wrapped {@link UnaryCallable} within the context of a new trace. */
@@ -94,15 +83,29 @@ public class TracedBatchedContextCallable<RequestT, ResponseT>
   public ApiFuture futureCall(RequestT request, ApiCallContext context) {
     ApiCallContext mergedContext = baseCallContext.merge(context);
 
+    return futureCall(request, mergedContext, null, null, null);
+  }
+
+  private ApiFuture futureCall(
+      RequestT request,
+      ApiCallContext callContext,
+      Long throttledTimeMs,
+      Long elementCount,
+      Long byteCount) {
     ApiTracer tracer =
-        tracerFactory.newTracer(mergedContext.getTracer(), spanName, OperationType.Batching);
+        tracerFactory.newTracer(callContext.getTracer(), spanName, OperationType.Batching);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {
-      mergedContext = mergedContext.withTracer(tracer);
-      ApiFuture<ResponseT> future = innerCallable.futureCall(request, mergedContext);
+      if (throttledTimeMs != null) {
+        tracer.batchRequestThrottled(throttledTimeMs);
+      }
+      if (elementCount != null && byteCount != null) {
+        tracer.batchRequestSent(elementCount, byteCount);
+      }
+      callContext = callContext.withTracer(tracer);
+      ApiFuture<ResponseT> future = innerCallable.futureCall(request, callContext);
       ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
-
       return future;
     } catch (RuntimeException e) {
       finisher.onFailure(e);
