@@ -31,6 +31,7 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /**
  * Represents a batching context where individual elements will be accumulated and flushed in a
@@ -45,6 +46,7 @@ import com.google.api.core.BetaApi;
  * @param <ElementResultT> The type of the result for each individual element.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
+@InternalExtensionOnly
 public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
 
   /**
@@ -74,9 +76,15 @@ public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
   void sendOutstanding();
 
   /**
-   * Closes this Batcher by preventing new elements from being added and flushing the existing
+   * Closes this Batcher by preventing new elements from being added, and then flushing the existing
    * elements.
    */
   @Override
   void close() throws InterruptedException;
+
+  /**
+   * Closes this Batcher by preventing new elements from being added, and then sending outstanding
+   * elements. The returned future will be resolved when the last element completes
+   */
+  ApiFuture<Void> closeAsync();
 }

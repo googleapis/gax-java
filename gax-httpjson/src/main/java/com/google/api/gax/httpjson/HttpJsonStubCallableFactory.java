@@ -41,7 +41,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public interface HttpJsonStubCallableFactory<
-    OperationT extends ApiMessage, OperationsStub extends BackgroundResource> {
+    OperationT, OperationsStub extends BackgroundResource> {
 
   /**
    * Create a callable object with http/json-specific functionality. Designed for use by generated
@@ -52,7 +52,7 @@ public interface HttpJsonStubCallableFactory<
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+  <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext);
@@ -66,7 +66,7 @@ public interface HttpJsonStubCallableFactory<
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT, PagedListResponseT>
+  <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
           HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
@@ -82,12 +82,12 @@ public interface HttpJsonStubCallableFactory<
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
+  <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext);
 
-  public <RequestT, ResponseT, MetadataT>
+  <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           HttpJsonCallSettings<RequestT, OperationT> httpJsonCallSettings,
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,

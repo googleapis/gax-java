@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +90,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final Object flushLock = new Object();
   private final Object elementLock = new Object();
   private final Future<?> scheduledFuture;
-  private volatile boolean isClosed = false;
+  private SettableApiFuture<Void> closeFuture;
   private final BatcherStats batcherStats = new BatcherStats();
   private final FlowController flowController;
 
@@ -172,7 +173,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
-    Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
+    // Note: there is no need to synchronize over closeFuture. The write & read of the variable
+    // will only be done from a single calling thread.
+    Preconditions.checkState(closeFuture == null, "Cannot add elements on a closed batcher");
+
     // This is not the optimal way of throttling. It does not send out partial batches, which
     // means that the Batcher might not use up all the resources allowed by FlowController.
     // The more efficient implementation should look like:
@@ -257,9 +261,20 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   }
 
   private void onBatchCompletion() {
-    if (numOfOutstandingBatches.decrementAndGet() == 0) {
-      synchronized (flushLock) {
+    boolean shouldClose = false;
+
+    synchronized (flushLock) {
+      if (numOfOutstandingBatches.decrementAndGet() == 0) {
         flushLock.notifyAll();
+        shouldClose = closeFuture != null;
+      }
+    }
+    if (shouldClose) {
+      BatchingException overallError = batcherStats.asException();
+      if (overallError != null) {
+        closeFuture.setException(overallError);
+      } else {
+        closeFuture.set(null);
       }
     }
   }
@@ -279,17 +294,57 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void close() throws InterruptedException {
-    if (isClosed) {
-      return;
+    try {
+      closeAsync().get();
+    } catch (ExecutionException e) {
+      // Original stacktrace of a batching exception is not useful, so rethrow the error with
+      // the caller stacktrace
+      if (e.getCause() instanceof BatchingException) {
+        BatchingException cause = (BatchingException) e.getCause();
+        throw new BatchingException(cause.getMessage());
+      } else {
+        throw new IllegalStateException("unexpected error closing the batcher", e.getCause());
+      }
     }
-    flush();
+  }
+
+  @Override
+  public ApiFuture<Void> closeAsync() {
+    if (closeFuture != null) {
+      return closeFuture;
+    }
+
+    // Send any buffered elements
+    // Must come before numOfOutstandingBatches check below
+    sendOutstanding();
+
+    boolean closeImmediately;
+
+    synchronized (flushLock) {
+      // prevent admission of new elements
+      closeFuture = SettableApiFuture.create();
+      // check if we can close immediately
+      closeImmediately = numOfOutstandingBatches.get() == 0;
+    }
+
+    // Clean up accounting
     scheduledFuture.cancel(true);
-    isClosed = true;
     currentBatcherReference.closed = true;
     currentBatcherReference.clear();
-    BatchingException exception = batcherStats.asException();
-    if (exception != null) {
-      throw exception;
+
+    // notify futures
+    if (closeImmediately) {
+      finishClose();
+    }
+    return closeFuture;
+  }
+
+  private void finishClose() {
+    BatchingException batchingException = batcherStats.asException();
+    if (batchingException != null) {
+      closeFuture.setException(batchingException);
+    } else {
+      closeFuture.set(null);
     }
   }
 

@@ -63,7 +63,7 @@ public class TracedClientStreamingCallableTest {
   public @Rule MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private ApiTracerFactory tracerFactory;
-  private ApiTracer parentTracer = NoopApiTracer.getInstance();
+  private ApiTracer parentTracer = BaseApiTracer.getInstance();
   @Mock private ApiTracer tracer;
 
   private FakeClientCallable innerCallable;
