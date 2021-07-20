@@ -36,11 +36,13 @@ import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientStreamingCallSettings;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ResumableClientStreamingCallable;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode;
@@ -327,6 +329,18 @@ public class GrpcCallableFactory {
             callable,
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()));
+
+    // We musn't change StreamingCallSettings to ClientStreamingCallSettings
+    // in gax APIs for backwards compatibility, but the generator will be updated
+    // to always provide ClientStreamingCallSettings.
+    if (streamingCallSettings instanceof ClientStreamingCallSettings) {
+      ClientStreamingCallSettings<RequestT, ResponseT> settings =
+          (ClientStreamingCallSettings<RequestT, ResponseT>) streamingCallSettings;
+      if (settings.getResumptionStrategy() != null) {
+        callable =
+            new ResumableClientStreamingCallable<>(callable, settings.getResumptionStrategy());
+      }
+    }
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
