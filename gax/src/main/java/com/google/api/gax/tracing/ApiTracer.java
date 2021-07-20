@@ -144,6 +144,13 @@ public interface ApiTracer {
   void batchRequestSent(long elementCount, long requestSize);
 
   /**
+   * Adds an annotation of total throttled time of a batch.
+   *
+   * @param throttledTimeMs total throttled time of this batch.
+   */
+  void batchRequestThrottled(long throttledTimeMs);
+
+  /**
    * A context class to be used with {@link #inScope()} and a try-with-resources block. Closing a
    * {@link Scope} removes any context that the underlying implementation might've set in {@link
    * #inScope()}.
