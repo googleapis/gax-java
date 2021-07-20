@@ -86,10 +86,8 @@ public class HttpJsonCallableFactory {
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        new HttpJsonDirectCallable<>(httpJsonCallSettings.getMethodDescriptor());
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
     callable = new HttpJsonExceptionCallable<>(callable, callSettings.getRetryableCodes());
-
     callable = Callables.retrying(callable, callSettings, clientContext);
 
     return callable;
