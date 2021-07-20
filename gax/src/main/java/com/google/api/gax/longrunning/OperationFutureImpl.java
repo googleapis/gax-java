@@ -30,6 +30,7 @@
 package com.google.api.gax.longrunning;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFunction;
@@ -42,6 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * An ApiFuture which tracks polling of a service. The polling is done periodically, based on the
@@ -166,12 +168,25 @@ public final class OperationFutureImpl<ResponseT, MetadataT>
 
   @Override
   public ApiFuture<MetadataT> getMetadata() {
-    ApiFuture<OperationSnapshot> future = pollingFuture.getAttemptResult();
+    @Nullable ApiFuture<OperationSnapshot> completedAttempt = pollingFuture.peekAttemptResult();
+    if (completedAttempt == null) {
+      completedAttempt = initialFuture;
+    } else {
+      checkState(completedAttempt.isDone());
+      try {
+        OperationSnapshot snapshot = completedAttempt.get();
+        if (snapshot.getMetadata() == null) {
+          completedAttempt = initialFuture;
+        }
+      } catch (Exception e) {
+        completedAttempt = initialFuture;
+      }
+    }
     synchronized (lock) {
-      if (gottenAttemptResult == future) {
+      if (gottenAttemptResult == completedAttempt) {
         return gottenPollResult;
       }
-      gottenAttemptResult = future;
+      gottenAttemptResult = completedAttempt;
       gottenPollResult =
           ApiFutures.transform(gottenAttemptResult, metadataTransformer, directExecutor());
       return gottenPollResult;
