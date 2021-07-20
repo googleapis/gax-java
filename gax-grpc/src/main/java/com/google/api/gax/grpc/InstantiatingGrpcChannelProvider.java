@@ -135,6 +135,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
             : builder.directPathServiceConfig;
   }
 
+  /**
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     grpc executor.
+   */
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
@@ -212,9 +217,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
-    } else if (needsHeaders()) {
+    if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else if (needsEndpoint()) {
       throw new IllegalStateException("getTransportChannel() called when needsEndpoint() is true");

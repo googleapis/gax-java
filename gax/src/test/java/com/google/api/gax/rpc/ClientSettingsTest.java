@@ -109,7 +109,8 @@ public class ClientSettingsTest {
   @Test
   public void testEmptyBuilder() throws Exception {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
-    Truth.assertThat(builder.getExecutorProvider())
+    Truth.assertThat(builder.getExecutorProvider()).isNull();
+    Truth.assertThat(builder.getBackgroundExecutorProvider())
         .isInstanceOf(InstantiatingExecutorProvider.class);
     Truth.assertThat(builder.getTransportChannelProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
@@ -124,6 +125,8 @@ public class ClientSettingsTest {
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider())
         .isSameInstanceAs(builder.getExecutorProvider());
+    Truth.assertThat(settings.getBackgroundExecutorProvider())
+        .isSameInstanceAs(builder.getBackgroundExecutorProvider());
     Truth.assertThat(settings.getTransportChannelProvider())
         .isSameInstanceAs(builder.getTransportChannelProvider());
     Truth.assertThat(settings.getCredentialsProvider())
@@ -139,6 +142,7 @@ public class ClientSettingsTest {
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
+    Truth.assertThat(settingsString).contains("backgroundExecutorProvider");
     Truth.assertThat(settingsString).contains("transportChannelProvider");
     Truth.assertThat(settingsString).contains("credentialsProvider");
     Truth.assertThat(settingsString).contains("clock");
@@ -172,7 +176,9 @@ public class ClientSettingsTest {
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
     builder.setQuotaProjectId(quotaProjectId);
 
+    // For backward compatibility, backgroundExecutorProvider is set to executorProvider
     Truth.assertThat(builder.getExecutorProvider()).isSameInstanceAs(executorProvider);
+    Truth.assertThat(builder.getBackgroundExecutorProvider()).isSameInstanceAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
     Truth.assertThat(builder.getCredentialsProvider()).isSameInstanceAs(credentialsProvider);
     Truth.assertThat(builder.getClock()).isSameInstanceAs(clock);
@@ -184,6 +190,7 @@ public class ClientSettingsTest {
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
+    Truth.assertThat(builderString).contains("backgroundExecutorProvider");
     Truth.assertThat(builderString).contains("transportChannelProvider");
     Truth.assertThat(builderString).contains("credentialsProvider");
     Truth.assertThat(builderString).contains("clock");
@@ -223,6 +230,10 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
 
     Truth.assertThat(builder.getExecutorProvider()).isInstanceOf(FixedExecutorProvider.class);
+    Truth.assertThat(builder.getBackgroundExecutorProvider())
+        .isInstanceOf(FixedExecutorProvider.class);
+    Truth.assertThat(builder.getExecutorProvider())
+        .isSameInstanceAs(builder.getBackgroundExecutorProvider());
     Truth.assertThat(builder.getTransportChannelProvider())
         .isInstanceOf(FixedTransportChannelProvider.class);
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(FixedCredentialsProvider.class);
@@ -263,6 +274,7 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
 
     Truth.assertThat(newBuilder.getExecutorProvider()).isSameInstanceAs(executorProvider);
+    Truth.assertThat(newBuilder.getBackgroundExecutorProvider()).isSameInstanceAs(executorProvider);
     Truth.assertThat(newBuilder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
     Truth.assertThat(newBuilder.getCredentialsProvider()).isSameInstanceAs(credentialsProvider);
     Truth.assertThat(newBuilder.getClock()).isSameInstanceAs(clock);

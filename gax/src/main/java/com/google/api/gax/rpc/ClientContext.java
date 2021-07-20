@@ -50,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -73,6 +72,10 @@ public abstract class ClientContext {
    */
   public abstract List<BackgroundResource> getBackgroundResources();
 
+  /**
+   * Gets the executor to use for running scheduled API call logic (such as retries and long-running
+   * operations).
+   */
   public abstract ScheduledExecutorService getExecutor();
 
   @Nullable
@@ -163,8 +166,12 @@ public abstract class ClientContext {
   public static ClientContext create(StubSettings settings) throws IOException {
     ApiClock clock = settings.getClock();
 
+    ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
+    final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
+
     ExecutorProvider executorProvider = settings.getExecutorProvider();
-    final ScheduledExecutorService executor = executorProvider.getExecutor();
+    final ScheduledExecutorService executor =
+        executorProvider == null ? null : executorProvider.getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
@@ -177,8 +184,11 @@ public abstract class ClientContext {
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
-    if (transportChannelProvider.needsExecutor()) {
-      transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
+    // After needsExecutor and StubSettings#setExecutor are deprecated, transport channel executor
+    // can only be set from TransportChannelProvider#withExecutor directly, and a provider will
+    // have a default executor if it needs one.
+    if (transportChannelProvider.needsExecutor() && executor != null) {
+      transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }
     Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
@@ -216,7 +226,7 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
       if (watchdogProvider.needsExecutor()) {
-        watchdogProvider = watchdogProvider.withExecutor(executor);
+        watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor);
       }
       watchdog = watchdogProvider.getWatchdog();
     }
@@ -226,16 +236,22 @@ public abstract class ClientContext {
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
     }
-    if (executorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    if (backgroundExecutorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(backgroundExecutor));
     }
     if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
       backgroundResources.add(watchdog);
     }
+    if (executorProvider != null
+        && executor != null
+        && executorProvider.shouldAutoClose()
+        && executor != backgroundExecutor) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    }
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
-        .setExecutor(executor)
+        .setExecutor(backgroundExecutor)
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
@@ -289,6 +305,10 @@ public abstract class ClientContext {
 
     public abstract Builder setBackgroundResources(List<BackgroundResource> backgroundResources);
 
+    /**
+     * Sets the executor to use for running scheduled API call logic (such as retries and
+     * long-running operations).
+     */
     public abstract Builder setExecutor(ScheduledExecutorService value);
 
     public abstract Builder setCredentials(Credentials value);

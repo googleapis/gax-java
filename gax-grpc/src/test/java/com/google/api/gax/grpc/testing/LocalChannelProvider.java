@@ -74,6 +74,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
     return true;
   }
 
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return false;

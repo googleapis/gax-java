@@ -93,6 +93,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     this.mtlsProvider = mtlsProvider;
   }
 
+  /**
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     executor defined in {@link ManagedHttpJsonChannel}.
+   */
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
@@ -149,9 +154,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
-    } else if (needsHeaders()) {
+    if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
       try {

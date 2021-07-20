@@ -176,12 +176,10 @@ public class ClientContextTest {
 
     @Override
     public TransportChannel getTransportChannel() throws IOException {
-      if (needsExecutor()) {
-        throw new IllegalStateException("Needs Executor");
-      }
       if (needsCredentials()) {
         throw new IllegalStateException("Needs Credentials");
       }
+      transport.setExecutor(executor);
       return transport;
     }
 
@@ -718,5 +716,57 @@ public class ClientContextTest {
             .build();
     assertFalse(settings.getSwitchToMtlsEndpointAllowed());
     assertEquals(endpoint, settings.getEndpoint());
+  }
+
+  @Test
+  public void testExecutorSettings() throws Exception {
+    TransportChannelProvider transportChannelProvider =
+        new FakeTransportProvider(
+            FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
+
+    ClientSettings.Builder builder =
+        new FakeClientSettings.Builder()
+            .setTransportChannelProvider(transportChannelProvider)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(Mockito.mock(GoogleCredentials.class)));
+
+    // By default, if executor is not set, channel provider should not have an executor set
+    ClientContext context = ClientContext.create(builder.build());
+    FakeTransportChannel transportChannel = (FakeTransportChannel) context.getTransportChannel();
+    assertThat(transportChannel.getExecutor()).isNull();
+
+    ExecutorProvider channelExecutorProvider =
+        FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class));
+    builder.setTransportChannelProvider(
+        transportChannelProvider.withExecutor((Executor) channelExecutorProvider.getExecutor()));
+    context = ClientContext.create(builder.build());
+    transportChannel = (FakeTransportChannel) context.getTransportChannel();
+    assertThat(transportChannel.getExecutor())
+        .isSameInstanceAs(channelExecutorProvider.getExecutor());
+
+    ExecutorProvider executorProvider =
+        FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class));
+    assertThat(channelExecutorProvider.getExecutor())
+        .isNotSameInstanceAs(executorProvider.getExecutor());
+
+    // For backward compatibility, if executor is set from stubSettings.setExecutor, and transport
+    // channel already has an executor, the ExecutorProvider set in stubSettings won't override
+    // transport channel's executor
+    builder.setExecutorProvider(executorProvider);
+    context = ClientContext.create(builder.build());
+    transportChannel = (FakeTransportChannel) context.getTransportChannel();
+    assertThat(transportChannel.getExecutor())
+        .isSameInstanceAs(channelExecutorProvider.getExecutor());
+
+    // For backward compatibility, if executor is set from stubSettings.setExecutor, and transport
+    // channel doesn't have an executor, transport channel will get the executor from
+    // stubSettings.setExecutor
+    builder.setExecutorProvider(executorProvider);
+    builder.setTransportChannelProvider(
+        new FakeTransportProvider(
+            FakeTransportChannel.create(new FakeChannel()), null, true, null, null));
+    context = ClientContext.create(builder.build());
+    transportChannel = (FakeTransportChannel) context.getTransportChannel();
+    assertThat(transportChannel.getExecutor()).isSameInstanceAs(executorProvider.getExecutor());
   }
 }
