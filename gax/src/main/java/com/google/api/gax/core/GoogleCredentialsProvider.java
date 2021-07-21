@@ -56,6 +56,9 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   @BetaApi
   public abstract List<String> getJwtEnabledScopes();
 
+  @BetaApi
+  public abstract boolean getUseJwtAccessWithScope();
+
   @VisibleForTesting
   @Nullable
   abstract GoogleCredentials getOAuth2Credentials();
@@ -91,12 +94,19 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     if (credentials.createScopedRequired()) {
       credentials = credentials.createScoped(getScopesToApply());
     }
+
+    if (getUseJwtAccessWithScope() && credentials instanceof ServiceAccountCredentials) {
+      // See https://google.aip.dev/auth/4111 for self signed JWT.
+      ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
+      return serviceAccount.createWithUseJwtAccessWithScope(true);
+    }
     return credentials;
   }
 
   public static Builder newBuilder() {
     return new AutoValue_GoogleCredentialsProvider.Builder()
-        .setJwtEnabledScopes(ImmutableList.<String>of());
+        .setJwtEnabledScopes(ImmutableList.<String>of())
+        .setUseJwtAccessWithScope(false);
   }
 
   public abstract Builder toBuilder();
@@ -134,9 +144,18 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
+    /** Whether self signed JWT with scopes should be used for service account credentials. */
+    @BetaApi
+    public abstract Builder setUseJwtAccessWithScope(boolean val);
+
+    /** The UseJwtAccessWithScope value previously provided. */
+    @BetaApi
+    public abstract boolean getUseJwtAccessWithScope();
+
     public GoogleCredentialsProvider build() {
       setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
       setJwtEnabledScopes(ImmutableList.copyOf(getJwtEnabledScopes()));
+      setUseJwtAccessWithScope(getUseJwtAccessWithScope());
       return autoBuild();
     }
 
