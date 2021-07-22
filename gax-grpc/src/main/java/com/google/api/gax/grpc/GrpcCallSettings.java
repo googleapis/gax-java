@@ -38,12 +38,12 @@ import io.grpc.MethodDescriptor;
 public class GrpcCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
   private final RequestParamsExtractor<RequestT> paramsExtractor;
+  private final boolean alwaysAwaitTrailers;
 
-  private GrpcCallSettings(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      RequestParamsExtractor<RequestT> paramsExtractor) {
-    this.methodDescriptor = methodDescriptor;
-    this.paramsExtractor = paramsExtractor;
+  private GrpcCallSettings(Builder builder) {
+    this.methodDescriptor = builder.methodDescriptor;
+    this.paramsExtractor = builder.paramsExtractor;
+    this.alwaysAwaitTrailers = builder.shouldAwaitTrailers;
   }
 
   public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
@@ -55,8 +55,13 @@ public class GrpcCallSettings<RequestT, ResponseT> {
     return paramsExtractor;
   }
 
+  @BetaApi
+  public boolean shouldAwaitTrailers() {
+    return alwaysAwaitTrailers;
+  }
+
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+    return new Builder<RequestT, ResponseT>().setShouldAwaitTrailers(true);
   }
 
   public static <RequestT, ResponseT> GrpcCallSettings<RequestT, ResponseT> create(
@@ -73,11 +78,14 @@ public class GrpcCallSettings<RequestT, ResponseT> {
   public static class Builder<RequestT, ResponseT> {
     private MethodDescriptor<RequestT, ResponseT> methodDescriptor;
     private RequestParamsExtractor<RequestT> paramsExtractor;
+    private boolean shouldAwaitTrailers;
 
     private Builder() {}
 
     private Builder(GrpcCallSettings<RequestT, ResponseT> settings) {
       this.methodDescriptor = settings.methodDescriptor;
+      this.paramsExtractor = settings.paramsExtractor;
+      this.shouldAwaitTrailers = settings.alwaysAwaitTrailers;
     }
 
     public Builder<RequestT, ResponseT> setMethodDescriptor(
@@ -93,8 +101,14 @@ public class GrpcCallSettings<RequestT, ResponseT> {
       return this;
     }
 
+    @BetaApi
+    public Builder<RequestT, ResponseT> setShouldAwaitTrailers(boolean b) {
+      this.shouldAwaitTrailers = b;
+      return this;
+    }
+
     public GrpcCallSettings<RequestT, ResponseT> build() {
-      return new GrpcCallSettings<>(methodDescriptor, paramsExtractor);
+      return new GrpcCallSettings<>(this);
     }
   }
 }

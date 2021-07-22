@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.67.0](https://www.github.com/googleapis/gax-java/compare/v1.66.0...v1.67.0) (2021-07-19)
+
+
+### Features
+
+* introduce closeAsync to Batcher ([#1423](https://www.github.com/googleapis/gax-java/issues/1423)) ([aab5288](https://www.github.com/googleapis/gax-java/commit/aab528803405c2b5f9fc89641f47abff948a876d))
+* optimize unary callables to not wait for trailers ([#1356](https://www.github.com/googleapis/gax-java/issues/1356)) ([dd5f955](https://www.github.com/googleapis/gax-java/commit/dd5f955a3ab740c677fbc6f1247094798eb814a3))
+* update DirectPath environment variables ([#1412](https://www.github.com/googleapis/gax-java/issues/1412)) ([4f63b61](https://www.github.com/googleapis/gax-java/commit/4f63b61f1259936aa4a1eaf9162218c787b92f2a))
+
+
+### Bug Fixes
+
+* remove `extends ApiMessage` from `HttpJsonStubCallableFactory` definition ([#1426](https://www.github.com/googleapis/gax-java/issues/1426)) ([87636a5](https://www.github.com/googleapis/gax-java/commit/87636a5812874a77e9004aab07607121efa43736))
+
 ## [1.66.0](https://www.github.com/googleapis/gax-java/compare/v1.65.1...v1.66.0) (2021-06-24)
 
 
