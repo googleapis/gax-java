@@ -36,6 +36,7 @@ import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -242,4 +243,46 @@ public interface ApiCallContext extends RetryingContext {
   /** Return the extra headers set for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   Map<String, List<String>> getExtraHeaders();
+
+  /**
+   * Return a new ApiCallContext with the extra context merged into the present instance. Any
+   * existing value of the key is overwritten.
+   */
+  @BetaApi("The surface for extra contexts is not stable yet and may change in the future.")
+  <T> ApiCallContext withExtraContext(Key<T> key, T extraContext);
+
+  /** Return the extra context set for this context. */
+  @SuppressWarnings("unchecked ")
+  @BetaApi("The surface for extra contexts is not stable yet and may change in the future.")
+  <T> T getExtraContext(Key<T> key);
+
+  /** Key for extra contexts key-value pair. */
+  public static final class Key<T> {
+    private final String name;
+    private final T defaultValue;
+
+    private Key(String name, T defaultValue) {
+      this.name = name;
+      this.defaultValue = defaultValue;
+    }
+
+    /**
+     * Factory method for creating instances of {@link Key}. The default value of the key is null.
+     */
+    public static <T> Key<T> create(String name) {
+      Preconditions.checkNotNull(name, "Key name cannot be null.");
+      return new Key<>(name, null);
+    }
+
+    /** Factory method for creating instances of {@link Key} with default values. */
+    public static <T> Key<T> createWithDefault(String name, T defaultValue) {
+      Preconditions.checkNotNull(name, "Key name cannot be null.");
+      return new Key<>(name, defaultValue);
+    }
+
+    /** Returns the user supplied default value of the key. */
+    public T getDefault() {
+      return defaultValue;
+    }
+  }
 }

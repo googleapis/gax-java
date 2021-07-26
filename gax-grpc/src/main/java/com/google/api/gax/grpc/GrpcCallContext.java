@@ -34,6 +34,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.ApiCallContextUtil;
 import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.BaseApiTracer;
@@ -43,7 +44,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
-import io.grpc.CallOptions.Key;
 import io.grpc.Channel;
 import io.grpc.Deadline;
 import io.grpc.Metadata;
@@ -66,7 +66,7 @@ import org.threeten.bp.Duration;
  */
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 public final class GrpcCallContext implements ApiCallContext {
-  static final CallOptions.Key<ApiTracer> TRACER_KEY = Key.create("gax.tracer");
+  static final CallOptions.Key<ApiTracer> TRACER_KEY = CallOptions.Key.create("gax.tracer");
 
   private final Channel channel;
   private final CallOptions callOptions;
@@ -77,6 +77,7 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final RetrySettings retrySettings;
   @Nullable private final ImmutableSet<StatusCode.Code> retryableCodes;
   private final ImmutableMap<String, List<String>> extraHeaders;
+  private final ImmutableMap<Key, Object> extraContexts;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
@@ -88,6 +89,7 @@ public final class GrpcCallContext implements ApiCallContext {
         null,
         null,
         ImmutableMap.<String, List<String>>of(),
+        ImmutableMap.<Key, Object>of(),
         null,
         null);
   }
@@ -102,6 +104,7 @@ public final class GrpcCallContext implements ApiCallContext {
         null,
         null,
         ImmutableMap.<String, List<String>>of(),
+        ImmutableMap.<Key, Object>of(),
         null,
         null);
   }
@@ -114,6 +117,7 @@ public final class GrpcCallContext implements ApiCallContext {
       @Nullable Duration streamIdleTimeout,
       @Nullable Integer channelAffinity,
       ImmutableMap<String, List<String>> extraHeaders,
+      ImmutableMap<Key, Object> extraContexts,
       @Nullable RetrySettings retrySettings,
       @Nullable Set<StatusCode.Code> retryableCodes) {
     this.channel = channel;
@@ -123,6 +127,7 @@ public final class GrpcCallContext implements ApiCallContext {
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
     this.extraHeaders = Preconditions.checkNotNull(extraHeaders);
+    this.extraContexts = Preconditions.checkNotNull(extraContexts);
     this.retrySettings = retrySettings;
     this.retryableCodes = retryableCodes == null ? null : ImmutableSet.copyOf(retryableCodes);
   }
@@ -187,6 +192,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -212,6 +218,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -231,6 +238,7 @@ public final class GrpcCallContext implements ApiCallContext {
         streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -245,6 +253,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         affinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -263,6 +272,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         newExtraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -282,6 +292,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         retrySettings,
         this.retryableCodes);
   }
@@ -301,6 +312,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         retryableCodes);
   }
@@ -370,6 +382,9 @@ public final class GrpcCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(this.extraHeaders, grpcCallContext.extraHeaders);
 
+    ImmutableMap<Key, Object> newExtraContexts =
+        ApiCallContextUtil.mergeExtraContexts(this.extraContexts, grpcCallContext.extraContexts);
+
     CallOptions newCallOptions =
         grpcCallContext
             .callOptions
@@ -388,6 +403,7 @@ public final class GrpcCallContext implements ApiCallContext {
         newStreamIdleTimeout,
         newChannelAffinity,
         newExtraHeaders,
+        newExtraContexts,
         newRetrySettings,
         newRetryableCodes);
   }
@@ -448,6 +464,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -462,6 +479,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamIdleTimeout,
         this.channelAffinity,
         this.extraHeaders,
+        this.extraContexts,
         this.retrySettings,
         this.retryableCodes);
   }
@@ -491,6 +509,36 @@ public final class GrpcCallContext implements ApiCallContext {
     return withCallOptions(callOptions.withOption(TRACER_KEY, tracer));
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public <T> GrpcCallContext withExtraContext(Key<T> key, T extraContext) {
+    Preconditions.checkNotNull(key);
+
+    ImmutableMap<Key, Object> newExtraContexts =
+        ApiCallContextUtil.addExtraContext(extraContexts, key, extraContext);
+    return new GrpcCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.channelAffinity,
+        this.extraHeaders,
+        newExtraContexts,
+        this.retrySettings,
+        this.retryableCodes);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public <T> T getExtraContext(Key<T> key) {
+    Preconditions.checkNotNull(key);
+    if (extraContexts.containsKey(key)) {
+      return (T) extraContexts.get(key);
+    }
+    return key.getDefault();
+  }
+
   @Override
   public int hashCode() {
     return Objects.hash(
@@ -501,6 +549,7 @@ public final class GrpcCallContext implements ApiCallContext {
         streamIdleTimeout,
         channelAffinity,
         extraHeaders,
+        extraContexts,
         retrySettings,
         retryableCodes);
   }
@@ -522,6 +571,7 @@ public final class GrpcCallContext implements ApiCallContext {
         && Objects.equals(this.streamIdleTimeout, that.streamIdleTimeout)
         && Objects.equals(this.channelAffinity, that.channelAffinity)
         && Objects.equals(this.extraHeaders, that.extraHeaders)
+        && Objects.equals(this.extraContexts, that.extraContexts)
         && Objects.equals(this.retrySettings, that.retrySettings)
         && Objects.equals(this.retryableCodes, that.retryableCodes);
   }
