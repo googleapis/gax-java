@@ -457,7 +457,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** @deprecated Please use {@link #getBackgroundExecutorProvider()}. */
     @Deprecated
     public ExecutorProvider getExecutorProvider() {
-      // return executorProvider;
       return deprecatedExecutorProviderSet ? backgroundExecutorProvider : null;
     }
 
