@@ -37,15 +37,14 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -54,11 +53,7 @@ import javax.annotation.Nullable;
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
   private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
   private static final ExecutorService DEFAULT_EXECUTOR =
-      Executors.newCachedThreadPool(
-          new ThreadFactoryBuilder()
-              .setDaemon(true)
-              .setNameFormat("http-default-executor-%d")
-              .build());
+      InstantiatingExecutorProvider.newBuilder().build().getExecutor();
 
   private final Executor executor;
   private final String endpoint;
@@ -158,7 +153,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
-      this.executor = executor;
+      this.executor = Preconditions.checkNotNull(executor);
       return this;
     }
 
@@ -179,9 +174,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
     public ManagedHttpJsonChannel build() {
       Preconditions.checkNotNull(endpoint);
-      if (executor == null) {
-        this.executor = DEFAULT_EXECUTOR;
-      }
       return new ManagedHttpJsonChannel(
           executor, endpoint, jsonFactory, headerEnhancers, httpTransport);
     }

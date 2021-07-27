@@ -169,10 +169,6 @@ public abstract class ClientContext {
     ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
     final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
-    ExecutorProvider executorProvider = settings.getExecutorProvider();
-    final ScheduledExecutorService executor =
-        executorProvider == null ? null : executorProvider.getExecutor();
-
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
     if (settings.getQuotaProjectId() != null) {
@@ -184,11 +180,11 @@ public abstract class ClientContext {
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
-    // After needsExecutor and StubSettings#setExecutor are deprecated, transport channel executor
-    // can only be set from TransportChannelProvider#withExecutor directly, and a provider will
-    // have a default executor if it needs one.
-    if (transportChannelProvider.needsExecutor() && executor != null) {
-      transportChannelProvider = transportChannelProvider.withExecutor(executor);
+    // After needsExecutor and StubSettings#setExecutorProvider are deprecated, transport channel
+    // executor can only be set from TransportChannelProvider#withExecutor directly, and a provider
+    // will have a default executor if it needs one.
+    if (transportChannelProvider.needsExecutor() && settings.getExecutorProvider() != null) {
+      transportChannelProvider = transportChannelProvider.withExecutor(backgroundExecutor);
     }
     Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
@@ -241,12 +237,6 @@ public abstract class ClientContext {
     }
     if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
       backgroundResources.add(watchdog);
-    }
-    if (executorProvider != null
-        && executor != null
-        && executorProvider.shouldAutoClose()
-        && executor != backgroundExecutor) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
     return newBuilder()
