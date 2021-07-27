@@ -38,7 +38,7 @@ def com_google_api_gax_java_repositories():
             name = name,
             strip_repo_prefix = "maven.",
             artifact = _fix_bazel_artifact_format(artifact),
-            server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+            server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/", "file:///usr/local/google/home/vam/.m2/repository/"],
             licenses = ["notice", "reciprocal"],
         )
 
