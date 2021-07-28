@@ -41,6 +41,7 @@ import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.protobuf.Option;
 import java.util.concurrent.ExecutionException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,7 +49,7 @@ public class HttpJsonOperationSnapshotCallableTest {
 
   UnaryCallable<Option, Field> innerCallable;
   OperationSnapshotFactory<Option, Field> operationSnapshotFactory;
-  HttpJsonOperationSnapshotCallable<Option, Field> opSnapCallable;
+  HttpJsonOperationSnapshotCallable<Option, Field> operationSnapCallable;
 
   @Before
   @SuppressWarnings("unchecked")
@@ -57,7 +58,7 @@ public class HttpJsonOperationSnapshotCallableTest {
     operationSnapshotFactory =
         (OperationSnapshotFactory<Option, Field>) mock(OperationSnapshotFactory.class);
 
-    opSnapCallable =
+    operationSnapCallable =
         new HttpJsonOperationSnapshotCallable<Option, Field>(
             innerCallable, operationSnapshotFactory);
   }
@@ -82,11 +83,36 @@ public class HttpJsonOperationSnapshotCallableTest {
     when(operationSnapshotFactory.create(request, field)).thenReturn(operationSnapshot);
     when(innerCallable.futureCall(request, context)).thenReturn(settableApiFuture);
 
-    ApiFuture<OperationSnapshot> futureCall = opSnapCallable.futureCall(request, context);
+    ApiFuture<OperationSnapshot> futureCall = operationSnapCallable.futureCall(request, context);
 
     Truth.assertThat(futureCall.get().getName()).isEqualTo("California");
+  }
 
-    // Truth.assertThat(futureCall.)
+  @Test
+  public void futureCallTestException() throws InterruptedException {
+    Option request = Option.newBuilder().setName("Arizona").build();
+    Field field = Field.newBuilder().setName("Georgia").build();
+    ApiCallContext context = mock(ApiCallContext.class);
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.newBuilder()
+            .setName("California")
+            .setMetadata(2)
+            .setDone(true)
+            .setResponse("Florida")
+            .setError(0, "no error")
+            .build();
 
+    SettableApiFuture<Field> settableApiFuture = SettableApiFuture.create();
+    settableApiFuture.setException(new RuntimeException("Seattle"));
+
+    when(operationSnapshotFactory.create(request, field)).thenReturn(operationSnapshot);
+    when(innerCallable.futureCall(request, context)).thenReturn(settableApiFuture);
+
+    try {
+      operationSnapCallable.futureCall(request, context).get();
+      Assert.fail("Exception should have been thrown");
+    } catch (ExecutionException e) {
+      Truth.assertThat(e).hasMessageThat().contains("Seattle");
+    }
   }
 }

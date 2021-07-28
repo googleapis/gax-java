@@ -39,34 +39,21 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.protobuf.Option;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class HttpJsonLongRunningClientTest {
 
-  UnaryCallable<Option, Field> opCallable;
-  OperationSnapshotFactory<Option, Field> opSnapFact;
+  OperationSnapshotFactory<Option, Field> operationSnapFact;
   PollingRequestFactory<Option> pollReqFact;
-
-  HttpJsonLongRunningClient<Option, Field> lroClient;
 
   @Before
   public void init() {
-    opCallable =
-        new UnaryCallable<Option, Field>() {
-          @Override
-          public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
-            if (!request.getName().equals("Chicago")) {
-              return ApiFutures.immediateFailedFuture(
-                  new IllegalStateException("Unexpected: " + request));
-            } else {
-              return ApiFutures.immediateFuture(Field.newBuilder().setName("Miami").build());
-            }
-          }
-        };
-    opSnapFact =
+    operationSnapFact =
         new OperationSnapshotFactory<Option, Field>() {
           @Override
           public OperationSnapshot create(final Option request, final Field response) {
@@ -82,24 +69,69 @@ public class HttpJsonLongRunningClientTest {
             return Option.newBuilder().setName(compoundOperationId).build();
           }
         };
-
-    lroClient = new HttpJsonLongRunningClient<Option, Field>(opCallable, opSnapFact, pollReqFact);
   }
 
   @Test
   public void getOperationCallableTest() {
-    UnaryCallable<String, OperationSnapshot> call = lroClient.getOperationCallable();
-    assertThat(call.call("Chicago").getName()).isEqualTo("Miami");
+    UnaryCallable<Option, Field>  operationCallable =
+        new UnaryCallable<Option, Field>() {
+          @Override
+          public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
+            return ApiFutures.immediateFuture(Field.newBuilder().setName("Miami").build());
+          }
+        };
+
+    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    UnaryCallable<String, OperationSnapshot> operationCall = lroClient.getOperationCallable();
+    assertThat(operationCall.call("Chicago").getName()).isEqualTo("Miami");
+  }
+
+  @Test
+  public void getOperationCallableFailTest() {
+    UnaryCallable<Option, Field>  operationCallable =
+        new UnaryCallable<Option, Field>() {
+          @Override
+          public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
+            return ApiFutures.immediateFailedFuture(new RuntimeException("Prague"));
+          }
+        };
+
+    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    UnaryCallable<String, OperationSnapshot> operationCall = lroClient.getOperationCallable();
+    try {
+      operationCall.call("Chicago");
+      Assert.fail("Exception should have been thrown");
+    } catch(RuntimeException e) {
+      Truth.assertThat(e).hasMessageThat().contains("Prague");
+    }
   }
 
   @Test
   public void cancelOperationCallableTest() {
+    UnaryCallable<Option, Field>  operationCallable =
+        new UnaryCallable<Option, Field>() {
+          @Override
+          public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
+            return ApiFutures.immediateFuture(Field.newBuilder().setName("Miami").build());
+          }
+        };
+
+    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, Void> cancel = lroClient.cancelOperationCallable();
     assertNull(cancel);
   }
 
   @Test
   public void deleteOperationCallableTest() {
+    UnaryCallable<Option, Field>  operationCallable =
+        new UnaryCallable<Option, Field>() {
+          @Override
+          public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
+            return ApiFutures.immediateFuture(Field.newBuilder().setName("Miami").build());
+          }
+        };
+
+    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, Void> delete = lroClient.cancelOperationCallable();
     assertNull(delete);
   }

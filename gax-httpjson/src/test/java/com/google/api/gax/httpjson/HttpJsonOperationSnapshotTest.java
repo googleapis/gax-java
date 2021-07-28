@@ -38,9 +38,8 @@ import org.junit.Test;
 public class HttpJsonOperationSnapshotTest {
 
   @Test
-  public void newBuilderTest() {
-    // Test when the operation is done with no error
-    HttpJsonOperationSnapshot testOpS0 =
+  public void newBuilderTestNoError() {
+    HttpJsonOperationSnapshot testOperationSnapshot0 =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot0")
             .setMetadata("Los Angeles")
@@ -49,8 +48,13 @@ public class HttpJsonOperationSnapshotTest {
             .setError(0, "no error")
             .build();
 
-    // Test when the operation is done with an error
-    HttpJsonOperationSnapshot testOpS1 =
+    assertNull(testOperationSnapshot0.getErrorMessage());
+    assertNull(testOperationSnapshot0.getErrorCode());
+  }
+
+  @Test
+  public void newBuilderTestWithError() {
+    HttpJsonOperationSnapshot testOperationSnapshot1 =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot1")
             .setMetadata("Austin")
@@ -59,8 +63,13 @@ public class HttpJsonOperationSnapshotTest {
             .setError(403, "Forbidden")
             .build();
 
-    // Test when the operation is not done
-    HttpJsonOperationSnapshot testOpS2 =
+    assertEquals(testOperationSnapshot1.getErrorMessage(), "Forbidden");
+    assertEquals(testOperationSnapshot1.getErrorCode(), HttpJsonStatusCode.of(403, "Forbidden"));
+  }
+
+  @Test
+  public void newBuilderTestNotDone() {
+    HttpJsonOperationSnapshot testOperationSnapshot2 =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot2")
             .setMetadata("Chicago")
@@ -69,13 +78,7 @@ public class HttpJsonOperationSnapshotTest {
             .setError(0, "no error")
             .build();
 
-    assertNull(testOpS0.getErrorMessage());
-    assertNull(testOpS0.getErrorCode());
-
-    assertEquals(testOpS1.getErrorMessage(), "Forbidden");
-    assertEquals(testOpS1.getErrorCode(), HttpJsonStatusCode.of(403, "Forbidden"));
-
-    assertNull(testOpS2.getErrorMessage());
-    assertNull(testOpS2.getErrorCode());
+    assertNull(testOperationSnapshot2.getErrorMessage());
+    assertNull(testOperationSnapshot2.getErrorCode());
   }
 }
