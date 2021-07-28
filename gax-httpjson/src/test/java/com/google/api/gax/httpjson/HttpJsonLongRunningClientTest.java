@@ -73,7 +73,7 @@ public class HttpJsonLongRunningClientTest {
 
   @Test
   public void getOperationCallableTest() {
-    UnaryCallable<Option, Field>  operationCallable =
+    UnaryCallable<Option, Field> operationCallable =
         new UnaryCallable<Option, Field>() {
           @Override
           public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
@@ -81,14 +81,16 @@ public class HttpJsonLongRunningClientTest {
           }
         };
 
-    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    HttpJsonLongRunningClient<Option, Field> lroClient =
+        new HttpJsonLongRunningClient<Option, Field>(
+            operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, OperationSnapshot> operationCall = lroClient.getOperationCallable();
     assertThat(operationCall.call("Chicago").getName()).isEqualTo("Miami");
   }
 
   @Test
   public void getOperationCallableFailTest() {
-    UnaryCallable<Option, Field>  operationCallable =
+    UnaryCallable<Option, Field> operationCallable =
         new UnaryCallable<Option, Field>() {
           @Override
           public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
@@ -96,19 +98,21 @@ public class HttpJsonLongRunningClientTest {
           }
         };
 
-    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    HttpJsonLongRunningClient<Option, Field> lroClient =
+        new HttpJsonLongRunningClient<Option, Field>(
+            operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, OperationSnapshot> operationCall = lroClient.getOperationCallable();
     try {
       operationCall.call("Chicago");
       Assert.fail("Exception should have been thrown");
-    } catch(RuntimeException e) {
+    } catch (RuntimeException e) {
       Truth.assertThat(e).hasMessageThat().contains("Prague");
     }
   }
 
   @Test
   public void cancelOperationCallableTest() {
-    UnaryCallable<Option, Field>  operationCallable =
+    UnaryCallable<Option, Field> operationCallable =
         new UnaryCallable<Option, Field>() {
           @Override
           public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
@@ -116,14 +120,16 @@ public class HttpJsonLongRunningClientTest {
           }
         };
 
-    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    HttpJsonLongRunningClient<Option, Field> lroClient =
+        new HttpJsonLongRunningClient<Option, Field>(
+            operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, Void> cancel = lroClient.cancelOperationCallable();
     assertNull(cancel);
   }
 
   @Test
   public void deleteOperationCallableTest() {
-    UnaryCallable<Option, Field>  operationCallable =
+    UnaryCallable<Option, Field> operationCallable =
         new UnaryCallable<Option, Field>() {
           @Override
           public ApiFuture<Field> futureCall(Option request, ApiCallContext context) {
@@ -131,7 +137,9 @@ public class HttpJsonLongRunningClientTest {
           }
         };
 
-    HttpJsonLongRunningClient<Option, Field> lroClient = new HttpJsonLongRunningClient<Option, Field>(operationCallable, operationSnapFact, pollReqFact);
+    HttpJsonLongRunningClient<Option, Field> lroClient =
+        new HttpJsonLongRunningClient<Option, Field>(
+            operationCallable, operationSnapFact, pollReqFact);
     UnaryCallable<String, Void> delete = lroClient.cancelOperationCallable();
     assertNull(delete);
   }
