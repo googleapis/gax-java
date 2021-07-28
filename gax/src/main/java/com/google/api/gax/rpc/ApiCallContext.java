@@ -245,19 +245,19 @@ public interface ApiCallContext extends RetryingContext {
   Map<String, List<String>> getExtraHeaders();
 
   /**
-   * Return a new ApiCallContext with the extra context merged into the present instance. Any
+   * Return a new ApiCallContext with the custom context merged into the present instance. Any
    * existing value of the key is overwritten.
    */
-  @BetaApi("The surface for extra contexts is not stable yet and may change in the future.")
-  <T> ApiCallContext withExtraContext(Key<T> key, T extraContext);
+  @BetaApi("The surface for custom contexts is not stable yet and may change in the future.")
+  <T> ApiCallContext withCustomContext(Key<T> key, T value);
 
-  /** Return the extra context set for this context. */
-  @SuppressWarnings("unchecked ")
-  @BetaApi("The surface for extra contexts is not stable yet and may change in the future.")
-  <T> T getExtraContext(Key<T> key);
+  /** Return the custom context set for this context. */
+  @SuppressWarnings("unchecked")
+  @BetaApi("The surface for custom contexts is not stable yet and may change in the future.")
+  <T> T getCustomContext(Key<T> key);
 
-  /** Key for extra contexts key-value pair. */
-  public static final class Key<T> {
+  /** Key for custom contexts key-value pair. */
+  final class Key<T> {
     private final String name;
     private final T defaultValue;
 

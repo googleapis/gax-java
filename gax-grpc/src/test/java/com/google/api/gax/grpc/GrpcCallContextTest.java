@@ -355,7 +355,7 @@ public class GrpcCallContextTest {
   }
 
   @Test
-  public void testWithExtraContext() {
+  public void testWithCustomContexts() {
     GrpcCallContext emptyCallContext = GrpcCallContext.createDefault();
     ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
     ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
@@ -364,16 +364,16 @@ public class GrpcCallContextTest {
     String testContextOverwrite = "test1Overwrite";
     GrpcCallContext context =
         emptyCallContext
-            .withExtraContext(contextKey1, testContext1)
-            .withExtraContext(contextKey2, testContext2);
-    assertEquals(testContext1, context.getExtraContext(contextKey1));
-    assertEquals(testContext2, context.getExtraContext(contextKey2));
-    GrpcCallContext newContext = context.withExtraContext(contextKey1, testContextOverwrite);
-    assertEquals(testContextOverwrite, newContext.getExtraContext(contextKey1));
+            .withCustomContext(contextKey1, testContext1)
+            .withCustomContext(contextKey2, testContext2);
+    assertEquals(testContext1, context.getCustomContext(contextKey1));
+    assertEquals(testContext2, context.getCustomContext(contextKey2));
+    GrpcCallContext newContext = context.withCustomContext(contextKey1, testContextOverwrite);
+    assertEquals(testContextOverwrite, newContext.getCustomContext(contextKey1));
   }
 
   @Test
-  public void testMergeExtraContext() {
+  public void testMergeCustomContexts() {
     GrpcCallContext emptyCallContext = GrpcCallContext.createDefault();
     ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
     ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
@@ -384,16 +384,16 @@ public class GrpcCallContextTest {
     String testContextOverwrite = "test1Overwrite";
     GrpcCallContext context1 =
         emptyCallContext
-            .withExtraContext(contextKey1, testContext1)
-            .withExtraContext(contextKey2, testContext2);
+            .withCustomContext(contextKey1, testContext1)
+            .withCustomContext(contextKey2, testContext2);
     GrpcCallContext context2 =
         emptyCallContext
-            .withExtraContext(contextKey1, testContextOverwrite)
-            .withExtraContext(contextKey3, testContext3);
+            .withCustomContext(contextKey1, testContextOverwrite)
+            .withCustomContext(contextKey3, testContext3);
     ApiCallContext mergedContext = context1.merge(context2);
-    assertEquals(testContextOverwrite, mergedContext.getExtraContext(contextKey1));
-    assertEquals(testContext2, mergedContext.getExtraContext(contextKey2));
-    assertEquals(testContext3, mergedContext.getExtraContext(contextKey3));
+    assertEquals(testContextOverwrite, mergedContext.getCustomContext(contextKey1));
+    assertEquals(testContext2, mergedContext.getCustomContext(contextKey2));
+    assertEquals(testContext3, mergedContext.getCustomContext(contextKey3));
   }
 
   private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {
