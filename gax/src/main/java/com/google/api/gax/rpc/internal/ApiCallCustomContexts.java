@@ -39,7 +39,7 @@ import com.google.common.collect.ImmutableMap;
 @InternalApi
 public final class ApiCallCustomContexts {
 
-  private ImmutableMap<Key, Object> customContexts;
+  private final ImmutableMap<Key, Object> customContexts;
 
   private ApiCallCustomContexts(ImmutableMap<Key, Object> contexts) {
     this.customContexts = Preconditions.checkNotNull(contexts);
