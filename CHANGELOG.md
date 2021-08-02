@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0](https://www.github.com/googleapis/gax-java/compare/v1.67.0...v2.0.0) (2021-07-30)
+
+
+### Features
+
+* promote to 2.0.0 ([#1444](https://www.github.com/googleapis/gax-java/issues/1444)) ([776b1aa](https://www.github.com/googleapis/gax-java/commit/776b1aa73022bedec55e69732245b73cd04608f8))
+
+
+### Bug Fixes
+
+* stop overriding default grpc executor ([#1355](https://www.github.com/googleapis/gax-java/issues/1355)) ([b1f8c43](https://www.github.com/googleapis/gax-java/commit/b1f8c43cc90eb8e5ef78d142878841689356738c))
+
+
+### Dependencies
+
+* update api-common, guava, google-auth-library-credentials ([#1442](https://www.github.com/googleapis/gax-java/issues/1442)) ([2925ed7](https://www.github.com/googleapis/gax-java/commit/2925ed78cfb74db07a87da28839aeebc9027ac72))
+
 ## [1.67.0](https://www.github.com/googleapis/gax-java/compare/v1.66.0...v1.67.0) (2021-07-19)
 
 
