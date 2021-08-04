@@ -35,7 +35,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
-import com.google.api.gax.rpc.internal.ApiCallCustomContexts;
+import com.google.api.gax.rpc.internal.ApiCallContextOptions;
 import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.BaseApiTracer;
@@ -58,7 +58,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
-  private final ApiCallCustomContexts customContexts;
+  private final ApiCallContextOptions options;
   private final ApiTracer tracer;
   private final RetrySettings retrySettings;
   private final ImmutableSet<StatusCode.Code> retryableCodes;
@@ -70,7 +70,7 @@ public class FakeCallContext implements ApiCallContext {
       Duration streamWaitTimeout,
       Duration streamIdleTimeout,
       ImmutableMap<String, List<String>> extraHeaders,
-      ApiCallCustomContexts customContexts,
+      ApiCallContextOptions options,
       ApiTracer tracer,
       RetrySettings retrySettings,
       Set<StatusCode.Code> retryableCodes) {
@@ -80,7 +80,7 @@ public class FakeCallContext implements ApiCallContext {
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
-    this.customContexts = customContexts;
+    this.options = options;
     this.tracer = tracer;
     this.retrySettings = retrySettings;
     this.retryableCodes = retryableCodes == null ? null : ImmutableSet.copyOf(retryableCodes);
@@ -94,7 +94,7 @@ public class FakeCallContext implements ApiCallContext {
         null,
         null,
         ImmutableMap.<String, List<String>>of(),
-        ApiCallCustomContexts.createDefault(),
+        ApiCallContextOptions.getDefaultOptions(),
         null,
         null,
         null);
@@ -171,7 +171,7 @@ public class FakeCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, fakeCallContext.extraHeaders);
 
-    ApiCallCustomContexts newCustomContext = customContexts.merge(fakeCallContext.customContexts);
+    ApiCallContextOptions newOptions = options.merge(fakeCallContext.options);
 
     return new FakeCallContext(
         newCallCredentials,
@@ -180,7 +180,7 @@ public class FakeCallContext implements ApiCallContext {
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newExtraHeaders,
-        newCustomContext,
+        newOptions,
         newTracer,
         newRetrySettings,
         newRetryableCodes);
@@ -198,7 +198,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         retrySettings,
         this.retryableCodes);
@@ -216,7 +216,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         retryableCodes);
@@ -256,7 +256,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -281,7 +281,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -306,7 +306,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -321,7 +321,7 @@ public class FakeCallContext implements ApiCallContext {
         streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -337,7 +337,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -355,7 +355,7 @@ public class FakeCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         newExtraHeaders,
-        this.customContexts,
+        this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
@@ -367,9 +367,9 @@ public class FakeCallContext implements ApiCallContext {
   }
 
   @Override
-  public <T> ApiCallContext withCustomContext(Key<T> key, T value) {
+  public <T> ApiCallContext withOption(Key<T> key, T value) {
     Preconditions.checkNotNull(key);
-    ApiCallCustomContexts newCustomContexts = customContexts.withCustomContext(key, value);
+    ApiCallContextOptions newOptions = options.withOption(key, value);
     return new FakeCallContext(
         credentials,
         channel,
@@ -377,16 +377,16 @@ public class FakeCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         extraHeaders,
-        newCustomContexts,
+        newOptions,
         tracer,
         retrySettings,
         retryableCodes);
   }
 
   @Override
-  public <T> T getCustomContext(Key<T> key) {
+  public <T> T getOption(Key<T> key) {
     Preconditions.checkNotNull(key);
-    return customContexts.getCustomContext(key);
+    return options.getOption(key);
   }
 
   /** {@inheritDoc} */
@@ -411,7 +411,7 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.customContexts,
+        this.options,
         tracer,
         this.retrySettings,
         this.retryableCodes);

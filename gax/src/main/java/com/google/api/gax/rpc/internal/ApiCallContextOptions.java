@@ -35,66 +35,61 @@ import com.google.api.gax.rpc.ApiCallContext.Key;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
-/** ApiCallCustomContexts encapsulates custom context data to pass in a {@link ApiCallContext} */
+/**
+ * ApiCallContextOptions encapsulates additional call options to pass in a {@link ApiCallContext}
+ */
 @InternalApi
-public final class ApiCallCustomContexts {
+public final class ApiCallContextOptions {
 
-  private final ImmutableMap<Key, Object> customContexts;
+  private final ImmutableMap<Key, Object> options;
+  private static final ApiCallContextOptions DEFAULT_OPTIONS =
+      new ApiCallContextOptions(ImmutableMap.<Key, Object>of());
 
-  private ApiCallCustomContexts(ImmutableMap<Key, Object> contexts) {
-    this.customContexts = Preconditions.checkNotNull(contexts);
+  private ApiCallContextOptions(ImmutableMap<Key, Object> contexts) {
+    this.options = Preconditions.checkNotNull(contexts);
   }
 
-  /** Create an empty custom call context. */
-  public static ApiCallCustomContexts createDefault() {
-    return new ApiCallCustomContexts(ImmutableMap.<Key, Object>of());
+  public static ApiCallContextOptions getDefaultOptions() {
+    return DEFAULT_OPTIONS;
   }
 
-  /** Add a context to custom contexts. Any existing value of the key is overwritten. */
-  public <T> ApiCallCustomContexts withCustomContext(Key<T> key, T context) {
+  /** Add an option. Any existing value of the key is overwritten. */
+  public <T> ApiCallContextOptions withOption(Key<T> key, T value) {
     Preconditions.checkNotNull(key);
-    Preconditions.checkNotNull(context);
+    Preconditions.checkNotNull(value);
     ImmutableMap.Builder builder = ImmutableMap.<Key, Object>builder();
-    if (!customContexts.containsKey(key)) {
-      builder.putAll(customContexts).put(key, context);
+    if (!options.containsKey(key)) {
+      builder.putAll(options).put(key, value);
     } else {
-      for (Key oldKey : customContexts.keySet()) {
+      for (Key oldKey : options.keySet()) {
         if (oldKey.equals(key)) {
-          builder.put(oldKey, context);
+          builder.put(oldKey, value);
         } else {
-          builder.put(oldKey, customContexts.get(oldKey));
+          builder.put(oldKey, options.get(oldKey));
         }
       }
     }
-    return new ApiCallCustomContexts(builder.build());
+    return new ApiCallContextOptions(builder.build());
   }
 
-  /** Get a custom context. */
-  public <T> T getCustomContext(Key<T> key) {
+  /** Get an option. */
+  public <T> T getOption(Key<T> key) {
     Preconditions.checkNotNull(key);
-    if (!customContexts.containsKey(key)) {
+    if (!options.containsKey(key)) {
       return key.getDefault();
     }
-    return (T) customContexts.get(key);
+    return (T) options.get(key);
   }
 
-  /**
-   * Merge new custom contexts into existing custom contexts. Any existing values of the keys are
-   * overwritten.
-   */
-  public ApiCallCustomContexts merge(ApiCallCustomContexts newCustomContexts) {
-    Preconditions.checkNotNull(newCustomContexts);
-    ImmutableMap.Builder builder = ImmutableMap.<Key, Object>builder();
-    for (Key key : customContexts.keySet()) {
-      Object oldValue = customContexts.get(key);
-      Object newValue = newCustomContexts.customContexts.get(key);
-      builder.put(key, newValue != null ? newValue : oldValue);
-    }
-    for (Key key : newCustomContexts.customContexts.keySet()) {
-      if (!customContexts.containsKey(key)) {
-        builder.put(key, newCustomContexts.customContexts.get(key));
+  /** Merge new options into existing ones. Any existing values of the keys are overwritten. */
+  public ApiCallContextOptions merge(ApiCallContextOptions newOptions) {
+    Preconditions.checkNotNull(newOptions);
+    ImmutableMap.Builder builder = ImmutableMap.<Key, Object>builder().putAll(newOptions.options);
+    for (Key key : options.keySet()) {
+      if (!newOptions.options.containsKey(key)) {
+        builder.put(key, options.get(key));
       }
     }
-    return new ApiCallCustomContexts(builder.build());
+    return new ApiCallContextOptions(builder.build());
   }
 }

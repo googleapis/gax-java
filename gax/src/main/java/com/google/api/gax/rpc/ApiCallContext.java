@@ -245,18 +245,20 @@ public interface ApiCallContext extends RetryingContext {
   Map<String, List<String>> getExtraHeaders();
 
   /**
-   * Return a new ApiCallContext with the custom context merged into the present instance. Any
+   * Return a new ApiCallContext with additional option merged into the present instance. Any
    * existing value of the key is overwritten.
    */
-  @BetaApi("The surface for custom contexts is not stable yet and may change in the future.")
-  <T> ApiCallContext withCustomContext(Key<T> key, T value);
+  @BetaApi(
+      "The surface for api call context options is not stable yet and may change in the future.")
+  <T> ApiCallContext withOption(Key<T> key, T value);
 
-  /** Return the custom context set for this context. */
+  /** Return the api call context option set for this context. */
   @SuppressWarnings("unchecked")
-  @BetaApi("The surface for custom contexts is not stable yet and may change in the future.")
-  <T> T getCustomContext(Key<T> key);
+  @BetaApi(
+      "The surface for api call context options is not stable yet and may change in the future.")
+  <T> T getOption(Key<T> key);
 
-  /** Key for custom contexts key-value pair. */
+  /** Key for api call context options key-value pair. */
   final class Key<T> {
     private final String name;
     private final T defaultValue;
@@ -272,12 +274,6 @@ public interface ApiCallContext extends RetryingContext {
     public static <T> Key<T> create(String name) {
       Preconditions.checkNotNull(name, "Key name cannot be null.");
       return new Key<>(name, null);
-    }
-
-    /** Factory method for creating instances of {@link Key} with default values. */
-    public static <T> Key<T> createWithDefault(String name, T defaultValue) {
-      Preconditions.checkNotNull(name, "Key name cannot be null.");
-      return new Key<>(name, defaultValue);
     }
 
     /** Returns the user supplied default value of the key. */

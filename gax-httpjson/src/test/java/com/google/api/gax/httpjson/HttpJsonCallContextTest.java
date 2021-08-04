@@ -231,7 +231,7 @@ public class HttpJsonCallContextTest {
   }
 
   @Test
-  public void testWithCustomContexts() {
+  public void testWithOptions() {
     ApiCallContext emptyCallContext = HttpJsonCallContext.createDefault();
     ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
     ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
@@ -240,16 +240,16 @@ public class HttpJsonCallContextTest {
     String testContextOverwrite = "test1Overwrite";
     ApiCallContext context =
         emptyCallContext
-            .withCustomContext(contextKey1, testContext1)
-            .withCustomContext(contextKey2, testContext2);
-    assertEquals(testContext1, context.getCustomContext(contextKey1));
-    assertEquals(testContext2, context.getCustomContext(contextKey2));
-    ApiCallContext newContext = context.withCustomContext(contextKey1, testContextOverwrite);
-    assertEquals(testContextOverwrite, newContext.getCustomContext(contextKey1));
+            .withOption(contextKey1, testContext1)
+            .withOption(contextKey2, testContext2);
+    assertEquals(testContext1, context.getOption(contextKey1));
+    assertEquals(testContext2, context.getOption(contextKey2));
+    ApiCallContext newContext = context.withOption(contextKey1, testContextOverwrite);
+    assertEquals(testContextOverwrite, newContext.getOption(contextKey1));
   }
 
   @Test
-  public void testMergeCustomContexts() {
+  public void testMergeOptions() {
     ApiCallContext emptyCallContext = HttpJsonCallContext.createDefault();
     ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
     ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
@@ -260,15 +260,15 @@ public class HttpJsonCallContextTest {
     String testContextOverwrite = "test1Overwrite";
     ApiCallContext context1 =
         emptyCallContext
-            .withCustomContext(contextKey1, testContext1)
-            .withCustomContext(contextKey2, testContext2);
+            .withOption(contextKey1, testContext1)
+            .withOption(contextKey2, testContext2);
     ApiCallContext context2 =
         emptyCallContext
-            .withCustomContext(contextKey1, testContextOverwrite)
-            .withCustomContext(contextKey3, testContext3);
+            .withOption(contextKey1, testContextOverwrite)
+            .withOption(contextKey3, testContext3);
     ApiCallContext mergedContext = context1.merge(context2);
-    assertEquals(testContextOverwrite, mergedContext.getCustomContext(contextKey1));
-    assertEquals(testContext2, mergedContext.getCustomContext(contextKey2));
-    assertEquals(testContext3, mergedContext.getCustomContext(contextKey3));
+    assertEquals(testContextOverwrite, mergedContext.getOption(contextKey1));
+    assertEquals(testContext2, mergedContext.getOption(contextKey2));
+    assertEquals(testContext3, mergedContext.getOption(contextKey3));
   }
 }
