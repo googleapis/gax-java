@@ -76,7 +76,7 @@ public final class ApiCallContextOptions {
   public <T> T getOption(Key<T> key) {
     Preconditions.checkNotNull(key);
     if (!options.containsKey(key)) {
-      return key.getDefault();
+      return null;
     }
     return (T) options.get(key);
   }
