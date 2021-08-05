@@ -277,8 +277,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private boolean isNonDefaultServiceAccountAllowed() {
-    if (allowNonDefaultServiceAccount != null) {
-      return allowNonDefaultServiceAccount;
+    if (allowNonDefaultServiceAccount != null && allowNonDefaultServiceAccount) {
+      return true;
     }
     return credentials instanceof ComputeEngineCredentials;
   }
