@@ -45,8 +45,8 @@ public final class ApiCallContextOptions {
   private static final ApiCallContextOptions DEFAULT_OPTIONS =
       new ApiCallContextOptions(ImmutableMap.<Key, Object>of());
 
-  private ApiCallContextOptions(ImmutableMap<Key, Object> contexts) {
-    this.options = Preconditions.checkNotNull(contexts);
+  private ApiCallContextOptions(ImmutableMap<Key, Object> options) {
+    this.options = Preconditions.checkNotNull(options);
   }
 
   public static ApiCallContextOptions getDefaultOptions() {
