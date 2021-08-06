@@ -150,6 +150,15 @@ public class OperationsClient implements BackgroundResource {
   }
 
   /**
+    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
+    * advanced usage - prefer using create(OperationsSettings).
+    */
+   @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
+   public static final OperationsClient create(BackgroundResource stub) {
+     return new OperationsClient((OperationsStub) stub);
+   }
+
+  /**
    * Constructs an instance of OperationsClient, using the given settings. This is protected so that
    * it is easy to make a subclass, but otherwise, the static factory methods should be preferred.
    */
