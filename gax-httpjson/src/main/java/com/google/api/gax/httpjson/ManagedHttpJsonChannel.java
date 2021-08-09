@@ -153,7 +153,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
-      this.executor = Preconditions.checkNotNull(executor);
+      this.executor = executor == null ? DEFAULT_EXECUTOR : executor;
       return this;
     }
 
