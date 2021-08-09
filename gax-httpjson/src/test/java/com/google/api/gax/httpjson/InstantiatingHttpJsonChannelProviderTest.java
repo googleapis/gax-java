@@ -62,6 +62,13 @@ public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransp
     provider = provider.withEndpoint(endpoint);
     assertThat(provider.needsEndpoint()).isFalse();
 
+    assertThat(provider.needsHeaders()).isTrue();
+    provider = provider.withHeaders(Collections.<String, String>emptyMap());
+    assertThat(provider.needsHeaders()).isFalse();
+
+    // Make sure getTransportChannel works without setting executor
+    assertThat(provider.getTransportChannel()).isInstanceOf(HttpJsonTransportChannel.class);
+
     assertThat(provider.needsExecutor()).isTrue();
     provider = provider.withExecutor((Executor) executor);
     assertThat(provider.needsExecutor()).isFalse();
@@ -70,10 +77,6 @@ public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransp
     assertThat(provider.needsExecutor()).isFalse();
     provider = provider.withExecutor(executor);
     assertThat(provider.needsExecutor()).isFalse();
-
-    assertThat(provider.needsHeaders()).isTrue();
-    provider = provider.withHeaders(Collections.<String, String>emptyMap());
-    assertThat(provider.needsHeaders()).isFalse();
 
     assertThat(provider.acceptsPoolSize()).isFalse();
     Exception thrownException = null;
