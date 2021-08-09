@@ -2,9 +2,9 @@ load("//:gax_java.bzl", "google_java_format", "google_java_format_verification",
 
 _JAVA_COPTS = [
     "-source",
-    "1.7",
+    "1.8",
     "-target",
-    "1.7",
+    "1.8",
 ]
 
 _COMPILE_DEPS = [
