@@ -34,10 +34,20 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 
+/**
+ * A {@code UnaryCallable} that wraps a UnaryCallable returning an Operation and returns an
+ * OperationSnapshot instead.
+ *
+ * <p>Public for technical reasons. For internal use only.
+ */
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
+@InternalApi
 public class HttpJsonOperationSnapshotCallable<RequestT, OperationT>
     extends UnaryCallable<RequestT, OperationSnapshot> {
 
@@ -51,6 +61,7 @@ public class HttpJsonOperationSnapshotCallable<RequestT, OperationT>
     this.operationSnapshotFactory = operationSnapshotFactory;
   }
 
+  /** {@inheritDoc} */
   @Override
   public ApiFuture<OperationSnapshot> futureCall(final RequestT request, ApiCallContext context) {
     return ApiFutures.transform(

@@ -48,8 +48,8 @@ import org.junit.Test;
 
 public class HttpJsonLongRunningClientTest {
 
-  OperationSnapshotFactory<Option, Field> operationSnapFact;
-  PollingRequestFactory<Option> pollReqFact;
+  private OperationSnapshotFactory<Option, Field> operationSnapFact;
+  private PollingRequestFactory<Option> pollReqFact;
 
   @Before
   public void init() {

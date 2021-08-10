@@ -29,6 +29,20 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
+
+/**
+ * A factory which creates a subsequent polling request from a compund operation id.
+ *
+ * @param <RequestT> polling request type
+ */
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface PollingRequestFactory<RequestT> {
+  /**
+   * Creates a polling request message from a {@code compoundOperationId}.
+   *
+   * @param compoundOperationId the compound operation ID, consisting of an operation name and
+   *     potentially any other relevant information delimited by a ':' * character
+   */
   RequestT create(String compoundOperationId);
 }

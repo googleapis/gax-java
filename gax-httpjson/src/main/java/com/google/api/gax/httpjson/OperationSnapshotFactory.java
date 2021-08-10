@@ -32,7 +32,17 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 
-@BetaApi
+/**
+ * A factory which creates an {@link OperationSnapshot} from an initial request message (the one
+ * which started a long running operation) and an operation response (which may be either initial
+ * request response or the polling request response).
+ *
+ * <p>Public for technical reasons. For internal use only.
+ *
+ * @param <RequestT> initial request message type
+ * @param <OperationT> initial or polling response type
+ */
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface OperationSnapshotFactory<RequestT, OperationT> {
   OperationSnapshot create(RequestT request, OperationT response);
 }
