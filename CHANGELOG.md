@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://www.github.com/googleapis/gax-java/compare/v2.0.0...v2.1.0) (2021-08-11)
+
+
+### Features
+
+* add allowNonDefaultServiceAccount option for DirectPath ([#1433](https://www.github.com/googleapis/gax-java/issues/1433)) ([209b494](https://www.github.com/googleapis/gax-java/commit/209b4944feba1c62be2c9de4545e3b01a806b738))
+
+
+### Bug Fixes
+
+* fix httpjson executor ([#1448](https://www.github.com/googleapis/gax-java/issues/1448)) ([8f48b70](https://www.github.com/googleapis/gax-java/commit/8f48b7027b95e8e75872d1f9dac537ea697d0acc))
+* make closeAsync don't interrupt running thread ([#1446](https://www.github.com/googleapis/gax-java/issues/1446)) ([7c6c298](https://www.github.com/googleapis/gax-java/commit/7c6c29824487346d444730388ea6967408692696))
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to v2.0.1 ([#1452](https://www.github.com/googleapis/gax-java/issues/1452)) ([a52f16f](https://www.github.com/googleapis/gax-java/commit/a52f16f6cef8340357acb374ff31c8a6f248403c))
+
 ## [2.0.0](https://www.github.com/googleapis/gax-java/compare/v1.67.0...v2.0.0) (2021-07-30)
 
 
