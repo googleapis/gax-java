@@ -29,9 +29,18 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.StatusCode;
 
+/**
+ * Implementation of OperationSnapshot based on REST transport.
+ *
+ * <p>Public for technical reasons. For internal use only.
+ */
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
+@InternalApi
 public class HttpJsonOperationSnapshot implements OperationSnapshot {
 
   private final String name;
@@ -61,31 +70,37 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public String getName() {
     return this.name;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Object getMetadata() {
     return this.metadata;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isDone() {
     return done;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Object getResponse() {
     return this.response;
   }
 
+  /** {@inheritDoc} */
   @Override
   public StatusCode getErrorCode() {
     return this.errorCode;
   }
 
+  /** {@inheritDoc} */
   @Override
   public String getErrorMessage() {
     return this.errorMessage;

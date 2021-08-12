@@ -29,20 +29,42 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.httpjson.ProtoOperationTransformers.MetadataTransformer;
+import com.google.api.gax.httpjson.ProtoOperationTransformers.ResponseTransformer;
+import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.common.truth.Truth;
+import com.google.protobuf.Option;
+import org.junit.Test;
 
-/**
- * A factory which creates a subsequent polling request from a compund operation id.
- *
- * @param <RequestT> polling request type
- */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
-public interface PollingRequestFactory<RequestT> {
-  /**
-   * Creates a polling request message from a {@code compoundOperationId}.
-   *
-   * @param compoundOperationId the compound operation ID, consisting of an operation name and
-   *     potentially any other relevant information delimited by a ':' * character
-   */
-  RequestT create(String compoundOperationId);
+public class ProtoOperationTransformersTest {
+
+  @Test
+  public void testResponseTransformer() {
+    ResponseTransformer<Option> transformer = ResponseTransformer.create(Option.class);
+    Option inputOption = Option.newBuilder().setName("Paris").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.newBuilder()
+            .setName("Madrid")
+            .setMetadata(2)
+            .setDone(true)
+            .setResponse(inputOption)
+            .setError(0, "no error")
+            .build();
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputOption);
+  }
+
+  @Test
+  public void testMetadataTransformer() {
+    MetadataTransformer<Option> transformer = MetadataTransformer.create(Option.class);
+    Option metaData = Option.newBuilder().setName("Valparaiso").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.newBuilder()
+            .setName("Barcelona")
+            .setMetadata(metaData)
+            .setDone(true)
+            .setResponse("Gary")
+            .setError(0, "no error")
+            .build();
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(metaData);
+  }
 }

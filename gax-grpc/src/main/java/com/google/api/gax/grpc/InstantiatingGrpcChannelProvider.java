@@ -105,6 +105,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
+  @Nullable private final Boolean allowNonDefaultServiceAccount;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
   @Nullable private final MtlsProvider mtlsProvider;
 
@@ -129,12 +130,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
     this.attemptDirectPath = builder.attemptDirectPath;
+    this.allowNonDefaultServiceAccount = builder.allowNonDefaultServiceAccount;
     this.directPathServiceConfig =
         builder.directPathServiceConfig == null
             ? getDefaultDirectPathServiceConfig()
             : builder.directPathServiceConfig;
   }
 
+  /**
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     grpc executor.
+   */
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
@@ -212,9 +219,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
-    } else if (needsHeaders()) {
+    if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else if (needsEndpoint()) {
       throw new IllegalStateException("getTransportChannel() called when needsEndpoint() is true");
@@ -271,6 +276,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return false;
   }
 
+  private boolean isNonDefaultServiceAccountAllowed() {
+    if (allowNonDefaultServiceAccount != null && allowNonDefaultServiceAccount) {
+      return true;
+    }
+    return credentials instanceof ComputeEngineCredentials;
+  }
+
   // DirectPath should only be used on Compute Engine.
   // Notice Windows is supported for now.
   static boolean isOnComputeEngine() {
@@ -320,7 +332,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     if (isDirectPathEnabled(serviceAddress)
-        && credentials instanceof ComputeEngineCredentials
+        && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
@@ -432,6 +444,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
     @Nullable private Boolean attemptDirectPath;
+    @Nullable private Boolean allowNonDefaultServiceAccount;
     @Nullable private ImmutableMap<String, ?> directPathServiceConfig;
 
     private Builder() {
@@ -456,6 +469,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.credentials = provider.credentials;
       this.channelPrimer = provider.channelPrimer;
       this.attemptDirectPath = provider.attemptDirectPath;
+      this.allowNonDefaultServiceAccount = provider.allowNonDefaultServiceAccount;
       this.directPathServiceConfig = provider.directPathServiceConfig;
       this.mtlsProvider = provider.mtlsProvider;
     }
@@ -648,6 +662,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setAttemptDirectPath(boolean attemptDirectPath) {
       this.attemptDirectPath = attemptDirectPath;
+      return this;
+    }
+
+    /** Whether allow non-default service account for DirectPath. */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setAllowNonDefaultServiceAccount(boolean allowNonDefaultServiceAccount) {
+      this.allowNonDefaultServiceAccount = allowNonDefaultServiceAccount;
       return this;
     }
 
