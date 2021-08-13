@@ -61,10 +61,9 @@ public final class ApiCallContextOptions {
     if (!options.containsKey(key)) {
       builder.putAll(options).put(key, value);
     } else {
+      builder.put(key, value);
       for (Key oldKey : options.keySet()) {
-        if (oldKey.equals(key)) {
-          builder.put(oldKey, value);
-        } else {
+        if (!oldKey.equals(key)) {
           builder.put(oldKey, options.get(oldKey));
         }
       }
