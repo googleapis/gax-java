@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://www.github.com/googleapis/gax-java/compare/v2.1.0...v2.2.0) (2021-08-13)
+
+
+### Features
+
+* Add AIP-151 LRO OperationsClient to gax-httpjson ([#1458](https://www.github.com/googleapis/gax-java/issues/1458)) ([314acb6](https://www.github.com/googleapis/gax-java/commit/314acb6a5c335732e8406bec86f6c37296ebf3f3))
+
 ## [2.1.0](https://www.github.com/googleapis/gax-java/compare/v2.0.0...v2.1.0) (2021-08-11)
 
 
