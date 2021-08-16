@@ -328,7 +328,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
 
     // Clean up accounting
-    scheduledFuture.cancel(true);
+    scheduledFuture.cancel(false);
     currentBatcherReference.closed = true;
     currentBatcherReference.clear();
 

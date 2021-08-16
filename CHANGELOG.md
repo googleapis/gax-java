@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.2.0](https://www.github.com/googleapis/gax-java/compare/v2.1.0...v2.2.0) (2021-08-13)
+
+
+### Features
+
+* Add AIP-151 LRO OperationsClient to gax-httpjson ([#1458](https://www.github.com/googleapis/gax-java/issues/1458)) ([314acb6](https://www.github.com/googleapis/gax-java/commit/314acb6a5c335732e8406bec86f6c37296ebf3f3))
+
+## [2.1.0](https://www.github.com/googleapis/gax-java/compare/v2.0.0...v2.1.0) (2021-08-11)
+
+
+### Features
+
+* add allowNonDefaultServiceAccount option for DirectPath ([#1433](https://www.github.com/googleapis/gax-java/issues/1433)) ([209b494](https://www.github.com/googleapis/gax-java/commit/209b4944feba1c62be2c9de4545e3b01a806b738))
+
+
+### Bug Fixes
+
+* fix httpjson executor ([#1448](https://www.github.com/googleapis/gax-java/issues/1448)) ([8f48b70](https://www.github.com/googleapis/gax-java/commit/8f48b7027b95e8e75872d1f9dac537ea697d0acc))
+* make closeAsync don't interrupt running thread ([#1446](https://www.github.com/googleapis/gax-java/issues/1446)) ([7c6c298](https://www.github.com/googleapis/gax-java/commit/7c6c29824487346d444730388ea6967408692696))
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to v2.0.1 ([#1452](https://www.github.com/googleapis/gax-java/issues/1452)) ([a52f16f](https://www.github.com/googleapis/gax-java/commit/a52f16f6cef8340357acb374ff31c8a6f248403c))
+
+## [2.0.0](https://www.github.com/googleapis/gax-java/compare/v1.67.0...v2.0.0) (2021-07-30)
+
+
+### Features
+
+* promote to 2.0.0 ([#1444](https://www.github.com/googleapis/gax-java/issues/1444)) ([776b1aa](https://www.github.com/googleapis/gax-java/commit/776b1aa73022bedec55e69732245b73cd04608f8))
+
+
+### Bug Fixes
+
+* stop overriding default grpc executor ([#1355](https://www.github.com/googleapis/gax-java/issues/1355)) ([b1f8c43](https://www.github.com/googleapis/gax-java/commit/b1f8c43cc90eb8e5ef78d142878841689356738c))
+
+
+### Dependencies
+
+* update api-common, guava, google-auth-library-credentials ([#1442](https://www.github.com/googleapis/gax-java/issues/1442)) ([2925ed7](https://www.github.com/googleapis/gax-java/commit/2925ed78cfb74db07a87da28839aeebc9027ac72))
+
 ## [1.67.0](https://www.github.com/googleapis/gax-java/compare/v1.66.0...v1.67.0) (2021-07-19)
 
 
