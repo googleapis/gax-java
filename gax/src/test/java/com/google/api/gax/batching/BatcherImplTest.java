@@ -869,7 +869,8 @@ public class BatcherImplTest {
                 }
               });
       try {
-        future.get(throttledTime, TimeUnit.MILLISECONDS);
+        future.get(10, TimeUnit.MILLISECONDS);
+        Thread.sleep(throttledTime);
         assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
       } catch (TimeoutException e) {
         // expected
