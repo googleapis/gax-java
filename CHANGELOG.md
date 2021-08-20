@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0](https://www.github.com/googleapis/gax-java/compare/v2.2.0...v2.3.0) (2021-08-16)
+
+
+### Features
+
+* add custom options to ApiCallContext ([#1435](https://www.github.com/googleapis/gax-java/issues/1435)) ([0fe20f3](https://www.github.com/googleapis/gax-java/commit/0fe20f379feba1570e562e60e3f0bf7cc4e485bd))
+* add UseJwtAccessWithScope to GoogleCredentialsProvider ([#1420](https://www.github.com/googleapis/gax-java/issues/1420)) ([ed39c34](https://www.github.com/googleapis/gax-java/commit/ed39c34693783460fc03effb47e7027914cfb5bc))
+
 ## [2.2.0](https://www.github.com/googleapis/gax-java/compare/v2.1.0...v2.2.0) (2021-08-13)
 
 
