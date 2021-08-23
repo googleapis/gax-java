@@ -56,10 +56,8 @@ public class HttpRequestRunnableTest {
   private static HttpJsonCallOptions fakeCallOptions;
   private static CatMessage catMessage;
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
-  private static HttpRequestRunnable httpRequestRunnable;
   private static HttpRequestFormatter<CatMessage> catFormatter;
   private static HttpResponseParser<EmptyMessage> catParser;
-  private static ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor;
   private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
   private static Set<String> queryParams =
       Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
@@ -139,8 +137,11 @@ public class HttpRequestRunnableTest {
             return null;
           }
         };
+  }
 
-    methodDescriptor =
+  @Test
+  public void testRequestUrl() throws IOException {
+    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
         ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
             .setFullMethodName("house.cat.get")
             .setHttpMethod(null)
@@ -148,7 +149,7 @@ public class HttpRequestRunnableTest {
             .setResponseParser(catParser)
             .build();
 
-    httpRequestRunnable =
+    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
         HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
             .setHttpJsonCallOptions(fakeCallOptions)
             .setEndpoint(ENDPOINT)
@@ -156,12 +157,9 @@ public class HttpRequestRunnableTest {
             .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
+            .setResponseFuture(SettableApiFuture.create())
             .build();
-  }
 
-  @Test
-  public void testRequestUrl() throws IOException {
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
@@ -170,7 +168,15 @@ public class HttpRequestRunnableTest {
 
   @Test
   public void testRequestUrlUnnormalized() throws IOException {
-    httpRequestRunnable =
+    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
+        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
+            .setFullMethodName("house.cat.get")
+            .setHttpMethod("PUT")
+            .setRequestFormatter(catFormatter)
+            .setResponseParser(catParser)
+            .build();
+
+    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
         HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
             .setHttpJsonCallOptions(fakeCallOptions)
             .setEndpoint("www.googleapis.com/animals/v1/projects")
@@ -178,13 +184,44 @@ public class HttpRequestRunnableTest {
             .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
+            .setResponseFuture(SettableApiFuture.create())
             .build();
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl =
         "https://www.googleapis.com/animals/v1/projects/name/feline?food=bird&food=mouse&size=small";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
+    Truth.assertThat(httpRequest.getRequestMethod()).isEqualTo("PUT");
+    Truth.assertThat(httpRequest.getHeaders().get("X-HTTP-Method-Override")).isNull();
+  }
+
+  @Test
+  public void testRequestUrlUnnormalizedPatch() throws IOException {
+    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
+        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
+            .setFullMethodName("house.cat.get")
+            .setHttpMethod("PATCH")
+            .setRequestFormatter(catFormatter)
+            .setResponseParser(catParser)
+            .build();
+
+    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
+        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
+            .setHttpJsonCallOptions(fakeCallOptions)
+            .setEndpoint("www.googleapis.com/animals/v1/projects")
+            .setRequest(catMessage)
+            .setApiMethodDescriptor(methodDescriptor)
+            .setHttpTransport(new MockHttpTransport())
+            .setJsonFactory(new GsonFactory())
+            .setResponseFuture(SettableApiFuture.create())
+            .build();
+    HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
+    Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
+    String expectedUrl =
+        "https://www.googleapis.com/animals/v1/projects/name/feline?food=bird&food=mouse&size=small";
+    Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
+    Truth.assertThat(httpRequest.getRequestMethod()).isEqualTo("POST");
+    Truth.assertThat(httpRequest.getHeaders().get("X-HTTP-Method-Override")).isEqualTo("PATCH");
   }
 
   // TODO(andrealin): test request body
