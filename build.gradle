@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.1.0" // {x-version-update:gax:current}
+project.version = "2.3.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
@@ -430,7 +430,7 @@ task javadocCombinedV3(type: Javadoc) {
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
   options.addStringOption("projectname", "gax")
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.0.jar")]
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.1.1.jar")]
 }
 
 clean {
