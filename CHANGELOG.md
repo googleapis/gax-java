@@ -1,11 +1,7 @@
 # Changelog
 
-## [3.0.0](https://www.github.com/googleapis/gax-java/compare/v2.3.0...v3.0.0) (2021-08-27)
+## [2.4.0](https://www.github.com/googleapis/gax-java/compare/v2.3.0...v2.4.0) (2021-08-27)
 
-
-### ⚠ BREAKING CHANGES
-
-* Fix PATCH being unsupported (#1465)
 
 ### Bug Fixes
 
