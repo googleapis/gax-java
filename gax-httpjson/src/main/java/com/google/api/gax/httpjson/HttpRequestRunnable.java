@@ -54,6 +54,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.threeten.bp.Duration;
+import org.threeten.bp.Instant;
 
 /** A runnable object that creates and executes an HTTP request. */
 @AutoValue
@@ -114,6 +116,16 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     HttpRequest httpRequest = buildRequest(requestFactory, url, jsonHttpContent);
+
+    Instant deadline = getHttpJsonCallOptions().getDeadline();
+    if (deadline != null) {
+      long readTimeout = Duration.between(Instant.now(), deadline).toMillis();
+      if (httpRequest.getReadTimeout() > 0
+          && httpRequest.getReadTimeout() < readTimeout
+          && readTimeout < Integer.MAX_VALUE) {
+        httpRequest.setReadTimeout((int) readTimeout);
+      }
+    }
 
     for (HttpJsonHeaderEnhancer enhancer : getHeaderEnhancers()) {
       enhancer.enhance(httpRequest.getHeaders());
