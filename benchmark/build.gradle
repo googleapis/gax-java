@@ -23,7 +23,7 @@ dependencies {
     compile project(':gax-grpc')
     compile "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
     compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.1'
-    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.2'
+    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.3'
 }
 
 // Allow command line to target specific test
