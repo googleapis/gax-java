@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.4.1](https://www.github.com/googleapis/gax-java/compare/v2.4.0...v2.4.1) (2021-09-08)
+
+
+### Bug Fixes
+
+* REGAPIC fix socket timeout for wait calls ([#1476](https://www.github.com/googleapis/gax-java/issues/1476)) ([86c68b3](https://www.github.com/googleapis/gax-java/commit/86c68b3ffd241f6932516d0e7b5d9ae5714b89e0))
+
 ## [2.4.0](https://www.github.com/googleapis/gax-java/compare/v2.3.0...v2.4.0) (2021-08-27)
 
 
