@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson.testing;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -100,8 +101,14 @@ public final class MockHttpService extends MockHttpTransport {
             String relativePath = getRelativePath(fullTargetUrl);
 
             for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
-              if (!httpMethod.equals(methodDescriptor.getHttpMethod())) {
-                continue;
+              // Check the comment in com.google.api.gax.httpjson.HttpRequestRunnable.buildRequest()
+              // method for details why it is needed.
+              String descriptorHttpMethod = methodDescriptor.getHttpMethod();
+              if (!httpMethod.equals(descriptorHttpMethod)) {
+                if (!(HttpMethods.PATCH.equals(descriptorHttpMethod)
+                    && HttpMethods.POST.equals(httpMethod))) {
+                  continue;
+                }
               }
 
               PathTemplate pathTemplate = methodDescriptor.getRequestFormatter().getPathTemplate();

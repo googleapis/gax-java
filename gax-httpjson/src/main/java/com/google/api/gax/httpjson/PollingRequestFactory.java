@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,28 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.tracing;
+package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 
 /**
- * Factory that will build {@link ApiTracer}s that do nothing.
+ * A factory which creates a subsequent polling request from a compund operation id.
  *
- * <p>For internal use only.
+ * @param <RequestT> polling request type
  */
-@InternalApi
-public final class NoopApiTracerFactory implements ApiTracerFactory {
-  private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
-
-  public static NoopApiTracerFactory getInstance() {
-    return INSTANCE;
-  }
-
-  private NoopApiTracerFactory() {}
-
-  /** {@inheritDoc} */
-  @Override
-  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
-    return NoopApiTracer.getInstance();
-  }
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
+public interface PollingRequestFactory<RequestT> {
+  /**
+   * Creates a polling request message from a {@code compoundOperationId}.
+   *
+   * @param compoundOperationId the compound operation ID, consisting of an operation name and
+   *     potentially any other relevant information delimited by a ':' * character
+   */
+  RequestT create(String compoundOperationId);
 }
