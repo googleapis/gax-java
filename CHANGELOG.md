@@ -1,5 +1,109 @@
 # Changelog
 
+### [2.4.1](https://www.github.com/googleapis/gax-java/compare/v2.4.0...v2.4.1) (2021-09-08)
+
+
+### Bug Fixes
+
+* REGAPIC fix socket timeout for wait calls ([#1476](https://www.github.com/googleapis/gax-java/issues/1476)) ([86c68b3](https://www.github.com/googleapis/gax-java/commit/86c68b3ffd241f6932516d0e7b5d9ae5714b89e0))
+
+## [2.4.0](https://www.github.com/googleapis/gax-java/compare/v2.3.0...v2.4.0) (2021-08-27)
+
+
+### Bug Fixes
+
+* Fix PATCH being unsupported ([#1465](https://www.github.com/googleapis/gax-java/issues/1465)) ([2c6ac24](https://www.github.com/googleapis/gax-java/commit/2c6ac24b1fce1de356e69370bbe6a4348825e3f9))
+
+
+### Dependencies
+
+* update google-common-prots and google-http-client ([#1471](https://www.github.com/googleapis/gax-java/issues/1471)) ([80e17a3](https://www.github.com/googleapis/gax-java/commit/80e17a35feb00aff0af3a65876625c705eb6ca46))
+
+## [2.3.0](https://www.github.com/googleapis/gax-java/compare/v2.2.0...v2.3.0) (2021-08-16)
+
+
+### Features
+
+* add custom options to ApiCallContext ([#1435](https://www.github.com/googleapis/gax-java/issues/1435)) ([0fe20f3](https://www.github.com/googleapis/gax-java/commit/0fe20f379feba1570e562e60e3f0bf7cc4e485bd))
+* add UseJwtAccessWithScope to GoogleCredentialsProvider ([#1420](https://www.github.com/googleapis/gax-java/issues/1420)) ([ed39c34](https://www.github.com/googleapis/gax-java/commit/ed39c34693783460fc03effb47e7027914cfb5bc))
+
+## [2.2.0](https://www.github.com/googleapis/gax-java/compare/v2.1.0...v2.2.0) (2021-08-13)
+
+
+### Features
+
+* Add AIP-151 LRO OperationsClient to gax-httpjson ([#1458](https://www.github.com/googleapis/gax-java/issues/1458)) ([314acb6](https://www.github.com/googleapis/gax-java/commit/314acb6a5c335732e8406bec86f6c37296ebf3f3))
+
+## [2.1.0](https://www.github.com/googleapis/gax-java/compare/v2.0.0...v2.1.0) (2021-08-11)
+
+
+### Features
+
+* add allowNonDefaultServiceAccount option for DirectPath ([#1433](https://www.github.com/googleapis/gax-java/issues/1433)) ([209b494](https://www.github.com/googleapis/gax-java/commit/209b4944feba1c62be2c9de4545e3b01a806b738))
+
+
+### Bug Fixes
+
+* fix httpjson executor ([#1448](https://www.github.com/googleapis/gax-java/issues/1448)) ([8f48b70](https://www.github.com/googleapis/gax-java/commit/8f48b7027b95e8e75872d1f9dac537ea697d0acc))
+* make closeAsync don't interrupt running thread ([#1446](https://www.github.com/googleapis/gax-java/issues/1446)) ([7c6c298](https://www.github.com/googleapis/gax-java/commit/7c6c29824487346d444730388ea6967408692696))
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to v2.0.1 ([#1452](https://www.github.com/googleapis/gax-java/issues/1452)) ([a52f16f](https://www.github.com/googleapis/gax-java/commit/a52f16f6cef8340357acb374ff31c8a6f248403c))
+
+## [2.0.0](https://www.github.com/googleapis/gax-java/compare/v1.67.0...v2.0.0) (2021-07-30)
+
+
+### Features
+
+* promote to 2.0.0 ([#1444](https://www.github.com/googleapis/gax-java/issues/1444)) ([776b1aa](https://www.github.com/googleapis/gax-java/commit/776b1aa73022bedec55e69732245b73cd04608f8))
+
+
+### Bug Fixes
+
+* stop overriding default grpc executor ([#1355](https://www.github.com/googleapis/gax-java/issues/1355)) ([b1f8c43](https://www.github.com/googleapis/gax-java/commit/b1f8c43cc90eb8e5ef78d142878841689356738c))
+
+
+### Dependencies
+
+* update api-common, guava, google-auth-library-credentials ([#1442](https://www.github.com/googleapis/gax-java/issues/1442)) ([2925ed7](https://www.github.com/googleapis/gax-java/commit/2925ed78cfb74db07a87da28839aeebc9027ac72))
+
+## [1.67.0](https://www.github.com/googleapis/gax-java/compare/v1.66.0...v1.67.0) (2021-07-19)
+
+
+### Features
+
+* introduce closeAsync to Batcher ([#1423](https://www.github.com/googleapis/gax-java/issues/1423)) ([aab5288](https://www.github.com/googleapis/gax-java/commit/aab528803405c2b5f9fc89641f47abff948a876d))
+* optimize unary callables to not wait for trailers ([#1356](https://www.github.com/googleapis/gax-java/issues/1356)) ([dd5f955](https://www.github.com/googleapis/gax-java/commit/dd5f955a3ab740c677fbc6f1247094798eb814a3))
+* update DirectPath environment variables ([#1412](https://www.github.com/googleapis/gax-java/issues/1412)) ([4f63b61](https://www.github.com/googleapis/gax-java/commit/4f63b61f1259936aa4a1eaf9162218c787b92f2a))
+
+
+### Bug Fixes
+
+* remove `extends ApiMessage` from `HttpJsonStubCallableFactory` definition ([#1426](https://www.github.com/googleapis/gax-java/issues/1426)) ([87636a5](https://www.github.com/googleapis/gax-java/commit/87636a5812874a77e9004aab07607121efa43736))
+
+## [1.66.0](https://www.github.com/googleapis/gax-java/compare/v1.65.1...v1.66.0) (2021-06-24)
+
+
+### Features
+
+* make ApiTracer internal API ([#1414](https://www.github.com/googleapis/gax-java/issues/1414)) ([e3e8462](https://www.github.com/googleapis/gax-java/commit/e3e8462a2f9e866480ec2106dc59555d41ea4bb5))
+
+### [1.65.1](https://www.github.com/googleapis/gax-java/compare/v1.65.0...v1.65.1) (2021-06-08)
+
+
+### Bug Fixes
+
+* fix grammar in StubSetting comment ([#1397](https://www.github.com/googleapis/gax-java/issues/1397)) ([b015910](https://www.github.com/googleapis/gax-java/commit/b0159102b52fd4b778a9bde15b1acd2e9fa6958e))
+
+## [1.65.0](https://www.github.com/googleapis/gax-java/compare/v1.64.0...v1.65.0) (2021-06-02)
+
+
+### Features
+
+* add mtls feature to http and grpc transport provider ([#1249](https://www.github.com/googleapis/gax-java/issues/1249)) ([b863041](https://www.github.com/googleapis/gax-java/commit/b863041bc4c03c8766e0feca8cb10f531373dc44))
+
 ## [1.64.0](https://www.github.com/googleapis/gax-java/compare/v1.63.4...v1.64.0) (2021-05-10)
 
 

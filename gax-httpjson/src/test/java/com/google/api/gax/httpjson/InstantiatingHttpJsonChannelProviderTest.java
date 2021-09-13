@@ -32,8 +32,12 @@ package com.google.api.gax.httpjson;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,9 +45,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class InstantiatingHttpJsonChannelProviderTest {
+public class InstantiatingHttpJsonChannelProviderTest extends AbstractMtlsTransportChannelTest {
 
   @Test
   public void basicTest() throws IOException {
@@ -57,6 +62,13 @@ public class InstantiatingHttpJsonChannelProviderTest {
     provider = provider.withEndpoint(endpoint);
     assertThat(provider.needsEndpoint()).isFalse();
 
+    assertThat(provider.needsHeaders()).isTrue();
+    provider = provider.withHeaders(Collections.<String, String>emptyMap());
+    assertThat(provider.needsHeaders()).isFalse();
+
+    // Make sure getTransportChannel works without setting executor
+    assertThat(provider.getTransportChannel()).isInstanceOf(HttpJsonTransportChannel.class);
+
     assertThat(provider.needsExecutor()).isTrue();
     provider = provider.withExecutor((Executor) executor);
     assertThat(provider.needsExecutor()).isFalse();
@@ -65,10 +77,6 @@ public class InstantiatingHttpJsonChannelProviderTest {
     assertThat(provider.needsExecutor()).isFalse();
     provider = provider.withExecutor(executor);
     assertThat(provider.needsExecutor()).isFalse();
-
-    assertThat(provider.needsHeaders()).isTrue();
-    provider = provider.withHeaders(Collections.<String, String>emptyMap());
-    assertThat(provider.needsHeaders()).isFalse();
 
     assertThat(provider.acceptsPoolSize()).isFalse();
     Exception thrownException = null;
@@ -93,5 +101,18 @@ public class InstantiatingHttpJsonChannelProviderTest {
 
     // Make sure we can create channels OK.
     provider.getTransportChannel().shutdownNow();
+  }
+
+  @Override
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
+      throws IOException, GeneralSecurityException {
+    InstantiatingHttpJsonChannelProvider channelProvider =
+        InstantiatingHttpJsonChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setMtlsProvider(provider)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
+            .build();
+    return channelProvider.createHttpTransport();
   }
 }

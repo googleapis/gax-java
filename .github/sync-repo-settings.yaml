@@ -11,11 +11,36 @@ branchProtectionRules:
       - bazel
       - linkage-monitor (8)
       - linkage-monitor (11)
-      - units (7)
       - units (8)
       - units (11)
       - cla/google
   - pattern: 1.63.0-sp
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - linkage-monitor (8)
+      - linkage-monitor (11)
+      - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 1.64.0-sp
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - linkage-monitor (8)
+      - linkage-monitor (11)
+      - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: java7
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true

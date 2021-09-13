@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -45,17 +46,24 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+import io.grpc.ChannelCredentials;
+import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.TlsChannelCredentials;
 import io.grpc.alts.ComputeEngineChannelBuilder;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManagerFactory;
 import org.threeten.bp.Duration;
 
 /**
@@ -73,6 +81,8 @@ import org.threeten.bp.Duration;
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+  private static final String DIRECT_PATH_ENV_DISABLE_DIRECT_PATH =
+      "GOOGLE_CLOUD_DISABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
   // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
@@ -95,7 +105,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
+  @Nullable private final Boolean allowNonDefaultServiceAccount;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
+  @Nullable private final MtlsProvider mtlsProvider;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -105,6 +117,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executor = builder.executor;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.mtlsProvider = builder.mtlsProvider;
     this.envProvider = builder.envProvider;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
@@ -117,12 +130,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
     this.attemptDirectPath = builder.attemptDirectPath;
+    this.allowNonDefaultServiceAccount = builder.allowNonDefaultServiceAccount;
     this.directPathServiceConfig =
         builder.directPathServiceConfig == null
             ? getDefaultDirectPathServiceConfig()
             : builder.directPathServiceConfig;
   }
 
+  /**
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     grpc executor.
+   */
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
@@ -200,9 +219,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
-    } else if (needsHeaders()) {
+    if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else if (needsEndpoint()) {
       throw new IllegalStateException("getTransportChannel() called when needsEndpoint() is true");
@@ -216,8 +233,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int realPoolSize = MoreObjects.firstNonNull(poolSize, 1);
     ChannelFactory channelFactory =
         new ChannelFactory() {
+          @Override
           public ManagedChannel createSingleChannel() throws IOException {
-            return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+            try {
+              return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+            } catch (GeneralSecurityException e) {
+              throw new IOException(e);
+            }
           }
         };
     ManagedChannel outerChannel;
@@ -229,19 +251,36 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
-  // TODO(weiranf): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
+  // TODO(mohanli): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
   //                and the env var is removed from client environment.
   private boolean isDirectPathEnabled(String serviceAddress) {
+    String disableDirectPathEnv = envProvider.getenv(DIRECT_PATH_ENV_DISABLE_DIRECT_PATH);
+    boolean isDirectPathDisabled = Boolean.parseBoolean(disableDirectPathEnv);
+    if (isDirectPathDisabled) {
+      return false;
+    }
+    // Only check attemptDirectPath when DIRECT_PATH_ENV_DISABLE_DIRECT_PATH is not set.
     if (attemptDirectPath != null) {
       return attemptDirectPath;
     }
     // Only check DIRECT_PATH_ENV_VAR when attemptDirectPath is not set.
     String whiteList = envProvider.getenv(DIRECT_PATH_ENV_VAR);
-    if (whiteList == null) return false;
+    if (whiteList == null) {
+      return false;
+    }
     for (String service : whiteList.split(",")) {
-      if (!service.isEmpty() && serviceAddress.contains(service)) return true;
+      if (!service.isEmpty() && serviceAddress.contains(service)) {
+        return true;
+      }
     }
     return false;
+  }
+
+  private boolean isNonDefaultServiceAccountAllowed() {
+    if (allowNonDefaultServiceAccount != null && allowNonDefaultServiceAccount) {
+      return true;
+    }
+    return credentials instanceof ComputeEngineCredentials;
   }
 
   // DirectPath should only be used on Compute Engine.
@@ -249,22 +288,34 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static boolean isOnComputeEngine() {
     String osName = System.getProperty("os.name");
     if ("Linux".equals(osName)) {
-      String cmd = "cat /sys/class/dmi/id/product_name";
       try {
-        Process process = Runtime.getRuntime().exec(new String[] {"/bin/sh", "-c", cmd});
-        process.waitFor();
         String result =
-            CharStreams.toString(new InputStreamReader(process.getInputStream(), "UTF-8"));
+            Files.asCharSource(new File("/sys/class/dmi/id/product_name"), StandardCharsets.UTF_8)
+                .readFirstLine();
         return result.contains(GCE_PRODUCTION_NAME_PRIOR_2016)
             || result.contains(GCE_PRODUCTION_NAME_AFTER_2016);
-      } catch (IOException | InterruptedException e) {
+      } catch (IOException ignored) {
         return false;
       }
     }
     return false;
   }
 
-  private ManagedChannel createSingleChannel() throws IOException {
+  @VisibleForTesting
+  ChannelCredentials createMtlsChannelCredentials() throws IOException, GeneralSecurityException {
+    if (mtlsProvider.useMtlsClientCertificate()) {
+      KeyStore mtlsKeyStore = mtlsProvider.getKeyStore();
+      if (mtlsKeyStore != null) {
+        KeyManagerFactory factory =
+            KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        factory.init(mtlsKeyStore, new char[] {});
+        return TlsChannelCredentials.newBuilder().keyManager(factory.getKeyManagers()).build();
+      }
+    }
+    return null;
+  }
+
+  private ManagedChannel createSingleChannel() throws IOException, GeneralSecurityException {
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
     GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
@@ -281,7 +332,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     if (isDirectPathEnabled(serviceAddress)
-        && credentials instanceof ComputeEngineCredentials
+        && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
@@ -290,7 +341,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       builder.defaultServiceConfig(directPathServiceConfig);
     } else {
-      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+      ChannelCredentials channelCredentials = createMtlsChannelCredentials();
+      if (channelCredentials != null) {
+        builder = Grpc.newChannelBuilder(endpoint, channelCredentials);
+      } else {
+        builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+      }
     }
     builder =
         builder
@@ -376,6 +432,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private HeaderProvider headerProvider;
     private String endpoint;
     private EnvironmentProvider envProvider;
+    private MtlsProvider mtlsProvider = new MtlsProvider();
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Integer maxInboundMetadataSize;
@@ -387,6 +444,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
     @Nullable private Boolean attemptDirectPath;
+    @Nullable private Boolean allowNonDefaultServiceAccount;
     @Nullable private ImmutableMap<String, ?> directPathServiceConfig;
 
     private Builder() {
@@ -411,7 +469,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.credentials = provider.credentials;
       this.channelPrimer = provider.channelPrimer;
       this.attemptDirectPath = provider.attemptDirectPath;
+      this.allowNonDefaultServiceAccount = provider.allowNonDefaultServiceAccount;
       this.directPathServiceConfig = provider.directPathServiceConfig;
+      this.mtlsProvider = provider.mtlsProvider;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -455,6 +515,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public Builder setEndpoint(String endpoint) {
       validateEndpoint(endpoint);
       this.endpoint = endpoint;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setMtlsProvider(MtlsProvider mtlsProvider) {
+      this.mtlsProvider = mtlsProvider;
       return this;
     }
 
@@ -596,6 +662,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setAttemptDirectPath(boolean attemptDirectPath) {
       this.attemptDirectPath = attemptDirectPath;
+      return this;
+    }
+
+    /** Whether allow non-default service account for DirectPath. */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setAllowNonDefaultServiceAccount(boolean allowNonDefaultServiceAccount) {
+      this.allowNonDefaultServiceAccount = allowNonDefaultServiceAccount;
       return this;
     }
 

@@ -36,8 +36,9 @@ import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
-import com.google.api.gax.tracing.NoopApiTracerFactory;
+import com.google.api.gax.tracing.BaseApiTracerFactory;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -49,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -72,6 +72,10 @@ public abstract class ClientContext {
    */
   public abstract List<BackgroundResource> getBackgroundResources();
 
+  /**
+   * Gets the executor to use for running scheduled API call logic (such as retries and long-running
+   * operations).
+   */
   public abstract ScheduledExecutorService getExecutor();
 
   @Nullable
@@ -118,7 +122,7 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
         .setStreamWatchdogCheckInterval(Duration.ZERO)
-        .setTracerFactory(NoopApiTracerFactory.getInstance())
+        .setTracerFactory(BaseApiTracerFactory.getInstance())
         .setQuotaProjectId(null);
   }
 
@@ -132,6 +136,29 @@ public abstract class ClientContext {
     return create(settings.getStubSettings());
   }
 
+  /** Returns the endpoint that should be used. See https://google.aip.dev/auth/4114. */
+  static String getEndpoint(
+      String endpoint,
+      String mtlsEndpoint,
+      boolean switchToMtlsEndpointAllowed,
+      MtlsProvider mtlsProvider)
+      throws IOException {
+    if (switchToMtlsEndpointAllowed) {
+      switch (mtlsProvider.getMtlsEndpointUsagePolicy()) {
+        case ALWAYS:
+          return mtlsEndpoint;
+        case NEVER:
+          return endpoint;
+        default:
+          if (mtlsProvider.useMtlsClientCertificate() && mtlsProvider.getKeyStore() != null) {
+            return mtlsEndpoint;
+          }
+          return endpoint;
+      }
+    }
+    return endpoint;
+  }
+
   /**
    * Instantiates the executor, credentials, and transport context based on the given client
    * settings.
@@ -139,8 +166,8 @@ public abstract class ClientContext {
   public static ClientContext create(StubSettings settings) throws IOException {
     ApiClock clock = settings.getClock();
 
-    ExecutorProvider executorProvider = settings.getExecutorProvider();
-    final ScheduledExecutorService executor = executorProvider.getExecutor();
+    ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
+    final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
@@ -153,18 +180,27 @@ public abstract class ClientContext {
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
-    if (transportChannelProvider.needsExecutor()) {
-      transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
+    // After needsExecutor and StubSettings#setExecutorProvider are deprecated, transport channel
+    // executor can only be set from TransportChannelProvider#withExecutor directly, and a provider
+    // will have a default executor if it needs one.
+    if (transportChannelProvider.needsExecutor() && settings.getExecutorProvider() != null) {
+      transportChannelProvider = transportChannelProvider.withExecutor(backgroundExecutor);
     }
     Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
-    if (transportChannelProvider.needsEndpoint()) {
-      transportChannelProvider = transportChannelProvider.withEndpoint(settings.getEndpoint());
-    }
     if (transportChannelProvider.needsCredentials() && credentials != null) {
       transportChannelProvider = transportChannelProvider.withCredentials(credentials);
+    }
+    String endpoint =
+        getEndpoint(
+            settings.getEndpoint(),
+            settings.getMtlsEndpoint(),
+            settings.getSwitchToMtlsEndpointAllowed(),
+            new MtlsProvider());
+    if (transportChannelProvider.needsEndpoint()) {
+      transportChannelProvider = transportChannelProvider.withEndpoint(endpoint);
     }
     TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
 
@@ -186,7 +222,7 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
       if (watchdogProvider.needsExecutor()) {
-        watchdogProvider = watchdogProvider.withExecutor(executor);
+        watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor);
       }
       watchdog = watchdogProvider.getWatchdog();
     }
@@ -196,8 +232,8 @@ public abstract class ClientContext {
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
     }
-    if (executorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    if (backgroundExecutorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(backgroundExecutor));
     }
     if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
       backgroundResources.add(watchdog);
@@ -205,7 +241,7 @@ public abstract class ClientContext {
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
-        .setExecutor(executor)
+        .setExecutor(backgroundExecutor)
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
@@ -259,6 +295,10 @@ public abstract class ClientContext {
 
     public abstract Builder setBackgroundResources(List<BackgroundResource> backgroundResources);
 
+    /**
+     * Sets the executor to use for running scheduled API call logic (such as retries and
+     * long-running operations).
+     */
     public abstract Builder setExecutor(ScheduledExecutorService value);
 
     public abstract Builder setCredentials(Credentials value);
