@@ -430,7 +430,7 @@ task javadocCombinedV3(type: Javadoc) {
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
   options.addStringOption("projectname", "gax")
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.1.1.jar")]
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.2.0.jar")]
 }
 
 clean {
