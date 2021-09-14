@@ -45,6 +45,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
@@ -69,7 +70,9 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
@@ -92,7 +95,12 @@ public class BatcherImplTest {
   @After
   public void tearDown() throws InterruptedException {
     if (underTest != null) {
-      underTest.close();
+      try {
+        // Close the batcher to avoid warnings of orphaned batchers
+        underTest.close();
+      } catch (BatchingException ignored) {
+        // Some tests intentionally inject failures into mutations
+      }
     }
   }
 
@@ -170,6 +178,55 @@ public class BatcherImplTest {
     assertThat(addOnClosedError)
         .hasMessageThat()
         .matches("Cannot add elements on a closed batcher");
+  }
+
+  /** Validates exception when batch is called after {@link Batcher#close()}. */
+  @Test
+  public void testNoElementAdditionAfterCloseAsync() throws Exception {
+    underTest = createDefaultBatcherImpl(batchingSettings, null);
+    underTest.add(1);
+    underTest.closeAsync();
+
+    IllegalStateException e =
+        Assert.assertThrows(
+            IllegalStateException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                underTest.add(1);
+              }
+            });
+
+    assertThat(e).hasMessageThat().matches("Cannot add elements on a closed batcher");
+  }
+
+  @Test
+  public void testCloseAsyncNonblocking() throws ExecutionException, InterruptedException {
+    final SettableApiFuture<List<Integer>> innerFuture = SettableApiFuture.create();
+
+    UnaryCallable<LabeledIntList, List<Integer>> unaryCallable =
+        new UnaryCallable<LabeledIntList, List<Integer>>() {
+          @Override
+          public ApiFuture<List<Integer>> futureCall(
+              LabeledIntList request, ApiCallContext context) {
+            return innerFuture;
+          }
+        };
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
+
+    ApiFuture<Integer> elementFuture = underTest.add(1);
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    ApiFuture<Void> closeFuture = underTest.closeAsync();
+    assertThat(stopwatch.elapsed(TimeUnit.MILLISECONDS)).isAtMost(100);
+
+    assertThat(closeFuture.isDone()).isFalse();
+    assertThat(elementFuture.isDone()).isFalse();
+
+    innerFuture.set(ImmutableList.of(1));
+    closeFuture.get();
   }
 
   /** Verifies exception occurred at RPC is propagated to element results */
@@ -610,6 +667,73 @@ public class BatcherImplTest {
       assertThat(lr.getMessage()).contains("not closed properly");
       assertThat(lr.getLevel()).isEqualTo(Level.SEVERE);
     } finally {
+      batcherLogger.setFilter(oldFilter);
+    }
+  }
+
+  /**
+   * Validates the absence of warning in case {@link BatcherImpl} is garbage collected after being
+   * closed.
+   *
+   * <p>Note:This test cannot run concurrently with other tests that use Batchers.
+   */
+  @Test
+  public void testClosedBatchersAreNotLogged() throws Exception {
+    // Clean out the existing instances
+    final long DELAY_TIME = 30L;
+    int actualRemaining = 0;
+    for (int retry = 0; retry < 3; retry++) {
+      System.gc();
+      System.runFinalization();
+      actualRemaining = BatcherReference.cleanQueue();
+      if (actualRemaining == 0) {
+        break;
+      }
+      Thread.sleep(DELAY_TIME * (1L << retry));
+    }
+    assertThat(actualRemaining).isAtMost(0);
+
+    // Capture logs
+    final List<LogRecord> records = new ArrayList<>(1);
+    Logger batcherLogger = Logger.getLogger(BatcherImpl.class.getName());
+    Filter oldFilter = batcherLogger.getFilter();
+    batcherLogger.setFilter(
+        new Filter() {
+          @Override
+          public boolean isLoggable(LogRecord record) {
+            synchronized (records) {
+              records.add(record);
+            }
+            return false;
+          }
+        });
+
+    try {
+      // Create a bunch of batchers that will garbage collected after being closed
+      for (int i = 0; i < 1_000; i++) {
+        BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> batcher =
+            createDefaultBatcherImpl(batchingSettings, null);
+        batcher.add(1);
+
+        if (i % 2 == 0) {
+          batcher.close();
+        } else {
+          batcher.closeAsync();
+        }
+      }
+      // Run GC a few times to give the batchers a chance to be collected
+      for (int retry = 0; retry < 100; retry++) {
+        System.gc();
+        System.runFinalization();
+        BatcherReference.cleanQueue();
+        Thread.sleep(10);
+      }
+
+      synchronized (records) {
+        assertThat(records).isEmpty();
+      }
+    } finally {
+      // reset logging
       batcherLogger.setFilter(oldFilter);
     }
   }

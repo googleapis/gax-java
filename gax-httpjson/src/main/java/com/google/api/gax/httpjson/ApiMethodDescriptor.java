@@ -49,6 +49,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   @Nullable
   public abstract String getHttpMethod();
 
+  @Nullable
+  public abstract OperationSnapshotFactory<RequestT, ResponseT> getOperationSnapshotFactory();
+
+  @Nullable
+  public abstract PollingRequestFactory<RequestT> getPollingRequestFactory();
+
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new AutoValue_ApiMethodDescriptor.Builder<RequestT, ResponseT>();
   }
@@ -65,6 +71,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         HttpResponseParser<ResponseT> responseParser);
 
     public abstract Builder<RequestT, ResponseT> setHttpMethod(String httpMethod);
+
+    public abstract Builder<RequestT, ResponseT> setOperationSnapshotFactory(
+        OperationSnapshotFactory<RequestT, ResponseT> operationSnapshotFactory);
+
+    public abstract Builder<RequestT, ResponseT> setPollingRequestFactory(
+        PollingRequestFactory<RequestT> pollingRequestFactory);
 
     public abstract ApiMethodDescriptor<RequestT, ResponseT> build();
   }

@@ -36,6 +36,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.common.base.MoreObjects;
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -63,8 +64,14 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings;
   }
 
+  /** @deprecated Please use {@link #getBackgroundExecutorProvider()} */
+  @Deprecated
   public final ExecutorProvider getExecutorProvider() {
     return stubSettings.getExecutorProvider();
+  }
+
+  public final ExecutorProvider getBackgroundExecutorProvider() {
+    return stubSettings.getBackgroundExecutorProvider();
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
@@ -112,6 +119,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", getExecutorProvider())
+        .add("backgroundExecutorProvider", getBackgroundExecutorProvider())
         .add("transportChannelProvider", getTransportChannelProvider())
         .add("credentialsProvider", getCredentialsProvider())
         .add("headerProvider", getHeaderProvider())
@@ -159,9 +167,27 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * call logic (such as retries and long-running operations), and also to pass to the transport
      * settings if an executor is needed for the transport and it doesn't have its own executor
      * provider.
+     *
+     * @deprecated Please use {@link #setBackgroundExecutorProvider(ExecutorProvider)} for setting
+     *     executor to use for running scheduled API call logic. To set executor for {@link
+     *     TransportChannelProvider}, please use {@link
+     *     TransportChannelProvider#withExecutor(Executor)} instead.
      */
+    @Deprecated
     public B setExecutorProvider(ExecutorProvider executorProvider) {
       stubSettings.setExecutorProvider(executorProvider);
+      stubSettings.setBackgroundExecutorProvider(executorProvider);
+      return self();
+    }
+
+    /**
+     * Sets the ExecutorProvider to use for getting the executor to use for running scheduled API
+     * call logic (such as retries and long-running operations). This will not set the executor in
+     * {@link TransportChannelProvider}. To set executor for {@link TransportChannelProvider},
+     * please use {@link TransportChannelProvider#withExecutor(Executor)}.
+     */
+    public B setBackgroundExecutorProvider(ExecutorProvider executorProvider) {
+      stubSettings.setBackgroundExecutorProvider(executorProvider);
       return self();
     }
 
@@ -238,9 +264,27 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    /** Gets the ExecutorProvider that was previously set on this Builder. */
+    /**
+     * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
+     * to use for running asynchronous API call logic (such as retries and long-running operations),
+     * and also to pass to the transport settings if an executor is needed for the transport and it
+     * doesn't have its own executor provider.
+     *
+     * @deprecated Please use {@link #getBackgroundExecutorProvider()} for getting the executor
+     *     provider that's used for running scheduled API call logic.
+     */
+    @Deprecated
     public ExecutorProvider getExecutorProvider() {
       return stubSettings.getExecutorProvider();
+    }
+
+    /**
+     * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
+     * to use for running asynchronous API call logic (such as retries and long-running operations).
+     * This ExecutorProvider is not used to set the executor in {@link TransportChannelProvider}.
+     */
+    public ExecutorProvider getBackgroundExecutorProvider() {
+      return stubSettings.getBackgroundExecutorProvider();
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */
@@ -303,6 +347,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", getExecutorProvider())
+          .add("backgroundExecutorProvider", getBackgroundExecutorProvider())
           .add("transportChannelProvider", getTransportChannelProvider())
           .add("credentialsProvider", getCredentialsProvider())
           .add("headerProvider", getHeaderProvider())

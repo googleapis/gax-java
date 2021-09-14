@@ -1,4 +1,4 @@
-project.version = "0.66.1-SNAPSHOT" // {x-version-update:benchmark:current}
+project.version = "0.74.2-SNAPSHOT" // {x-version-update:benchmark:current}
 
 buildscript {
     repositories {
@@ -22,9 +22,8 @@ dependencies {
     compile project(':gax')
     compile project(':gax-grpc')
     compile "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
-
-    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:1.24.1'
-    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.86.0'
+    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.2'
+    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.3'
 }
 
 // Allow command line to target specific test

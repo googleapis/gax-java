@@ -30,109 +30,25 @@
 package com.google.api.gax.tracing;
 
 import com.google.api.core.InternalApi;
-import org.threeten.bp.Duration;
 
 /**
- * An implementation of {@link ApiTracer} that does nothing.
+ * Base factory that will build {@link ApiTracer}s that do nothing.
  *
  * <p>For internal use only.
  */
-@InternalApi
-public final class NoopApiTracer implements ApiTracer {
-  private static final ApiTracer INSTANCE = new NoopApiTracer();
+@InternalApi("For internal use by google-cloud-java clients only")
+public class BaseApiTracerFactory implements ApiTracerFactory {
+  private static final BaseApiTracerFactory INSTANCE = new BaseApiTracerFactory();
 
-  private static final Scope NOOP_SCOPE =
-      new Scope() {
-        @Override
-        public void close() {
-          // noop
-        }
-      };
-
-  private NoopApiTracer() {}
-
-  public static ApiTracer getInstance() {
+  public static BaseApiTracerFactory getInstance() {
     return INSTANCE;
   }
 
-  @Override
-  public Scope inScope() {
-    return NOOP_SCOPE;
-  }
+  protected BaseApiTracerFactory() {}
 
+  /** {@inheritDoc} */
   @Override
-  public void operationSucceeded() {
-    // noop
-  }
-
-  @Override
-  public void operationCancelled() {
-    // noop
-  }
-
-  @Override
-  public void operationFailed(Throwable error) {
-    // noop
-  }
-
-  @Override
-  public void connectionSelected(String id) {
-    // noop
-  }
-
-  @Override
-  public void attemptStarted(int attemptNumber) {
-    // noop
-  }
-
-  @Override
-  public void attemptSucceeded() {
-    // noop
-  }
-
-  @Override
-  public void attemptCancelled() {
-    // noop
-  }
-
-  @Override
-  public void attemptFailed(Throwable error, Duration delay) {
-    // noop
-  }
-
-  @Override
-  public void attemptFailedRetriesExhausted(Throwable error) {
-    // noop
-  }
-
-  @Override
-  public void attemptPermanentFailure(Throwable error) {
-    // noop
-
-  }
-
-  @Override
-  public void lroStartFailed(Throwable error) {
-    // noop
-  }
-
-  @Override
-  public void lroStartSucceeded() {
-    // noop
-  }
-
-  @Override
-  public void responseReceived() {
-    // noop
-  }
-
-  @Override
-  public void requestSent() {
-    // noop
-  }
-
-  @Override
-  public void batchRequestSent(long elementCount, long requestSize) {
-    // noop
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+    return BaseApiTracer.getInstance();
   }
 }
