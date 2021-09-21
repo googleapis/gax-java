@@ -77,76 +77,76 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-   public void testAnyResponseTransformer() {
-     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
-     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
-     OperationSnapshot operationSnapshot =
-         HttpJsonOperationSnapshot.create(
-             Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
-     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
-   }
+  public void testAnyResponseTransformer() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+  }
 
-   @Test
-   public void testAnyResponseTransformer_exception() {
-     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
-     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
-     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.getNumber()).build();
-     OperationSnapshot operationSnapshot =
-         HttpJsonOperationSnapshot.create(
-             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
-     try {
-       transformer.apply(operationSnapshot);
-       Assert.fail("ResponseTransformer should have thrown an exception");
-     } catch (UnavailableException expected) {
-       Truth.assertThat(expected)
-           .hasMessageThat()
-           .contains("failed with status = HttpJsonStatusCode{statusCode=UNAVAILABLE}");
-     }
-   }
+  @Test
+  public void testAnyResponseTransformer_exception() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (UnavailableException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("failed with status = HttpJsonStatusCode{statusCode=UNAVAILABLE}");
+    }
+  }
 
-   @Test
-   public void testAnyResponseTransformer_mismatchedTypes() {
-     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
-     Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
-     OperationSnapshot operationSnapshot =
-         HttpJsonOperationSnapshot.create(
-             Operation.newBuilder()
-                 .setResponse(Any.pack(Color.getDefaultInstance()))
-                 .setError(status)
-                 .build());
-     try {
-       transformer.apply(operationSnapshot);
-       Assert.fail("ResponseTransformer should have thrown an exception");
-     } catch (ApiException expected) {
-       Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-     }
-   }
+  @Test
+  public void testAnyResponseTransformer_mismatchedTypes() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder()
+                .setResponse(Any.pack(Color.getDefaultInstance()))
+                .setError(status)
+                .build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
+  }
 
-   @Test
-   public void testAnyMetadataTransformer() {
-     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
-     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
-     OperationSnapshot operationSnapshot =
-         HttpJsonOperationSnapshot.create(
-             Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
-     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
-   }
+  @Test
+  public void testAnyMetadataTransformer() {
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+  }
 
-   @Test
-   public void testAnyMetadataTransformer_mismatchedTypes() {
-     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
-     Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
-     OperationSnapshot operationSnapshot =
-         HttpJsonOperationSnapshot.create(
-             Operation.newBuilder()
-                 .setMetadata(Any.pack(Color.getDefaultInstance()))
-                 .setError(status)
-                 .build());
-     try {
-       transformer.apply(operationSnapshot);
-       Assert.fail("MetadataTransformer should have thrown an exception");
-     } catch (ApiException expected) {
-       Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-     }
-   }
+  @Test
+  public void testAnyMetadataTransformer_mismatchedTypes() {
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
+    Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder()
+                .setMetadata(Any.pack(Color.getDefaultInstance()))
+                .setError(status)
+                .build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("MetadataTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
+  }
 }

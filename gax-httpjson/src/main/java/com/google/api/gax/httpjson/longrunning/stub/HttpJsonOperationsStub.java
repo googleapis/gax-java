@@ -176,9 +176,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   new PollingRequestFactory<GetOperationRequest>() {
                     @Override
                     public GetOperationRequest create(String compoundOperationId) {
-                      return GetOperationRequest.newBuilder()
-                          .setName(compoundOperationId)
-                          .build();
+                      return GetOperationRequest.newBuilder().setName(compoundOperationId).build();
                     }
                   })
               .build();

@@ -191,8 +191,6 @@ public class HttpJsonStatusCode implements StatusCode {
 
   @Override
   public String toString() {
-    return "HttpJsonStatusCode{"
-        + "statusCode=" + statusCode
-        + "}";
+    return "HttpJsonStatusCode{" + "statusCode=" + statusCode + "}";
   }
 }

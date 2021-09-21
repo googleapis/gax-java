@@ -49,7 +49,6 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
