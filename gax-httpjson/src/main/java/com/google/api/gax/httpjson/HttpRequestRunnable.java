@@ -49,6 +49,7 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -195,9 +196,13 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
       }
+
       if (getApiMethodDescriptor().getResponseParser() != null) {
         ResponseT response =
-            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
+            getApiMethodDescriptor()
+                .getResponseParser()
+                .parse(httpResponse.getContent(), getHttpJsonCallOptions().getTypeRegistry());
+
         getResponseFuture().set(response);
       } else {
         getResponseFuture().set(null);

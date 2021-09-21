@@ -90,6 +90,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code connection}
  *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
+ *
  *   <li>{@code Attempt failed, scheduling next attempt} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -107,6 +108,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code connection}
  *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
+ *
  *   <li>{@code Attempts exhausted} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -122,6 +124,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code connection}
  *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
+ *
  *   <li>{@code Attempt failed, error not retryable} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -137,6 +140,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code connection}
  *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
+ *
  *   <li>{@code Attempt succeeded} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -150,6 +154,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code connection}
  *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
+ *
  * </ul>
  *
  * <p>Long running operations, which are composed of an initial RPC to start the operation and a
@@ -163,12 +168,14 @@ import org.threeten.bp.Duration;
  *         <dt>{@code status}
  *         <dd>The status code of why the operation failed to start
  *       </dl>
+ *
  *   <li>{@code Polling was cancelled} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
  *         <dd>Zero based sequential poll number.
  *         <dt>{@code attempt request count}
  *       </dl>
+ *
  *   <li>{@code Scheduling next poll} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -178,6 +185,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code delay}
  *         <dd>The number of milliseconds to wait before polling again
  *       </dl>
+ *
  *   <li>{@code Polling attempts exhausted} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -185,6 +193,7 @@ import org.threeten.bp.Duration;
  *         <dt>{@code status}
  *         <dd>OK if the poll succeeded, but the operation is still running.
  *       </dl>
+ *
  *   <li>{@code Polling failed} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -192,11 +201,13 @@ import org.threeten.bp.Duration;
  *         <dt>{@code status}
  *         <dd>OK if the poll succeeded, but the operation is still running.
  *       </dl>
+ *
  *   <li>{@code Polling completed} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
  *         <dd>Zero based sequential poll number
  *       </dl>
+ *
  * </ul>
  *
  * <p>The toplevel long running operation span will also contain child spans to describe the retry
