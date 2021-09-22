@@ -61,7 +61,7 @@ public class HttpJsonCallableFactory {
   private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings) {
     return new HttpJsonDirectCallable<RequestT, ResponseT>(
-        httpJsonCallSettings.getMethodDescriptor());
+        httpJsonCallSettings.getMethodDescriptor(), httpJsonCallSettings.getTypeRegistry());
   }
 
   static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(

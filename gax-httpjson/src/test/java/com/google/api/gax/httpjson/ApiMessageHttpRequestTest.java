@@ -40,6 +40,7 @@ import com.google.auth.Credentials;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -62,6 +63,11 @@ public class ApiMessageHttpRequestTest {
 
         @Override
         public Credentials getCredentials() {
+          return null;
+        }
+
+        @Override
+        public TypeRegistry getTypeRegistry() {
           return null;
         }
       };

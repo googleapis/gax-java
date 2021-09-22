@@ -39,11 +39,17 @@ import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.httpjson.ApiMethodDescriptor;
 import com.google.api.gax.httpjson.FieldsExtractor;
 import com.google.api.gax.httpjson.HttpJsonCallSettings;
+import com.google.api.gax.httpjson.HttpJsonLongRunningClient;
+import com.google.api.gax.httpjson.HttpJsonOperationSnapshot;
 import com.google.api.gax.httpjson.HttpJsonStubCallableFactory;
+import com.google.api.gax.httpjson.OperationSnapshotFactory;
+import com.google.api.gax.httpjson.PollingRequestFactory;
 import com.google.api.gax.httpjson.ProtoMessageRequestFormatter;
 import com.google.api.gax.httpjson.ProtoMessageResponseParser;
 import com.google.api.gax.httpjson.ProtoRestSerializer;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.DeleteOperationRequest;
@@ -52,6 +58,7 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -157,6 +164,21 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   ProtoMessageResponseParser.<Operation>newBuilder()
                       .setDefaultInstance(Operation.getDefaultInstance())
                       .build())
+              .setOperationSnapshotFactory(
+                  new OperationSnapshotFactory<GetOperationRequest, Operation>() {
+                    @Override
+                    public OperationSnapshot create(
+                        GetOperationRequest request, Operation response) {
+                      return HttpJsonOperationSnapshot.create(response);
+                    }
+                  })
+              .setPollingRequestFactory(
+                  new PollingRequestFactory<GetOperationRequest>() {
+                    @Override
+                    public GetOperationRequest create(String compoundOperationId) {
+                      return GetOperationRequest.newBuilder().setName(compoundOperationId).build();
+                    }
+                  })
               .build();
 
   private static final ApiMethodDescriptor<DeleteOperationRequest, Empty>
@@ -254,6 +276,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
 
+  private final LongRunningClient longRunningClient;
   private final BackgroundResource backgroundResources;
   private final HttpJsonStubCallableFactory callableFactory;
 
@@ -270,7 +293,19 @@ public class HttpJsonOperationsStub extends OperationsStub {
   public static final HttpJsonOperationsStub create(
       ClientContext clientContext, HttpJsonStubCallableFactory callableFactory) throws IOException {
     return new HttpJsonOperationsStub(
-        OperationsStubSettings.newBuilder().build(), clientContext, callableFactory);
+        OperationsStubSettings.newBuilder().build(),
+        clientContext,
+        callableFactory,
+        TypeRegistry.getEmptyTypeRegistry());
+  }
+
+  public static final HttpJsonOperationsStub create(
+      ClientContext clientContext,
+      HttpJsonStubCallableFactory callableFactory,
+      TypeRegistry typeRegistry)
+      throws IOException {
+    return new HttpJsonOperationsStub(
+        OperationsStubSettings.newBuilder().build(), clientContext, callableFactory, typeRegistry);
   }
 
   /**
@@ -280,7 +315,11 @@ public class HttpJsonOperationsStub extends OperationsStub {
    */
   protected HttpJsonOperationsStub(OperationsStubSettings settings, ClientContext clientContext)
       throws IOException {
-    this(settings, clientContext, new HttpJsonOperationsCallableFactory());
+    this(
+        settings,
+        clientContext,
+        new HttpJsonOperationsCallableFactory(),
+        TypeRegistry.getEmptyTypeRegistry());
   }
 
   /**
@@ -291,7 +330,8 @@ public class HttpJsonOperationsStub extends OperationsStub {
   protected HttpJsonOperationsStub(
       OperationsStubSettings settings,
       ClientContext clientContext,
-      HttpJsonStubCallableFactory callableFactory)
+      HttpJsonStubCallableFactory callableFactory,
+      TypeRegistry typeRegistry)
       throws IOException {
     this.callableFactory = callableFactory;
 
@@ -299,18 +339,22 @@ public class HttpJsonOperationsStub extends OperationsStub {
         listOperationsTransportSettings =
             HttpJsonCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
                 .setMethodDescriptor(listOperationsMethodDescriptor)
+                .setTypeRegistry(typeRegistry)
                 .build();
     HttpJsonCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         HttpJsonCallSettings.<GetOperationRequest, Operation>newBuilder()
             .setMethodDescriptor(getOperationMethodDescriptor)
+            .setTypeRegistry(typeRegistry)
             .build();
     HttpJsonCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         HttpJsonCallSettings.<DeleteOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .setTypeRegistry(typeRegistry)
             .build();
     HttpJsonCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         HttpJsonCallSettings.<CancelOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .setTypeRegistry(typeRegistry)
             .build();
 
     this.listOperationsCallable =
@@ -328,6 +372,12 @@ public class HttpJsonOperationsStub extends OperationsStub {
     this.cancelOperationCallable =
         callableFactory.createUnaryCallable(
             cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
+
+    this.longRunningClient =
+        new HttpJsonLongRunningClient<GetOperationRequest, Operation>(
+            getOperationCallable,
+            getOperationMethodDescriptor.getOperationSnapshotFactory(),
+            getOperationMethodDescriptor.getPollingRequestFactory());
 
     this.backgroundResources =
         new BackgroundResourceAggregation(clientContext.getBackgroundResources());
@@ -367,6 +417,11 @@ public class HttpJsonOperationsStub extends OperationsStub {
   @Override
   public UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
     return cancelOperationCallable;
+  }
+
+  @Override
+  public LongRunningClient longRunningClient() {
+    return longRunningClient;
   }
 
   @Override

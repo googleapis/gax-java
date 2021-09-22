@@ -30,8 +30,10 @@
 package com.google.api.gax.httpjson;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import com.google.api.gax.rpc.StatusCode.Code;
 import java.util.ArrayList;
 import org.junit.Test;
 
@@ -39,7 +41,7 @@ public class HttpJsonOperationSnapshotTest {
 
   @Test
   public void newBuilderTestNoError() {
-    HttpJsonOperationSnapshot testOperationSnapshot0 =
+    HttpJsonOperationSnapshot testOperationSnapshot =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot0")
             .setMetadata("Los Angeles")
@@ -48,13 +50,14 @@ public class HttpJsonOperationSnapshotTest {
             .setError(0, "no error")
             .build();
 
-    assertNull(testOperationSnapshot0.getErrorMessage());
-    assertNull(testOperationSnapshot0.getErrorCode());
+    assertEquals("no error", testOperationSnapshot.getErrorMessage());
+    assertEquals(HttpJsonStatusCode.of(Code.OK), testOperationSnapshot.getErrorCode());
+    assertTrue(testOperationSnapshot.isDone());
   }
 
   @Test
   public void newBuilderTestWithError() {
-    HttpJsonOperationSnapshot testOperationSnapshot1 =
+    HttpJsonOperationSnapshot testOperationSnapshot =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot1")
             .setMetadata("Austin")
@@ -63,13 +66,14 @@ public class HttpJsonOperationSnapshotTest {
             .setError(403, "Forbidden")
             .build();
 
-    assertEquals(testOperationSnapshot1.getErrorMessage(), "Forbidden");
-    assertEquals(testOperationSnapshot1.getErrorCode(), HttpJsonStatusCode.of(403, "Forbidden"));
+    assertEquals(testOperationSnapshot.getErrorMessage(), "Forbidden");
+    assertEquals(testOperationSnapshot.getErrorCode(), HttpJsonStatusCode.of(403, "Forbidden"));
+    assertTrue(testOperationSnapshot.isDone());
   }
 
   @Test
   public void newBuilderTestNotDone() {
-    HttpJsonOperationSnapshot testOperationSnapshot2 =
+    HttpJsonOperationSnapshot testOperationSnapshot =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("snapshot2")
             .setMetadata("Chicago")
@@ -78,7 +82,8 @@ public class HttpJsonOperationSnapshotTest {
             .setError(0, "no error")
             .build();
 
-    assertNull(testOperationSnapshot2.getErrorMessage());
-    assertNull(testOperationSnapshot2.getErrorCode());
+    assertEquals("no error", testOperationSnapshot.getErrorMessage());
+    assertEquals(HttpJsonStatusCode.of(Code.OK), testOperationSnapshot.getErrorCode());
+    assertFalse(testOperationSnapshot.isDone());
   }
 }
