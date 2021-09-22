@@ -29,16 +29,25 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.protobuf.TypeRegistry;
+
 /** HTTP-specific settings for creating callables. */
 public class HttpJsonCallSettings<RequestT, ResponseT> {
   private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+  private final TypeRegistry typeRegistry;
 
-  private HttpJsonCallSettings(ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+  private HttpJsonCallSettings(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, TypeRegistry typeRegistry) {
     this.methodDescriptor = methodDescriptor;
+    this.typeRegistry = typeRegistry;
   }
 
   public ApiMethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
     return methodDescriptor;
+  }
+
+  public TypeRegistry getTypeRegistry() {
+    return typeRegistry;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
@@ -58,6 +67,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
 
   public static class Builder<RequestT, ResponseT> {
     private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+    private TypeRegistry typeRegistry;
 
     private Builder() {}
 
@@ -71,8 +81,13 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
       return this;
     }
 
+    public Builder<RequestT, ResponseT> setTypeRegistry(TypeRegistry typeRegistry) {
+      this.typeRegistry = typeRegistry;
+      return this;
+    }
+
     public HttpJsonCallSettings<RequestT, ResponseT> build() {
-      return new HttpJsonCallSettings<>(methodDescriptor);
+      return new HttpJsonCallSettings<>(methodDescriptor, typeRegistry);
     }
   }
 }

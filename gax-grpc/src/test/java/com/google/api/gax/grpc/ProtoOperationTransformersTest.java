@@ -48,9 +48,8 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ProtoOperationTransformersTest {
-
   @Test
-  public void testResponseTransformer() {
+  public void testAnyResponseTransformer() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
@@ -60,7 +59,7 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testResponseTransformer_exception() {
+  public void testAnyResponseTransformer_exception() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.value()).build();
@@ -78,7 +77,7 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testResponseTransformer_mismatchedTypes() {
+  public void testAnyResponseTransformer_mismatchedTypes() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
@@ -96,7 +95,7 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testMetadataTransformer() {
+  public void testAnyMetadataTransformer() {
     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
@@ -106,7 +105,7 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testMetadataTransformer_mismatchedTypes() {
+  public void testAnyMetadataTransformer_mismatchedTypes() {
     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =

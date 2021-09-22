@@ -34,6 +34,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -191,6 +192,11 @@ public class HttpJsonDirectCallableTest {
     @Override
     public String parse(InputStream httpContent) {
       return "fake";
+    }
+
+    @Override
+    public String parse(InputStream httpContent, TypeRegistry registry) {
+      return parse(httpContent);
     }
 
     @Override
