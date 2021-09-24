@@ -86,8 +86,23 @@ public interface ApiTracer {
    */
   void attemptStarted(int attemptNumber);
 
+  /**
+   * Adds an annotation that an attempt is about to start with additional information from the
+   * request. In general this should occur at the very start of the operation. The attemptNumber is
+   * zero based. So the initial attempt will be 0.
+   *
+   * @param attemptNumber the zero based sequential attempt number.
+   * @param request request of this attempt.
+   */
+  void attemptStarted(Object request, int attemptNumber);
+
   /** Adds an annotation that the attempt succeeded. */
   void attemptSucceeded();
+
+  /**
+   * Adds an annotation that the attempt succeeded with additional information from the response.
+   */
+  void attemptSucceeded(Object response);
 
   /** Add an annotation that the attempt was cancelled by the user. */
   void attemptCancelled();
