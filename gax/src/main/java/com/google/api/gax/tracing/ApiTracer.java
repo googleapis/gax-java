@@ -101,6 +101,8 @@ public interface ApiTracer {
 
   /**
    * Adds an annotation that the attempt succeeded with additional information from the response.
+   *
+   * @param response response returned by this attempt.
    */
   void attemptSucceeded(Object response);
 
