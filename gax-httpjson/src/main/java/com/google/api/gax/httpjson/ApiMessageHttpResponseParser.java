@@ -37,6 +37,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -102,6 +103,11 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
         throw new RestSerializationException(e);
       }
     }
+  }
+
+  @Override
+  public ResponseT parse(InputStream httpResponseBody, TypeRegistry registry) {
+    return parse(httpResponseBody);
   }
 
   @Override

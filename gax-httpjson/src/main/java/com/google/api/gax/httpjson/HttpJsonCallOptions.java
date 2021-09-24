@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
+import com.google.protobuf.TypeRegistry;
 import javax.annotation.Nullable;
 import org.threeten.bp.Instant;
 
@@ -45,6 +46,9 @@ public abstract class HttpJsonCallOptions {
   @Nullable
   public abstract Credentials getCredentials();
 
+  @Nullable
+  public abstract TypeRegistry getTypeRegistry();
+
   public static Builder newBuilder() {
     return new AutoValue_HttpJsonCallOptions.Builder();
   }
@@ -54,6 +58,8 @@ public abstract class HttpJsonCallOptions {
     public abstract Builder setDeadline(Instant value);
 
     public abstract Builder setCredentials(Credentials value);
+
+    public abstract Builder setTypeRegistry(TypeRegistry value);
 
     public abstract HttpJsonCallOptions build();
   }

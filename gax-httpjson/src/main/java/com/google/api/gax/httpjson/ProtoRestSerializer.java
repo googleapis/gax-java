@@ -33,6 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,11 +51,20 @@ import java.util.Map;
  */
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
-  private ProtoRestSerializer() {}
+  private final TypeRegistry registry;
+
+  private ProtoRestSerializer(TypeRegistry registry) {
+    this.registry = registry;
+  }
 
   /** Creates a new instance of ProtoRestSerializer. */
   public static <RequestT extends Message> ProtoRestSerializer<RequestT> create() {
-    return new ProtoRestSerializer<>();
+    return create(TypeRegistry.getEmptyTypeRegistry());
+  }
+
+  /** Creates a new instance of ProtoRestSerializer. */
+  static <RequestT extends Message> ProtoRestSerializer<RequestT> create(TypeRegistry registry) {
+    return new ProtoRestSerializer<>(registry);
   }
 
   /**
@@ -67,7 +77,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    */
   String toJson(RequestT message) {
     try {
-      return JsonFormat.printer().print(message);
+      return JsonFormat.printer().usingTypeRegistry(registry).print(message);
     } catch (InvalidProtocolBufferException e) {
       throw new RestSerializationException("Failed to serialize message to JSON", e);
     }
@@ -85,7 +95,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
   @SuppressWarnings("unchecked")
   RequestT fromJson(InputStream message, Charset messageCharset, Message.Builder builder) {
     try (Reader json = new InputStreamReader(message, messageCharset)) {
-      JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
+      JsonFormat.parser().usingTypeRegistry(registry).ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {
       throw new RestSerializationException("Failed to parse response message", e);

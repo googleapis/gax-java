@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://www.github.com/googleapis/gax-java/compare/v2.4.1...v2.5.0) (2021-09-21)
+
+
+### Features
+
+* Add REST AIP-151 LRO support ([#1484](https://www.github.com/googleapis/gax-java/issues/1484)) ([95ca348](https://www.github.com/googleapis/gax-java/commit/95ca3482d272b5c5c5ac2c85ba007f0ba9f7b5cf))
+
 ### [2.4.1](https://www.github.com/googleapis/gax-java/compare/v2.4.0...v2.4.1) (2021-09-08)
 
 

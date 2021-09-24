@@ -33,6 +33,7 @@ import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
 import com.google.protobuf.Option;
+import com.google.protobuf.TypeRegistry;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -78,6 +79,15 @@ public class ProtoMessageResponseParserTest {
   public void parse() {
     Field actualField =
         parser.parse(new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)));
+    Truth.assertThat(actualField).isEqualTo(field);
+  }
+
+  @Test
+  public void parseWithTypeRegistry() {
+    Field actualField =
+        parser.parse(
+            new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)),
+            TypeRegistry.newBuilder().build());
     Truth.assertThat(actualField).isEqualTo(field);
   }
 
