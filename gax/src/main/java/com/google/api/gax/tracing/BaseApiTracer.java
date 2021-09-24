@@ -87,7 +87,7 @@ public class BaseApiTracer implements ApiTracer {
 
   @Override
   public void attemptStarted(Object request, int attemptNumber) {
-    // noop
+    attemptStarted(attemptNumber);
   }
 
   @Override
@@ -97,7 +97,7 @@ public class BaseApiTracer implements ApiTracer {
 
   @Override
   public void attemptSucceeded(Object response) {
-    // noop
+    attemptSucceeded();
   }
 
   @Override

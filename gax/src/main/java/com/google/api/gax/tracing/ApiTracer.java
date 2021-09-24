@@ -79,11 +79,13 @@ public interface ApiTracer {
   void connectionSelected(String id);
 
   /**
-   * Adds an annotation that an attempt is about to start. In general this should occur at the very
-   * start of the operation. The attemptNumber is zero based. So the initial attempt will be 0.
-   *
+   * @deprecated Please use {@link #attemptStarted(Object, int)} instead.
+   *     <p>Adds an annotation that an attempt is about to start. In general this should occur at
+   *     the very start of the operation. The attemptNumber is zero based. So the initial attempt
+   *     will be 0.
    * @param attemptNumber the zero based sequential attempt number.
    */
+  @Deprecated
   void attemptStarted(int attemptNumber);
 
   /**
@@ -96,7 +98,11 @@ public interface ApiTracer {
    */
   void attemptStarted(Object request, int attemptNumber);
 
-  /** Adds an annotation that the attempt succeeded. */
+  /**
+   * @deprecated Please use {@link #attemptSucceeded(Object)} instead Adds an annotation that the
+   *     attempt succeeded.
+   */
+  @Deprecated
   void attemptSucceeded();
 
   /**
