@@ -1,7 +1,7 @@
 Google API Extensions for Java
 ==============================
 
-[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)](https://travis-ci.org/googleapis/gax-java)
+[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=main)](https://travis-ci.org/googleapis/gax-java)
 
 - [Documentation](https://googleapis.dev/java/gax/latest/)
 
@@ -152,6 +152,6 @@ License
 
 BSD - See [LICENSE] for more information.
 
-[CONTRIBUTING]:https://github.com/googleapis/gax-java/blob/master/CONTRIBUTING.md
-[LICENSE]: https://github.com/googleapis/gax-java/blob/master/LICENSE
+[CONTRIBUTING]:https://github.com/googleapis/gax-java/blob/main/CONTRIBUTING.md
+[LICENSE]: https://github.com/googleapis/gax-java/blob/main/LICENSE
 
