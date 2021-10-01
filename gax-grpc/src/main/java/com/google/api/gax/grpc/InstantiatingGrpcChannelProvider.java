@@ -337,7 +337,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
       CallCredentials callCreds = MoreCallCredentials.from(credentials);
-      ChannelCredentials channelCreds = ComputeEngineChannelCredentials.create(callCreds);
+      ChannelCredentials channelCreds =
+          ComputeEngineChannelCredentials.newBuilder().setCallCredentials(callCreds).build();
       builder = Grpc.newChannelBuilderForAddress(serviceAddress, port, channelCreds);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
       // Will be overridden by user defined values if any.
