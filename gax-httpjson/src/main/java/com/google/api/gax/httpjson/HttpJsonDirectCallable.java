@@ -33,6 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.TypeRegistry;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Instant;
@@ -44,9 +45,16 @@ import org.threeten.bp.Instant;
  */
 class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final ApiMethodDescriptor<RequestT, ResponseT> descriptor;
+  private final TypeRegistry typeRegistry;
 
   HttpJsonDirectCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
+    this(descriptor, null);
+  }
+
+  HttpJsonDirectCallable(
+      ApiMethodDescriptor<RequestT, ResponseT> descriptor, TypeRegistry typeRegistry) {
     this.descriptor = descriptor;
+    this.typeRegistry = typeRegistry;
   }
 
   @Override
@@ -68,6 +76,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
         HttpJsonCallOptions.newBuilder()
             .setDeadline(deadline)
             .setCredentials(context.getCredentials())
+            .setTypeRegistry(typeRegistry)
             .build();
     return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
   }

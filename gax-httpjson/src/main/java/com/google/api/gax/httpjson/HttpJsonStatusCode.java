@@ -57,6 +57,51 @@ public class HttpJsonStatusCode implements StatusCode {
     return new HttpJsonStatusCode(statusCode.getHttpStatusCode(), statusCode);
   }
 
+  public static HttpJsonStatusCode of(com.google.rpc.Code rpcCode) {
+    return new HttpJsonStatusCode(rpcCode.getNumber(), rpcCodeToStatusCode(rpcCode));
+  }
+
+  static StatusCode.Code rpcCodeToStatusCode(com.google.rpc.Code rpcCode) {
+    switch (rpcCode) {
+      case OK:
+        return Code.OK;
+      case CANCELLED:
+        return Code.CANCELLED;
+      case UNKNOWN:
+        return Code.UNKNOWN;
+      case INVALID_ARGUMENT:
+        return Code.INVALID_ARGUMENT;
+      case DEADLINE_EXCEEDED:
+        return Code.DEADLINE_EXCEEDED;
+      case NOT_FOUND:
+        return Code.DEADLINE_EXCEEDED;
+      case ALREADY_EXISTS:
+        return Code.ALREADY_EXISTS;
+      case PERMISSION_DENIED:
+        return Code.PERMISSION_DENIED;
+      case RESOURCE_EXHAUSTED:
+        return Code.RESOURCE_EXHAUSTED;
+      case FAILED_PRECONDITION:
+        return Code.FAILED_PRECONDITION;
+      case ABORTED:
+        return Code.ABORTED;
+      case OUT_OF_RANGE:
+        return Code.OUT_OF_RANGE;
+      case UNIMPLEMENTED:
+        return Code.UNIMPLEMENTED;
+      case INTERNAL:
+        return Code.INTERNAL;
+      case UNAVAILABLE:
+        return Code.UNAVAILABLE;
+      case DATA_LOSS:
+        return Code.DATA_LOSS;
+      case UNAUTHENTICATED:
+        return Code.UNAUTHENTICATED;
+      default:
+        throw new IllegalArgumentException("Unrecognized rpc code: " + rpcCode);
+    }
+  }
+
   static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
     String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
     switch (httpStatus) {
@@ -142,5 +187,10 @@ public class HttpJsonStatusCode implements StatusCode {
   @Override
   public int hashCode() {
     return Objects.hash(statusCode);
+  }
+
+  @Override
+  public String toString() {
+    return "HttpJsonStatusCode{" + "statusCode=" + statusCode + "}";
   }
 }

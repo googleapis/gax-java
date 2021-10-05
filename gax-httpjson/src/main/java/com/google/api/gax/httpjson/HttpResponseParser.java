@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
 
 /** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
@@ -45,6 +46,16 @@ public interface HttpResponseParser<MessageFormatT> {
    *     MessageFormatT}
    */
   MessageFormatT parse(InputStream httpContent);
+
+  /**
+   * Parse the http body content JSON stream into the MessageFormatT.
+   *
+   * @param httpContent the body of an HTTP response
+   * @param registry type registry with Any fields descriptors
+   * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
+   *     MessageFormatT}
+   */
+  MessageFormatT parse(InputStream httpContent, TypeRegistry registry);
 
   /**
    * Serialize an object into an HTTP body, which is written out to output.

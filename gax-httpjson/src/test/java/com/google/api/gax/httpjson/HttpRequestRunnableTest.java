@@ -41,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -74,6 +75,11 @@ public class HttpRequestRunnableTest {
 
           @Override
           public Credentials getCredentials() {
+            return null;
+          }
+
+          @Override
+          public TypeRegistry getTypeRegistry() {
             return null;
           }
         };
@@ -129,6 +135,11 @@ public class HttpRequestRunnableTest {
         new HttpResponseParser<EmptyMessage>() {
           @Override
           public EmptyMessage parse(InputStream httpContent) {
+            return null;
+          }
+
+          @Override
+          public EmptyMessage parse(InputStream httpContent, TypeRegistry registry) {
             return null;
           }
 
