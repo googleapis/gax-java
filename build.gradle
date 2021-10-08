@@ -100,6 +100,7 @@ allprojects {
 subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
+  apply plugin: 'maven'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
   apply plugin: 'signing'

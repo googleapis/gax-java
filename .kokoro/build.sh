@@ -24,4 +24,4 @@ java -version
 echo $JOB_TYPE
 
 ./gradlew assemble
-./gradlew build
+./gradlew build install
