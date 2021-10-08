@@ -25,7 +25,7 @@ dependencies {
     libraries['maven.org_mockito_mockito_core'],
     libraries['maven.com_google_truth_truth']
 
-  apt libraries['maven.com_google_auto_value_auto_value']
+  annotationProcessor libraries['maven.com_google_auto_value_auto_value']
 
   shadowNoGuava libraries['maven.com_google_guava_guava']
 }

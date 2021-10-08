@@ -11,7 +11,7 @@ buildscript {
   }
   dependencies {
     classpath "net.ltgt.gradle:gradle-apt-plugin:0.10",
-      "com.github.jengelman.gradle.plugins:shadow:1.2.4",
+      "com.github.jengelman.gradle.plugins:shadow:6.1.0",
       "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0",
       "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
 
@@ -153,7 +153,7 @@ subprojects {
       html.enabled true
     }
     afterEvaluate {
-      classDirectories = files(classDirectories.files.collect {
+      getClassDirectories().setFrom files(classDirectories.files.collect {
         fileTree(dir: it,
                  exclude: ['**/AutoValue_*'])
         })
@@ -167,7 +167,7 @@ subprojects {
   // ----------
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
 
     from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.resources.srcDirs
     exclude('**/*Test.java')
@@ -177,7 +177,7 @@ subprojects {
   // -------
 
   task javadocJar(type: Jar) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc
   }
 
@@ -197,7 +197,7 @@ subprojects {
   // -------
 
   task javadocJarV3(type: Jar) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc
   }
 
@@ -217,7 +217,7 @@ subprojects {
   // --------
 
   task testlibJar(type: Jar, dependsOn: test) {
-    classifier = 'testlib'
+    archiveClassifier = 'testlib'
     from sourceSets.test.output
 
     include('com/google/api/gax/rpc/testing/**')
@@ -229,7 +229,7 @@ subprojects {
   // ---------
 
   shadowJar {
-    classifier = 'guavashaded'
+    archiveClassifier = 'guavashaded'
     relocate 'com.google.common', 'com.google.api.gax.repackaged.com.google.common'
     relocate 'io.grpc.stub', 'com.google.api.gax.repackaged.io.grpc.stub'
     relocate 'io.grpc.protobuf', 'com.google.api.gax.repackaged.io.grpc.protobuf'
@@ -328,7 +328,6 @@ subprojects {
 
             artifact javadocJar
             artifact sourcesJar
-            artifact shadowJar
             artifact testlibJar
 
             pom {

@@ -18,7 +18,8 @@ dependencies {
     libraries['maven.com_google_truth_truth'],
     libraries['maven.com_google_auto_value_auto_value']
 
-  apt libraries['maven.com_google_auto_value_auto_value']
+  annotationProcessor libraries['maven.com_google_auto_value_auto_value']
+  testAnnotationProcessor libraries['maven.com_google_auto_value_auto_value']
 
   shadowNoGuava libraries['maven.com_google_guava_guava']
 }
