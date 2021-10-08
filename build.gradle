@@ -11,7 +11,7 @@ buildscript {
   }
   dependencies {
     classpath "net.ltgt.gradle:gradle-apt-plugin:0.21",
-      "com.github.jengelman.gradle.plugins:shadow:4.0.2",
+      "com.github.jengelman.gradle.plugins:shadow:6.1.0",
       "io.github.gradle-nexus:publish-plugin:1.1.0",
       "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
 
@@ -99,7 +99,6 @@ allprojects {
 
 subprojects {
   apply plugin: 'java'
-  apply plugin: 'maven-publish'
   apply plugin: 'eclipse'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
@@ -157,10 +156,10 @@ subprojects {
       html.enabled true
     }
     afterEvaluate {
-      classDirectories.setFrom(files(classDirectories.files.collect {
+      getClassDirectories().setFrom files(classDirectories.files.collect {
         fileTree(dir: it,
                  exclude: ['**/AutoValue_*'])
-        }))
+        })
     }
   }
 
@@ -332,7 +331,6 @@ subprojects {
 
             artifact javadocJar
             artifact sourcesJar
-            artifact shadowJar
             artifact testlibJar
 
             pom {

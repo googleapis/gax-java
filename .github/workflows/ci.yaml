@@ -80,4 +80,4 @@ jobs:
       - name: Check dependency conflicts with the latest Libraries BOM
         uses: GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1-linkagemonitor
       - name: Check dependency conflicts in the gax artifacts
-        run: ./gradlew checkJavaLinkage
+        run: ./gradlew checkJavaLinkage -x signMavenJavaPublication
