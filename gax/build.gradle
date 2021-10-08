@@ -4,19 +4,19 @@ archivesBaseName = "gax"
 project.version = "2.5.1-SNAPSHOT" // {x-version-update:gax:current}
 
 dependencies {
-  compile libraries['maven.com_google_guava_guava'],
+  implementation (libraries['maven.com_google_guava_guava'],
     libraries['maven.com_google_code_findbugs_jsr305'],
     libraries['maven.org_threeten_threetenbp'],
     libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
     libraries['maven.com_google_api_api_common'],
-    libraries['maven.io_opencensus_opencensus_api']
+    libraries['maven.io_opencensus_opencensus_api'])
 
   compileOnly libraries['maven.com_google_auto_value_auto_value']
 
-  testCompile libraries['maven.junit_junit'],
+  testImplementation( libraries['maven.junit_junit'],
     libraries['maven.org_mockito_mockito_core'],
     libraries['maven.com_google_truth_truth'],
-    libraries['maven.com_google_auto_value_auto_value']
+    libraries['maven.com_google_auto_value_auto_value'] )
 
   annotationProcessor libraries['maven.com_google_auto_value_auto_value']
   testAnnotationProcessor libraries['maven.com_google_auto_value_auto_value']

@@ -4,7 +4,7 @@ archivesBaseName = "gax-httpjson"
 project.version = "0.90.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
 
 dependencies {
-  compile project(':gax'),
+  implementation( project(':gax'),
     libraries['maven.com_google_protobuf'],
     libraries['maven.com_google_protobuf_java_util'],
     libraries['maven.com_google_code_gson_gson'],
@@ -15,15 +15,15 @@ dependencies {
     libraries['maven.com_google_http_client_google_http_client_gson'],
     libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
     libraries['maven.com_google_auth_google_auth_library_credentials'],
-    libraries['maven.com_google_api_grpc_proto_google_common_protos']
-    libraries['maven.com_google_api_api_common']
+    libraries['maven.com_google_api_grpc_proto_google_common_protos'],
+    libraries['maven.com_google_api_api_common'])
 
   compileOnly libraries['maven.com_google_auto_value_auto_value']
 
-  testCompile project(':gax').sourceSets.test.output,
+  testImplementation( project(':gax').sourceSets.test.output,
     libraries['maven.junit_junit'],
     libraries['maven.org_mockito_mockito_core'],
-    libraries['maven.com_google_truth_truth']
+    libraries['maven.com_google_truth_truth'])
 
   annotationProcessor libraries['maven.com_google_auto_value_auto_value']
 

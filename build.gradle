@@ -10,9 +10,9 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath "net.ltgt.gradle:gradle-apt-plugin:0.10",
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.21",
       "com.github.jengelman.gradle.plugins:shadow:6.1.0",
-      "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0",
+      "io.github.gradle-nexus:publish-plugin:1.1.0",
       "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
 
     classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.8"
@@ -21,7 +21,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'io.codearte.nexus-staging'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.5.1-SNAPSHOT" // {x-version-update:gax:current}
@@ -46,12 +46,16 @@ verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
 
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
     !nonReleaseProjects.contains(project.name)) {
-  // Nexus staging plugin only works at root project level
-  // See https://github.com/Codearte/gradle-nexus-staging-plugin/issues/47
-  nexusStaging {
-    username = ossrhUsername
-    password = ossrhPassword
+  nexusPublishing {
     packageGroup = "com.google.api"
+    repositories {
+      sonatype {   //or custom repository name
+        nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
+        snapshotRepositoryUrl.set(uri('https://google.oss.sonatype.org/content/repositories/snapshots/'))
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
   }
 }
 
@@ -95,8 +99,8 @@ allprojects {
 
 subprojects {
   apply plugin: 'java'
-  apply plugin: 'maven'
   apply plugin: 'eclipse'
+  apply plugin: 'maven'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
   apply plugin: 'signing'
@@ -261,12 +265,12 @@ subprojects {
 
   configurations {
     codeGeneration
-    compile.exclude group: 'com.google.guava', module: 'guava-jdk5'
+    implementation.exclude group: 'com.google.guava', module: 'guava-jdk5'
   }
 
   dependencies {
-    codeGeneration libraries['maven.com_google_auto_value_auto_value'],
-        libraries['maven.com_google_code_findbugs_jsr305']
+    codeGeneration (libraries['maven.com_google_auto_value_auto_value'],
+        libraries['maven.com_google_code_findbugs_jsr305'])
 
     // Separate configuration (class path) for Linkage Checker
     linkageChecker "com.google.cloud.tools:dependencies:1.4.0"
@@ -484,7 +488,7 @@ task createApiDocsRedirect {
 }
 
 task publishDocs {
-  dependsOn 'closeAndReleaseRepository'
+  dependsOn 'closeAndReleaseSonatypeStagingRepository'
   doLast {
     exec {
       workingDir './tmp_gh-pages'

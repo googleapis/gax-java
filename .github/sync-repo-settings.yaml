@@ -9,8 +9,6 @@ branchProtectionRules:
     requiresStrictStatusChecks: true
     requiredStatusCheckContexts:
       - bazel
-      - linkage-monitor (8)
-      - linkage-monitor (11)
       - units (8)
       - units (11)
       - cla/google

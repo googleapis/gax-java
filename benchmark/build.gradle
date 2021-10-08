@@ -19,11 +19,11 @@ repositories {
 }
 
 dependencies {
-    compile project(':gax')
-    compile project(':gax-grpc')
-    compile "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
-    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.4'
-    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.6'
+    implementation project(':gax')
+    implementation project(':gax-grpc')
+    implementation "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
+    implementation 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.4'
+    implementation 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.6'
 }
 
 // Allow command line to target specific test
