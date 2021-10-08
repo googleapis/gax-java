@@ -1,5 +1,3 @@
-import jdk.internal.dynalink.linker.LinkerServices
-
 archivesBaseName = "gax-httpjson"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
