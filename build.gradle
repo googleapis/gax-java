@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.5.1" // {x-version-update:gax:current}
+project.version = "2.5.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
