@@ -42,6 +42,8 @@ tasks.whenTaskAdded { task ->
     task.dependsOn copyPom
   } else if (task.name == 'publishMavenJavaPublicationToMavenRepository') {
     task.dependsOn copyPom
+  } else if (task.name == 'publishMavenJavaPublicationToSonatypeRepository') {
+    task.dependsOn copyPom
   }
 }
 
