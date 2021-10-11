@@ -12,7 +12,7 @@ buildscript {
 
 archivesBaseName = "gax-bom"
 
-project.version = "2.5.1-SNAPSHOT" // {x-version-update:gax-bom:current}
+project.version = "2.5.1" // {x-version-update:gax-bom:current}
 
 ext {
   mavenJavaDir = "$project.buildDir/publications/mavenJava"
@@ -41,6 +41,8 @@ tasks.whenTaskAdded { task ->
   } else if (task.name == 'publishMavenJavaPublicationToMavenLocal') {
     task.dependsOn copyPom
   } else if (task.name == 'publishMavenJavaPublicationToMavenRepository') {
+    task.dependsOn copyPom
+  } else if (task.name == 'publishMavenJavaPublicationToSonatypeRepository') {
     task.dependsOn copyPom
   }
 }

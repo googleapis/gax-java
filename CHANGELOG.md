@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.5.1](https://www.github.com/googleapis/gax-java/compare/v2.5.0...v2.5.1) (2021-10-08)
+
+
+### Dependencies
+
+* fix release pipeline ([#1500](https://www.github.com/googleapis/gax-java/issues/1500)) ([f8ae03b](https://www.github.com/googleapis/gax-java/commit/f8ae03bbf0389d5fd943d214c1058ee012be757b))
+
 ## [2.5.0](https://www.github.com/googleapis/gax-java/compare/v2.4.1...v2.5.0) (2021-09-21)
 
 
