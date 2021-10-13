@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import com.google.api.gax.rpc.StatusCode;
 import java.util.Arrays;
@@ -64,7 +66,9 @@ public class HttpJsonStatusCodeTest {
   public void httpStatusToStatusCodeTest() {
     // The HTTP status code conversion logic is currently in the process of being standardized,
     // the tested logic may change in nearest future.
-    assertEquals(StatusCode.Code.OK, HttpJsonStatusCode.httpStatusToStatusCode(200, "anything"));
+    final String defaultMessage = "anything";
+    assertEquals(
+        StatusCode.Code.OK, HttpJsonStatusCode.httpStatusToStatusCode(200, defaultMessage));
     assertEquals(
         StatusCode.Code.OUT_OF_RANGE,
         HttpJsonStatusCode.httpStatusToStatusCode(400, HttpJsonStatusCode.OUT_OF_RANGE));
@@ -73,25 +77,25 @@ public class HttpJsonStatusCodeTest {
         HttpJsonStatusCode.httpStatusToStatusCode(400, HttpJsonStatusCode.FAILED_PRECONDITION));
     assertEquals(
         StatusCode.Code.INVALID_ARGUMENT,
-        HttpJsonStatusCode.httpStatusToStatusCode(400, "anything"));
+        HttpJsonStatusCode.httpStatusToStatusCode(400, defaultMessage));
     assertEquals(
         StatusCode.Code.UNAUTHENTICATED,
-        HttpJsonStatusCode.httpStatusToStatusCode(401, "anything"));
+        HttpJsonStatusCode.httpStatusToStatusCode(401, defaultMessage));
     assertEquals(
         StatusCode.Code.PERMISSION_DENIED,
-        HttpJsonStatusCode.httpStatusToStatusCode(403, "anything"));
+        HttpJsonStatusCode.httpStatusToStatusCode(403, defaultMessage));
     assertEquals(
-        StatusCode.Code.NOT_FOUND, HttpJsonStatusCode.httpStatusToStatusCode(404, "anything"));
+        StatusCode.Code.NOT_FOUND, HttpJsonStatusCode.httpStatusToStatusCode(404, defaultMessage));
     assertEquals(
         StatusCode.Code.ALREADY_EXISTS,
         HttpJsonStatusCode.httpStatusToStatusCode(409, HttpJsonStatusCode.ALREADY_EXISTS));
     assertEquals(
-        StatusCode.Code.ABORTED, HttpJsonStatusCode.httpStatusToStatusCode(409, "anything"));
+        StatusCode.Code.ABORTED, HttpJsonStatusCode.httpStatusToStatusCode(409, defaultMessage));
     assertEquals(
         StatusCode.Code.RESOURCE_EXHAUSTED,
-        HttpJsonStatusCode.httpStatusToStatusCode(429, "anything"));
+        HttpJsonStatusCode.httpStatusToStatusCode(429, defaultMessage));
     assertEquals(
-        StatusCode.Code.CANCELLED, HttpJsonStatusCode.httpStatusToStatusCode(499, "anything"));
+        StatusCode.Code.CANCELLED, HttpJsonStatusCode.httpStatusToStatusCode(499, defaultMessage));
     assertEquals(
         StatusCode.Code.DATA_LOSS,
         HttpJsonStatusCode.httpStatusToStatusCode(500, HttpJsonStatusCode.DATA_LOSS));
@@ -99,24 +103,26 @@ public class HttpJsonStatusCodeTest {
         StatusCode.Code.UNKNOWN,
         HttpJsonStatusCode.httpStatusToStatusCode(500, HttpJsonStatusCode.UNKNOWN));
     assertEquals(
-        StatusCode.Code.INTERNAL, HttpJsonStatusCode.httpStatusToStatusCode(500, "anything"));
+        StatusCode.Code.INTERNAL, HttpJsonStatusCode.httpStatusToStatusCode(500, defaultMessage));
     assertEquals(
-        StatusCode.Code.UNIMPLEMENTED, HttpJsonStatusCode.httpStatusToStatusCode(501, "anything"));
+        StatusCode.Code.UNIMPLEMENTED,
+        HttpJsonStatusCode.httpStatusToStatusCode(501, defaultMessage));
     assertEquals(
-        StatusCode.Code.UNAVAILABLE, HttpJsonStatusCode.httpStatusToStatusCode(503, "anything"));
+        StatusCode.Code.UNAVAILABLE,
+        HttpJsonStatusCode.httpStatusToStatusCode(503, defaultMessage));
     assertEquals(
         StatusCode.Code.DEADLINE_EXCEEDED,
-        HttpJsonStatusCode.httpStatusToStatusCode(504, "anything"));
+        HttpJsonStatusCode.httpStatusToStatusCode(504, defaultMessage));
 
     try {
-      HttpJsonStatusCode.httpStatusToStatusCode(411, "anything");
+      HttpJsonStatusCode.httpStatusToStatusCode(411, defaultMessage);
       fail();
     } catch (IllegalStateException e) {
       // expected
     }
 
     try {
-      HttpJsonStatusCode.httpStatusToStatusCode(666, "anything");
+      HttpJsonStatusCode.httpStatusToStatusCode(666, defaultMessage);
       fail();
     } catch (IllegalArgumentException e) {
       // expected
