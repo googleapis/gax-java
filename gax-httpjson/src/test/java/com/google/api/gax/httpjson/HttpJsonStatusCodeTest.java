@@ -50,7 +50,7 @@ public class HttpJsonStatusCodeTest {
         statusCode = HttpJsonStatusCode.rpcCodeToStatusCode(rpcCode);
       } catch (IllegalArgumentException e) {
         if (rpcCode != com.google.rpc.Code.UNRECOGNIZED) {
-          fail("Unrecognized com.google.rpc.Code found");
+          fail("Unrecognized com.google.rpc.Code found " + rpcCode);
         }
         continue;
       }
