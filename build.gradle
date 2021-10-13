@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.5.2" // {x-version-update:gax:current}
+project.version = "2.5.3" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
@@ -433,7 +433,7 @@ task javadocCombinedV3(type: Javadoc) {
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
   options.addStringOption("projectname", "gax")
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.2.1.jar")]
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.3.0.jar")]
 }
 
 clean {
