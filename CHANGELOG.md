@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.5.2](https://www.github.com/googleapis/gax-java/compare/v2.5.1...v2.5.2) (2021-10-13)
+
+
+### Dependencies
+
+* release multiple artifacts at once ([#1506](https://www.github.com/googleapis/gax-java/issues/1506)) ([8c022f6](https://www.github.com/googleapis/gax-java/commit/8c022f69f7878280e00f200f65a931ff0f8cfe45))
+
 ### [2.5.1](https://www.github.com/googleapis/gax-java/compare/v2.5.0...v2.5.1) (2021-10-08)
 
 
