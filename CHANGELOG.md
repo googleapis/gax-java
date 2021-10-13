@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.5.3](https://www.github.com/googleapis/gax-java/compare/v2.5.2...v2.5.3) (2021-10-13)
+
+
+### Bug Fixes
+
+* Fix `com.google.rpc.Code` to `StatusCode.Code` conversion  logic ([#1508](https://www.github.com/googleapis/gax-java/issues/1508)) ([61b1617](https://www.github.com/googleapis/gax-java/commit/61b161799faf292be1394111381f8a35e757b85a))
+
 ### [2.5.2](https://www.github.com/googleapis/gax-java/compare/v2.5.1...v2.5.2) (2021-10-13)
 
 
