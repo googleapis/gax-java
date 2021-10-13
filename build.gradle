@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.5.2-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "2.5.3-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
@@ -273,7 +273,7 @@ subprojects {
         libraries['maven.com_google_code_findbugs_jsr305'])
 
     // Separate configuration (class path) for Linkage Checker
-    linkageChecker "com.google.cloud.tools:dependencies:1.4.0"
+    linkageChecker "com.google.cloud.tools:dependencies:1.5.12"
   }
 
   compileJava.classpath += configurations.codeGeneration
