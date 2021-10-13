@@ -74,7 +74,7 @@ public class HttpJsonStatusCode implements StatusCode {
       case DEADLINE_EXCEEDED:
         return Code.DEADLINE_EXCEEDED;
       case NOT_FOUND:
-        return Code.DEADLINE_EXCEEDED;
+        return Code.NOT_FOUND;
       case ALREADY_EXISTS:
         return Code.ALREADY_EXISTS;
       case PERMISSION_DENIED:
