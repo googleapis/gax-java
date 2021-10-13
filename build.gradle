@@ -273,7 +273,7 @@ subprojects {
         libraries['maven.com_google_code_findbugs_jsr305'])
 
     // Separate configuration (class path) for Linkage Checker
-    linkageChecker "com.google.cloud.tools:dependencies:1.5.4"
+    linkageChecker "com.google.cloud.tools:dependencies:1.5.12"
   }
 
   compileJava.classpath += configurations.codeGeneration
