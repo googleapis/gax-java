@@ -100,7 +100,7 @@ import org.threeten.bp.Duration;
  * OperationsStubSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-@Generated("by gapic-generator-java")
+
 @BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
   /** The default scopes of the service. */

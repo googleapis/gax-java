@@ -49,7 +49,7 @@ import javax.annotation.Generated;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by gapic-generator-java")
+
 @BetaApi
 public abstract class OperationsStub implements BackgroundResource {
 

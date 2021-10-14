@@ -57,7 +57,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-@Generated("by gapic-generator-java")
+
 public class OperationsClientTest {
   private static MockHttpService mockService;
   private static OperationsClient client;

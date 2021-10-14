@@ -85,7 +85,7 @@ import javax.annotation.Generated;
  * OperationsSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-@Generated("by gapic-generator-java")
+
 @BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
 

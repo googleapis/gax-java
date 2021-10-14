@@ -121,7 +121,7 @@ import javax.annotation.Generated;
  *
  * <p>Please refer to the GitHub repository's samples for more quickstart code snippets.
  */
-@Generated("by gapic-generator-java")
+
 @BetaApi
 public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
