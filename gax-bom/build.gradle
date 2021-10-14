@@ -3,8 +3,9 @@ archivesBaseName = "gax-bom"
 project.version = "2.5.3" // {x-version-update:gax-bom:current}
 
 ext {
-  mavenJavaDir = "$project.buildDir/publications/mavenJava"
+  mavenJavaDir = "$buildDir/publications/mavenJava"
   mavenJavaBomOutputFile = file(mavenJavaDir + "/pom-default.xml")
+  mavenJavaBomAscOutputFile = file(mavenJavaDir + "/pom-default.xml.asc")
 }
 
 // Copy our pom.xml to the location where a generated POM would go
@@ -59,6 +60,10 @@ artifacts {
   archives(mavenJavaBomOutputFile) {
     builtBy copyPom
   }
+  archives(mavenJavaBomAscOutputFile) {
+    extension 'pom.asc'
+    builtBy signMavenJavaPublication
+  }
 }
 
 afterEvaluate {
@@ -70,6 +75,7 @@ afterEvaluate {
       mavenJava(MavenPublication) {
         version = project.version
         artifact mavenJavaBomOutputFile
+        artifact mavenJavaBomAscOutputFile
       }
     }
     repositories {
