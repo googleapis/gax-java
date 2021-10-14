@@ -10,10 +10,10 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath "net.ltgt.gradle:gradle-apt-plugin:0.21",
-      "com.github.jengelman.gradle.plugins:shadow:6.1.0",
-      "io.github.gradle-nexus:publish-plugin:1.1.0",
-      "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.10",
+            "com.github.jengelman.gradle.plugins:shadow:6.1.0",
+            "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0",
+            "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
 
     classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.8"
   }
@@ -21,7 +21,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
+apply plugin: 'io.codearte.nexus-staging'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.5.3" // {x-version-update:gax:current}
@@ -46,16 +46,12 @@ verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
 
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
     !nonReleaseProjects.contains(project.name)) {
-  nexusPublishing {
+  // Nexus staging plugin only works at root project level
+  // See https://github.com/Codearte/gradle-nexus-staging-plugin/issues/47
+  nexusStaging {
+    username = ossrhUsername
+    password = ossrhPassword
     packageGroup = "com.google.api"
-    repositories {
-      sonatype {   //or custom repository name
-        nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
-        snapshotRepositoryUrl.set(uri('https://google.oss.sonatype.org/content/repositories/snapshots/'))
-        username = ossrhUsername
-        password = ossrhPassword
-      }
-    }
   }
 }
 
