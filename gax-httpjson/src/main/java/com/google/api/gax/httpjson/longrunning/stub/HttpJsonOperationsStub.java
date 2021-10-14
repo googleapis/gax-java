@@ -66,14 +66,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
  * REST stub implementation for the Operations service API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-
 @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class HttpJsonOperationsStub extends OperationsStub {
   private static final ApiMethodDescriptor<ListOperationsRequest, ListOperationsResponse>

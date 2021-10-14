@@ -53,7 +53,6 @@ import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.List;
 
-
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
  * Settings class to configure an instance of {@link OperationsClient}.
@@ -85,7 +84,6 @@ import java.util.List;
  * OperationsSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-
 @BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
 

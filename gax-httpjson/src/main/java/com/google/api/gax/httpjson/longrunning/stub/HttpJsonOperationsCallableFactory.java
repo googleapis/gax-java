@@ -43,14 +43,12 @@ import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
-
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
  * REST callable factory implementation for the Operations service API.
  *
  * <p>This class is for advanced usage.
  */
-
 @BetaApi
 public class HttpJsonOperationsCallableFactory
     implements HttpJsonStubCallableFactory<ApiMessage, BackgroundResource> {

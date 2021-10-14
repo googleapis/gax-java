@@ -42,14 +42,12 @@ import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 
-
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
  * Base stub class for the Operations service API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-
 @BetaApi
 public abstract class OperationsStub implements BackgroundResource {
 

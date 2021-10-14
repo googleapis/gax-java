@@ -120,7 +120,6 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>Please refer to the GitHub repository's samples for more quickstart code snippets.
  */
-
 @BetaApi
 public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
