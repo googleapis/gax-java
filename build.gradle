@@ -387,7 +387,7 @@ subprojects {
         if (project.hasProperty('signing.gnupg.executable')) {
           useGpgCmd()
         }
-        sign publishing.publications.mavenJava
+        sign publishing.publications
       }
     }
   }
