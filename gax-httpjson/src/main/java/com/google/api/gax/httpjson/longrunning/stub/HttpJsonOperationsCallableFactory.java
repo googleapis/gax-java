@@ -42,7 +42,7 @@ import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import javax.annotation.Generated;
+
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
