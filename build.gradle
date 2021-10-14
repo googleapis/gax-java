@@ -1,27 +1,15 @@
 import groovy.io.FileType
 
-buildscript {
-  repositories {
-    mavenLocal()
-    maven {
-      url 'https://plugins.gradle.org/m2/'
-    }
-    mavenCentral()
-    jcenter()
-  }
-  dependencies {
-    classpath "net.ltgt.gradle:gradle-apt-plugin:0.21",
-      "com.github.jengelman.gradle.plugins:shadow:6.1.0",
-      "io.github.gradle-nexus:publish-plugin:1.1.0",
-      "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
+plugins {
+  id 'java'
+  id 'com.github.sherter.google-java-format' version '0.8'
 
-    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.8"
-  }
+  id 'com.dorongold.task-tree' version '2.1.0' apply false
+  id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
+  id 'com.github.johnrengelman.plugin-shadow' version '2.0.3' apply false
+  id 'io.github.gradle-nexus.publish-plugin' version "1.1.0" apply false
+  id 'net.ltgt.apt' version '0.21' apply false
 }
-
-apply plugin: 'java'
-apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.5.3" // {x-version-update:gax:current}
@@ -60,13 +48,14 @@ if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 }
 
 allprojects {
+  apply plugin: 'java'
+
   repositories {
     mavenCentral() // for google-java-format's dependency
   }
 
   // Formatting tasks
   // ================
-  apply plugin: 'com.github.sherter.google-java-format'
   test.dependsOn verifyGoogleJavaFormat
   verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
 
@@ -98,16 +87,15 @@ allprojects {
 }
 
 subprojects {
-  apply plugin: 'java'
   apply plugin: 'eclipse'
-  apply plugin: 'maven'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
-  apply plugin: 'signing'
-  apply plugin: "net.ltgt.apt"
-  apply plugin: 'com.github.johnrengelman.shadow'
   apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
   apply plugin: 'com.dorongold.task-tree'
+  apply plugin: 'com.github.johnrengelman.shadow'
+  apply plugin: "net.ltgt.apt"
 
   group = "com.google.api"
 
@@ -370,8 +358,8 @@ subprojects {
           maven {
             url 'https://google.oss.sonatype.org/service/local/staging/deploy/maven2/'
             credentials {
-              username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
-              password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+              username = project.findProperty('ossrhUsername')
+              password = project.findProperty('ossrhPassword')
             }
           }
         }
@@ -416,11 +404,6 @@ task javadocCombined(type: Javadoc) {
 javadoc.options {
   encoding = 'UTF-8'
   links 'https://docs.oracle.com/javase/7/docs/api/'
-}
-
-clean {
-  delete 'tmp_gh-pages/'
-  delete 'tmp_docs/'
 }
 
 // JavaDocV3 docFX
