@@ -39,7 +39,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-@javax.annotation.Generated("by GAPIC")
 @BetaApi
 public class MockOperationsImpl extends OperationsImplBase {
   private List<AbstractMessage> requests;
