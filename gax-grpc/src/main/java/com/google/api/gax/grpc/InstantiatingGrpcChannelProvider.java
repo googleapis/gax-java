@@ -83,7 +83,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   private static final String DIRECT_PATH_ENV_DISABLE_DIRECT_PATH =
       "GOOGLE_CLOUD_DISABLE_DIRECT_PATH";
-  private static final String DIRECT_PATH_ENABLE_XDS = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS";
+  private static final String DIRECT_PATH_ENV_ENABLE_XDS = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
   // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
@@ -336,7 +336,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (isDirectPathEnabled(serviceAddress)
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
-      isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENABLE_XDS));
+      isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
         builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
@@ -358,10 +358,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
     // google-c2p resolver requires service config lookup
     if (!isDirectPathXdsEnabled) {
-      builder =
-          builder
-              // See https://github.com/googleapis/gapic-generator/issues/2816
-              .disableServiceConfigLookUp();
+      // See https://github.com/googleapis/gapic-generator/issues/2816
+      builder.disableServiceConfigLookUp();
     }
     builder =
         builder
