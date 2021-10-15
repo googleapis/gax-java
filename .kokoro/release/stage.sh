@@ -33,6 +33,7 @@ create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
 if [[ -n "${AUTORELEASE_PR}" ]]
 then
   ./gradlew publishToSonatype closeSonatypeStagingRepository
+  #./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
 else
   ./gradlew publishToSonatype
 fi

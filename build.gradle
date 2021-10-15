@@ -20,6 +20,21 @@ ext {
   libraryVendor = 'Google'
 }
 
+if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
+    !nonReleaseProjects.contains(project.name)) {
+  nexusPublishing {
+    packageGroup = group
+    repositories {
+      sonatype {   //or custom repository name
+        nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
+        snapshotRepositoryUrl.set(uri('https://google.oss.sonatype.org/content/repositories/snapshots/'))
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
+  }
+}
+
 subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
@@ -37,21 +52,6 @@ subprojects {
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
-
-  if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-      !nonReleaseProjects.contains(project.name)) {
-    nexusPublishing {
-      packageGroup = group
-      repositories {
-        sonatype {   //or custom repository name
-          nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
-          snapshotRepositoryUrl.set(uri('https://google.oss.sonatype.org/content/repositories/snapshots/'))
-          username = ossrhUsername
-          password = ossrhPassword
-        }
-      }
-    }
-  }
 
   // Formatting tasks
   // ================
