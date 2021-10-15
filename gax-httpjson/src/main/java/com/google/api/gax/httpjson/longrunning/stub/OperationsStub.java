@@ -41,7 +41,6 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
@@ -49,7 +48,6 @@ import javax.annotation.Generated;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by gapic-generator-java")
 @BetaApi
 public abstract class OperationsStub implements BackgroundResource {
 

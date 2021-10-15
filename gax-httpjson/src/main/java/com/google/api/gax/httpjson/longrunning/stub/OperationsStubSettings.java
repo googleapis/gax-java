@@ -66,7 +66,6 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.Generated;
 import org.threeten.bp.Duration;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
@@ -100,7 +99,6 @@ import org.threeten.bp.Duration;
  * OperationsStubSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-@Generated("by gapic-generator-java")
 @BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
   /** The default scopes of the service. */
