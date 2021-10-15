@@ -30,10 +30,9 @@ setup_environment_secrets
 mkdir -p ${HOME}/.gradle
 create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
 
-./gradlew publishToSonatype closeSonatypeStagingRepository
-#if [[ -z "${AUTORELEASE_PR}" ]]
-#then
-#  ./gradlew publishToSonatype
-#else
-#  ./gradlew publishToSonatype closeSonatypeStagingRepository
-#fi
+if [[ -n "${AUTORELEASE_PR}" ]]
+then
+  ./gradlew publishToSonatype closeSonatypeStagingRepository
+else
+  ./gradlew publishToSonatype
+fi
