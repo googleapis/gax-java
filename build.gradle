@@ -392,6 +392,9 @@ task javadocCombinedV3(type: Javadoc) {
   options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
   options.addStringOption("projectname", "gax")
   options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.3.0.jar")]
+  // Newer Gradle 6 passes -notimestamp by default, which the doclet above doesn't understand:
+  // https://github.com/gradle/gradle/issues/11898
+  options.noTimestamp false
 }
 
 clean {
