@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.6.0](https://www.github.com/googleapis/gax-java/compare/v2.5.3...v2.6.0) (2021-10-15)
+
+
+### Features
+
+* remove deprecated Generated annotation ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Bug Fixes
+
+* Fix com.google.rpc.Code to StatusCode.Code conversion logic ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Dependencies
+
+* update api-common to 2.0.5 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update auto-value to 1.8.2 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update com_google_protobuf to 3.18.1 ([#1519](https://www.github.com/googleapis/gax-java/issues/1519)) ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update google-http-client to 1.40.1 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update grpc to 1.41.0 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update guava to v31 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
 ### [2.5.3](https://www.github.com/googleapis/gax-java/compare/v2.5.2...v2.5.3) (2021-10-13)
 
 
