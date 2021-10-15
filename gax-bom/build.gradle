@@ -71,9 +71,6 @@ afterEvaluate {
       mavenJava(MavenPublication) {
         version = project.version
         artifact mavenJavaBomOutputFile
-        artifact(file(mavenJavaBomAscOutputFile)) {
-          extension 'pom.asc'
-        }
       }
     }
     repositories {
@@ -93,6 +90,12 @@ afterEvaluate {
         useGpgCmd()
       }
       sign publishing.publications.mavenJava
+
+      publishing.publications.mavenJava(MavenPublication) {
+        artifact(mavenJavaBomAscOutputFile) {
+          extension 'pom.asc'
+        }
+      }
     }
   }
 }
