@@ -23,7 +23,7 @@ ext {
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
     !nonReleaseProjects.contains(project.name)) {
   nexusPublishing {
-    packageGroup = group
+    packageGroup = 'com.google.api'
     repositories {
       sonatype {   //or custom repository name
         nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
