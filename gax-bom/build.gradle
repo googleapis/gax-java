@@ -60,13 +60,10 @@ artifacts {
   archives(mavenJavaBomOutputFile) {
     builtBy copyPom
   }
-  archives(mavenJavaBomAscOutputFile) {
-    extension 'pom.asc'
-    builtBy signMavenJavaPublication
-  }
 }
 
 afterEvaluate {
+
   // We can't use the `publishing` section from the main build.gradle because
   // we don't want all the Java artifacts, and we want to use our own pom.xml
   // instead of the generated one.
@@ -75,7 +72,9 @@ afterEvaluate {
       mavenJava(MavenPublication) {
         version = project.version
         artifact mavenJavaBomOutputFile
-        artifact mavenJavaBomAscOutputFile
+        artifact(file(mavenJavaBomAscOutputFile)) {
+          extension 'pom.asc'
+        }
       }
     }
     repositories {
