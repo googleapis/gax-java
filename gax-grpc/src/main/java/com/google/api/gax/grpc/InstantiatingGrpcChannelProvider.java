@@ -331,12 +331,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     ManagedChannelBuilder<?> builder;
 
-    // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
-    String directPathXdsEnv = envProvider.getenv(DIRECT_PATH_ENABLE_XDS);
-    boolean isDirectPathXdsEnabled = Boolean.parseBoolean(directPathXdsEnv);
+    // Check DirectPath traffic.
+    boolean isDirectPathXdsEnabled = false;
     if (isDirectPathEnabled(serviceAddress)
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
+      isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
         builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
