@@ -33,9 +33,4 @@ create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
 # This is a multi module project. Cannot publish directly to maven without
 # resolving this issue https://github.com/gradle-nexus/publish-plugin/issues/19
 # Might migrate to maven pom in the future.
-if [[ -z "${AUTORELEASE_PR}" ]]
-then
-  ./gradlew publishToSonatype
-else
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-fi
+./gradlew publishToSonatype releaseSonatypeStagingRepository
