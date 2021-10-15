@@ -1,6 +1,6 @@
 archivesBaseName = 'gax-bom'
 
-project.version = "2.5.4-SNAPSHOT" // {x-version-update:gax-bom:current}
+project.version = "2.6.0" // {x-version-update:gax-bom:current}
 
 ext {
   mavenJavaDir = "$buildDir/publications/mavenJava"
