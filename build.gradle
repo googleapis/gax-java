@@ -1,27 +1,14 @@
 import groovy.io.FileType
 
-buildscript {
-  repositories {
-    mavenLocal()
-    maven {
-      url 'https://plugins.gradle.org/m2/'
-    }
-    mavenCentral()
-    jcenter()
-  }
-  dependencies {
-    classpath "net.ltgt.gradle:gradle-apt-plugin:0.21",
-      "com.github.jengelman.gradle.plugins:shadow:6.1.0",
-      "io.github.gradle-nexus:publish-plugin:1.1.0",
-      "gradle.plugin.com.dorongold.plugins:task-tree:1.5"
+plugins {
+  id 'java'
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 
-    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.8"
-  }
+  id 'com.dorongold.task-tree' version '2.1.0' apply false
+  id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
+  id 'com.github.sherter.google-java-format' version '0.8' apply false
+  id 'net.ltgt.apt' version '0.21' apply false
 }
-
-apply plugin: 'java'
-apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.5.4-SNAPSHOT" // {x-version-update:gax:current}
@@ -34,20 +21,10 @@ ext {
   libraryVendor = 'Google'
 }
 
-googleJavaFormat {
-  exclude '.apt_generated/**'
-  exclude 'bin/**'
-  exclude 'build/**'
-  exclude 'bazel*/**'
-}
-
-// google-java-format-gradle-plugin:0.8 does not work with Java 1.7.
-verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
-
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
     !nonReleaseProjects.contains(project.name)) {
   nexusPublishing {
-    packageGroup = "com.google.api"
+    packageGroup = 'com.google.api'
     repositories {
       sonatype {   //or custom repository name
         nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
@@ -59,16 +36,34 @@ if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
   }
 }
 
-allprojects {
-  repositories {
-    mavenCentral() // for google-java-format's dependency
-  }
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+  apply plugin: 'jacoco'
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  apply plugin: 'com.dorongold.task-tree'
+  apply plugin: 'com.github.johnrengelman.shadow'
+  apply plugin: 'com.github.sherter.google-java-format'
+  apply plugin: 'net.ltgt.apt'
+
+  group = 'com.google.api'
+
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
   // Formatting tasks
   // ================
-  apply plugin: 'com.github.sherter.google-java-format'
+  googleJavaFormat {
+    exclude '.apt_generated/**'
+    exclude 'bin/**'
+    exclude 'build/**'
+    exclude 'bazel*/**'
+  }
+
   test.dependsOn verifyGoogleJavaFormat
-  verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
 
   task verifyLicense {
     doLast {
@@ -95,24 +90,6 @@ allprojects {
       options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
   }
-}
-
-subprojects {
-  apply plugin: 'java'
-  apply plugin: 'eclipse'
-  apply plugin: 'maven'
-  apply plugin: 'idea'
-  apply plugin: 'jacoco'
-  apply plugin: 'signing'
-  apply plugin: "net.ltgt.apt"
-  apply plugin: 'com.github.johnrengelman.shadow'
-  apply plugin: 'maven-publish'
-  apply plugin: 'com.dorongold.task-tree'
-
-  group = "com.google.api"
-
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
 
   // Dependencies
   // ------------
@@ -177,44 +154,30 @@ subprojects {
     exclude('**/*Test.java')
   }
 
+  javadoc.options {
+    encoding = 'UTF-8'
+    links 'https://docs.oracle.com/javase/7/docs/api/'
+
+    if (JavaVersion.current().isJava8Compatible()) {
+      addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
+    if (JavaVersion.current().isJava11Compatible()) {
+      addStringOption('-release', '7')
+    }
+  }
+
   // JavaDocV1 html
   // -------
-
   task javadocJar(type: Jar) {
     archiveClassifier = 'javadoc'
     from javadoc
   }
 
-  javadoc.options {
-    encoding = 'UTF-8'
-    links 'https://docs.oracle.com/javase/7/docs/api/'
-
-    if (JavaVersion.current().isJava8Compatible()) {
-      addStringOption('Xdoclint:all,-missing', '-quiet')
-    }
-    if (JavaVersion.current().isJava11Compatible()) {
-      addStringOption('-release', '7')
-    }
-  }
-
   // JavaDocV3 - docFX
   // -------
-
   task javadocJarV3(type: Jar) {
     archiveClassifier = 'javadoc'
     from javadoc
-  }
-
-  javadoc.options {
-    encoding = 'UTF-8'
-    links 'https://docs.oracle.com/javase/7/docs/api/'
-
-    if (JavaVersion.current().isJava8Compatible()) {
-      addStringOption('Xdoclint:all,-missing', '-quiet')
-    }
-    if (JavaVersion.current().isJava11Compatible()) {
-      addStringOption('-release', '7')
-    }
   }
 
   // Test jar
@@ -370,8 +333,8 @@ subprojects {
           maven {
             url 'https://google.oss.sonatype.org/service/local/staging/deploy/maven2/'
             credentials {
-              username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
-              password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+              username = project.findProperty('ossrhUsername')
+              password = project.findProperty('ossrhPassword')
             }
           }
         }
@@ -405,22 +368,17 @@ subprojects {
   }
 }
 
+javadoc.options {
+  encoding = 'UTF-8'
+  links 'https://docs.oracle.com/javase/7/docs/api/'
+}
+
 // JavaDocV1 html
 // -------
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
   destinationDir = new File(projectDir, 'tmp_docs')
-}
-
-javadoc.options {
-  encoding = 'UTF-8'
-  links 'https://docs.oracle.com/javase/7/docs/api/'
-}
-
-clean {
-  delete 'tmp_gh-pages/'
-  delete 'tmp_docs/'
 }
 
 // JavaDocV3 docFX

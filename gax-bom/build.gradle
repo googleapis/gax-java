@@ -1,22 +1,11 @@
-
-buildscript {
-  repositories {
-    mavenLocal()
-    maven {
-      url 'https://plugins.gradle.org/m2/'
-    }
-    mavenCentral()
-    jcenter()
-  }
-}
-
-archivesBaseName = "gax-bom"
+archivesBaseName = 'gax-bom'
 
 project.version = "2.5.4-SNAPSHOT" // {x-version-update:gax-bom:current}
 
 ext {
-  mavenJavaDir = "$project.buildDir/publications/mavenJava"
+  mavenJavaDir = "$buildDir/publications/mavenJava"
   mavenJavaBomOutputFile = file(mavenJavaDir + "/pom-default.xml")
+  mavenJavaBomAscOutputFile = file(mavenJavaDir + "/pom-default.xml.asc")
 }
 
 // Copy our pom.xml to the location where a generated POM would go
@@ -88,8 +77,8 @@ afterEvaluate {
       maven {
         url 'https://google.oss.sonatype.org/service/local/staging/deploy/maven2/'
         credentials {
-          username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
-          password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+          username = project.findProperty('ossrhUsername')
+          password = project.findProperty('ossrhPassword')
         }
       }
     }
@@ -101,6 +90,12 @@ afterEvaluate {
         useGpgCmd()
       }
       sign publishing.publications.mavenJava
+
+      publishing.publications.mavenJava(MavenPublication) {
+        artifact(mavenJavaBomAscOutputFile) {
+          extension 'pom.asc'
+        }
+      }
     }
   }
 }

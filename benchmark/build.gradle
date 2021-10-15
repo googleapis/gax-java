@@ -1,32 +1,18 @@
+plugins {
+  id 'me.champeau.gradle.jmh' version '0.5.3'
+}
+
 project.version = "0.75.4-SNAPSHOT" // {x-version-update:benchmark:current}
 
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath "me.champeau.gradle:jmh-gradle-plugin:0.5.3"
-    }
-}
-
-apply plugin: "me.champeau.gradle.jmh"
-apply plugin: 'java'
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation project(':gax')
-    implementation project(':gax-grpc')
-    implementation "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
-    implementation 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.4'
-    implementation 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.6'
+  implementation project(':gax')
+  implementation project(':gax-grpc')
+  implementation "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
+  implementation 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.4'
+  implementation 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.6'
 }
 
 // Allow command line to target specific test
-if (project.properties.containsKey('include')) {
-    jmh.include = [project.properties.get('include')]
+if (project.hasProperty('include')) {
+  jmh.include = [project.include]
 }
