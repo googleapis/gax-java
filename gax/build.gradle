@@ -1,9 +1,15 @@
+plugins {
+  id 'java-library'
+}
+
 archivesBaseName = "gax"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.6.1-SNAPSHOT" // {x-version-update:gax:current}
 
 dependencies {
+  api libraries['maven.com_google_auth_google_auth_library_credentials']
+
   implementation (libraries['maven.com_google_guava_guava'],
     libraries['maven.com_google_code_findbugs_jsr305'],
     libraries['maven.org_threeten_threetenbp'],

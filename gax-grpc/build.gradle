@@ -1,18 +1,23 @@
+plugins {
+  id 'java-library'
+}
+
 archivesBaseName = "gax-grpc"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.6.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
-  implementation( project(':gax'),
-    libraries['maven.io_grpc_grpc_stub'],
+  api (project(':gax'),
+    libraries['maven.com_google_auth_google_auth_library_credentials'])
+
+  implementation(libraries['maven.io_grpc_grpc_stub'],
     libraries['maven.io_grpc_grpc_auth'],
     libraries['maven.io_grpc_grpc_protobuf'],
     libraries['maven.com_google_guava_guava'],
     libraries['maven.com_google_code_findbugs_jsr305'],
     libraries['maven.org_threeten_threetenbp'],
     libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
-    libraries['maven.com_google_auth_google_auth_library_credentials'],
     libraries['maven.com_google_api_grpc_proto_google_common_protos'],
     libraries['maven.com_google_api_api_common'],
     libraries['maven.io_grpc_grpc_netty_shaded'],
