@@ -1,7 +1,3 @@
-plugins {
-  id 'java-library'
-}
-
 archivesBaseName = "gax"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
