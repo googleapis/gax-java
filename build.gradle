@@ -37,7 +37,7 @@ if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 }
 
 subprojects {
-  apply plugin: 'java'
+  apply plugin: 'java-library'
   apply plugin: 'eclipse'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
@@ -109,6 +109,7 @@ subprojects {
       'maven.io_grpc_grpc_core': "io.grpc:grpc-core:${libraries['version.io_grpc']}",
       'maven.io_grpc_grpc_context': "io.grpc:grpc-context:${libraries['version.io_grpc']}",
       'maven.io_grpc_grpc_stub': "io.grpc:grpc-stub:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_api': "io.grpc:grpc-api:${libraries['version.io_grpc']}",
       'maven.io_grpc_grpc_auth': "io.grpc:grpc-auth:${libraries['version.io_grpc']}",
       'maven.io_grpc_grpc_protobuf': "io.grpc:grpc-protobuf:${libraries['version.io_grpc']}",
       'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
