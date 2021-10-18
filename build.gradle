@@ -362,12 +362,10 @@ configure(normalReleasableProjects) {
 
   signing {
     required { gradle.taskGraph.hasTask ":${name}:publishToSonatype" }
-    if (!noDefaultPublications.contains(project.name)) {
-      if (project.hasProperty('signing.gnupg.executable')) {
-        useGpgCmd()
-      }
-      sign publishing.publications
+    if (project.hasProperty('signing.gnupg.executable')) {
+      useGpgCmd()
     }
+    sign publishing.publications
   }
 }
 
