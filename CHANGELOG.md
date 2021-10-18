@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.6.1](https://www.github.com/googleapis/gax-java/compare/2.6.0...v2.6.1) (2021-10-18)
+
+
+### Bug Fixes
+
+* declare depenencies of API surfaces as api ([#1535](https://www.github.com/googleapis/gax-java/issues/1535)) ([#1536](https://www.github.com/googleapis/gax-java/issues/1536)) ([8794b5c](https://www.github.com/googleapis/gax-java/commit/8794b5c322659af5a339c40552f16d71b7605cdf))
+
 ## [2.6.0](https://www.github.com/googleapis/gax-java/compare/v2.5.3...v2.6.0) (2021-10-15)
 
 
