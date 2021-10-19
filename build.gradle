@@ -7,7 +7,6 @@ plugins {
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
   id 'com.github.sherter.google-java-format' version '0.8' apply false
-  id 'net.ltgt.apt' version '0.21' apply false
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
@@ -47,7 +46,6 @@ configure(javaProjects) {
   apply plugin: 'com.dorongold.task-tree'
   apply plugin: 'com.github.johnrengelman.shadow'
   apply plugin: 'com.github.sherter.google-java-format'
-  apply plugin: 'net.ltgt.apt'
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -125,6 +123,12 @@ configure(javaProjects) {
   configurations {
     shadowNoGuava
     linkageChecker
+    implementation.exclude group: 'com.google.guava', module: 'guava-jdk5'
+  }
+
+  dependencies {
+    // Separate configuration (class path) for Linkage Checker
+    linkageChecker "com.google.cloud.tools:dependencies:1.5.12"
   }
 
   jacocoTestReport {
@@ -134,9 +138,8 @@ configure(javaProjects) {
     }
     afterEvaluate {
       getClassDirectories().setFrom files(classDirectories.files.collect {
-        fileTree(dir: it,
-                 exclude: ['**/AutoValue_*'])
-        })
+        fileTree(dir: it, exclude: ['**/AutoValue_*'])
+      })
     }
   }
 
@@ -213,70 +216,6 @@ configure(javaProjects) {
     testLogging {
       events "passed", "skipped", "failed", "standardOut", "standardError"
       exceptionFormat = 'full'
-    }
-  }
-
-
-  // Eclipse Annotation Processing
-  // -----------------------------
-
-  ext {
-    eclipseAptFolder = '.apt_generated'
-    eclipseSettingsDir = file('.settings')
-  }
-
-  configurations {
-    codeGeneration
-    implementation.exclude group: 'com.google.guava', module: 'guava-jdk5'
-  }
-
-  dependencies {
-    codeGeneration (libraries['maven.com_google_auto_value_auto_value'],
-        libraries['maven.com_google_code_findbugs_jsr305'])
-
-    // Separate configuration (class path) for Linkage Checker
-    linkageChecker "com.google.cloud.tools:dependencies:1.5.12"
-  }
-
-  compileJava.classpath += configurations.codeGeneration
-
-  eclipse {
-    jdt.file.withProperties {
-      it['org.eclipse.jdt.core.compiler.processAnnotations'] = 'enabled'
-    }
-  }
-
-  tasks.eclipseJdt {
-    doFirst {
-      def aptPrefs =
-          file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs")
-      aptPrefs.parentFile.mkdirs()
-
-      aptPrefs.text = """\
-          eclipse.preferences.version=1
-          org.eclipse.jdt.apt.aptEnabled=true
-          org.eclipse.jdt.apt.genSrcDir=${eclipseAptFolder}
-          org.eclipse.jdt.apt.reconcileEnabled=true
-          """.stripIndent()
-
-      file('.factorypath').withWriter {
-        new groovy.xml.MarkupBuilder(it).'factorypath' {
-          project.configurations.codeGeneration.each { dep->
-            factorypathentry(
-              kind:'EXTJAR',
-              id:dep.absolutePath,
-              enabled:true,
-              runInBatchMode:false)
-          }
-        }
-      }
-    }
-  }
-
-  tasks.cleanEclipseJdt {
-    doFirst {
-      delete file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs"),
-        file('.factorypath')
     }
   }
 }
