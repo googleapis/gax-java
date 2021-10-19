@@ -109,6 +109,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Boolean allowNonDefaultServiceAccount;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
   @Nullable private final MtlsProvider mtlsProvider;
+  @Nullable @VisibleForTesting private String activeEndpoint;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -136,6 +137,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         builder.directPathServiceConfig == null
             ? getDefaultDirectPathServiceConfig()
             : builder.directPathServiceConfig;
+    this.activeEndpoint = builder.endpoint;
   }
 
   /**
@@ -339,15 +341,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
-        builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
+        activeEndpoint = "google-c2p:///" + serviceAddress;
+        builder = ComputeEngineChannelBuilder.forTarget(activeEndpoint);
       } else {
         builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
-        // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
-        // Will be overridden by user defined values if any.
-        builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
-        builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         builder.defaultServiceConfig(directPathServiceConfig);
       }
+      // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
+      // Will be overridden by user defined values if any.
+      builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
+      builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } else {
       ChannelCredentials channelCredentials = createMtlsChannelCredentials();
       if (channelCredentials != null) {
@@ -398,9 +401,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return managedChannel;
   }
 
-  /** The endpoint to be used for the channel. */
+  /** The endpoint passed to the builder. It must have a pot, and must not have a URI scheme. */
   public String getEndpoint() {
     return endpoint;
+  }
+
+  /** The actual endpoint to be used for building a channel. */
+  public String getActiveEndpoint() {
+    return activeEndpoint;
   }
 
   /** The time without read activity before sending a keepalive ping. */
@@ -532,6 +540,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @VisibleForTesting
     Builder setMtlsProvider(MtlsProvider mtlsProvider) {
       this.mtlsProvider = mtlsProvider;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setEnvProvider(EnvironmentProvider envProvider) {
+      this.envProvider = envProvider;
       return this;
     }
 

@@ -67,6 +67,23 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportChannelTest {
+  static class TestEnvironmentProvider
+      implements InstantiatingGrpcChannelProvider.EnvironmentProvider {
+    private final String isDirectPathXdsEnabled;
+
+    TestEnvironmentProvider(String isDirectPathXdsEnabled) {
+      this.isDirectPathXdsEnabled = isDirectPathXdsEnabled;
+    }
+
+    @Override
+    public String getenv(String env) {
+      if (env.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS")) {
+        return isDirectPathXdsEnabled;
+      }
+      return System.getenv(env);
+    }
+  }
+
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
@@ -384,6 +401,30 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
+  }
+
+  @Test
+  public void testWithDirectPathXds() throws IOException {
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    InstantiatingGrpcChannelProvider iProvider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setAttemptDirectPath(true)
+            .setEnvProvider(new TestEnvironmentProvider(/*isDirectPathXdsEnabled = */ "true"))
+            .build();
+
+    TransportChannelProvider provider =
+        iProvider
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withExecutor((Executor) executor)
+            .withEndpoint("localhost:8080")
+            .withCredentials(ComputeEngineCredentials.create());
+    ;
+
+    provider.getTransportChannel().shutdownNow();
+
+    assertEquals(iProvider.getActiveEndpoint(), "google-c2p:///localhost");
   }
 
   @Test
