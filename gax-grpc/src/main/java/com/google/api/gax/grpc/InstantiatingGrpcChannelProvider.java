@@ -401,7 +401,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return managedChannel;
   }
 
-  /** The endpoint passed to the builder. It must have a pot, and must not have a URI scheme. */
+  /** The endpoint passed to the builder, which must have a port. */
   public String getEndpoint() {
     return endpoint;
   }

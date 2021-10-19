@@ -408,23 +408,22 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
-    InstantiatingGrpcChannelProvider iProvider =
+    InstantiatingGrpcChannelProvider grpcChannelProvider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .setAttemptDirectPath(true)
             .setEnvProvider(new TestEnvironmentProvider(/*isDirectPathXdsEnabled = */ "true"))
             .build();
 
-    TransportChannelProvider provider =
-        iProvider
+    TransportChannelProvider transportChannelProvider =
+        grpcChannelProvider
             .withHeaders(Collections.<String, String>emptyMap())
             .withExecutor((Executor) executor)
             .withEndpoint("localhost:8080")
             .withCredentials(ComputeEngineCredentials.create());
-    ;
 
-    provider.getTransportChannel().shutdownNow();
+    transportChannelProvider.getTransportChannel().shutdownNow();
 
-    assertEquals(iProvider.getActiveEndpoint(), "google-c2p:///localhost");
+    assertEquals(grpcChannelProvider.getActiveEndpoint(), "google-c2p:///localhost");
   }
 
   @Test
