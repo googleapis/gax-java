@@ -16,12 +16,11 @@
 set -eo pipefail
 
 scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-## cd to the parent directory, i.e. the root of the git repo
+# cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
 # Print out Java
 java -version
 echo $JOB_TYPE
 
-./gradlew assemble
-./gradlew build install
+./gradlew -Pskip.signing build publishToMavenLocal
