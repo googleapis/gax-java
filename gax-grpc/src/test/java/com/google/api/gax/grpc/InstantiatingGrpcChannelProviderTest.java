@@ -284,6 +284,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
             if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
               assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
@@ -321,6 +322,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
             // Clients with non-GCE credentials will not attempt DirectPath.
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
@@ -351,6 +353,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
             // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
@@ -381,6 +384,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
             // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
