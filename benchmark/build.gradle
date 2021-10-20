@@ -9,7 +9,7 @@ dependencies {
   implementation project(':gax-grpc')
   implementation "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
   implementation 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:2.1.4'
-  implementation 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.6'
+  implementation 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:1.96.7'
 }
 
 // Allow command line to target specific test
