@@ -314,7 +314,7 @@ javadoc.options {
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-  destinationDir = new File(projectDir, 'tmp_docs')
+  destinationDir = file('tmp_docs')
 }
 
 // JavaDocV3 docFX
@@ -322,7 +322,7 @@ task javadocCombined(type: Javadoc) {
 task javadocCombinedV3(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-  destinationDir = new File(projectDir, 'tmp_docs/docfx-yml')
+  destinationDir = file('tmp_docs/docfx-yml')
 
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption('doclet', 'com.microsoft.doclet.DocFxDoclet')
