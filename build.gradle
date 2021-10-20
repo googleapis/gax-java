@@ -4,52 +4,69 @@ plugins {
   id 'java'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 
+  id 'com.diffplug.eclipse.apt' version '3.33.1' apply false
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
   id 'com.github.sherter.google-java-format' version '0.8' apply false
-  id 'net.ltgt.apt' version '0.21' apply false
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.6.1-SNAPSHOT" // {x-version-update:gax:current}
 
-ext {
-  // Project names not used for release
-  nonReleaseProjects = ['benchmark']
-  // Project names not using the default publication configuration
-  noDefaultPublications = ['benchmark', 'gax-bom']
-  libraryVendor = 'Google'
+allprojects {
+  group = 'com.google.api'
 }
 
-if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-    !nonReleaseProjects.contains(project.name)) {
-  nexusPublishing {
-    packageGroup = 'com.google.api'
-    repositories {
-      sonatype {   //or custom repository name
-        nexusUrl.set(uri('https://google.oss.sonatype.org/service/local/'))
-        snapshotRepositoryUrl.set(uri('https://google.oss.sonatype.org/content/repositories/snapshots/'))
-        username = ossrhUsername
-        password = ossrhPassword
-      }
+// Project names not used for release
+def nonReleaseProjects = ['benchmark']
+// Project names not using the default publication configuration
+def noDefaultPublications = ['benchmark', 'gax-bom']
+def nonJavaProjects = ['gax-bom']
+
+ext {
+  libraryVendor = 'Google'
+
+  // Load Dependencies shared between Bazel and Gradle build scripts
+  libraries = new Properties()
+  file('dependencies.properties').withReader { libraries.load(it) }
+  // Gradle-specific build script dependencies
+  libraries.putAll(
+    'maven.io_grpc_grpc_bom': "io.grpc:grpc-bom:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_core': "io.grpc:grpc-core:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_context': "io.grpc:grpc-context:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_stub': "io.grpc:grpc-stub:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_api': "io.grpc:grpc-api:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_auth': "io.grpc:grpc-auth:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_protobuf': "io.grpc:grpc-protobuf:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_alts': "io.grpc:grpc-alts:${libraries['version.io_grpc']}",
+    'maven.com_google_protobuf': "com.google.protobuf:protobuf-java:${libraries['version.com_google_protobuf']}",
+    'maven.com_google_protobuf_java_util': "com.google.protobuf:protobuf-java-util:${libraries['version.com_google_protobuf']}")
+}
+
+nexusPublishing {
+  packageGroup = 'com.google.api'
+  repositories {
+    sonatype {
+      nexusUrl = uri('https://google.oss.sonatype.org/service/local/')
+      snapshotRepositoryUrl = uri('https://google.oss.sonatype.org/content/repositories/snapshots/')
+      username = findProperty('ossrhUsername')
+      password = findProperty('ossrhPassword')
     }
   }
 }
 
-subprojects {
+def javaProjects = subprojects.findAll { !nonJavaProjects.contains(it.name) }
+configure(javaProjects) {
   apply plugin: 'java-library'
   apply plugin: 'eclipse'
   apply plugin: 'idea'
   apply plugin: 'jacoco'
-  apply plugin: 'maven-publish'
-  apply plugin: 'signing'
 
+  apply plugin: 'com.diffplug.eclipse.apt'
   apply plugin: 'com.dorongold.task-tree'
   apply plugin: 'com.github.johnrengelman.shadow'
   apply plugin: 'com.github.sherter.google-java-format'
-  apply plugin: 'net.ltgt.apt'
-
-  group = 'com.google.api'
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -57,67 +74,39 @@ subprojects {
   // Formatting tasks
   // ================
   googleJavaFormat {
-    exclude '.apt_generated/**'
+    exclude '.apt_generated*/**'
     exclude 'bin/**'
     exclude 'build/**'
     exclude 'bazel*/**'
   }
-
   test.dependsOn verifyGoogleJavaFormat
 
   task verifyLicense {
     doLast {
-      def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
+      def licenseText = new File('license-header-javadoc.txt').text
       def srcFiles = []
       sourceSets
           .collectMany{it.allJava.getSrcDirs()}
           .grep{it.exists()}
           .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
       srcFiles = srcFiles
-          .findAll{it.get(0).path.endsWith(".java")}
-          .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
+          .findAll{it.get(0).path.endsWith('.java')}
+          .collect{new Tuple(it.get(0), it.get(1).replaceAll('Copyright 20[0-9]{2}', 'Copyright 20xx'))}
           .findAll{!it.get(1).startsWith(licenseText)}
       if (srcFiles.asList().size() > 0) {
         srcFiles.each({println 'missing license: ' + it.get(0)})
-        throw new IllegalStateException("Above files do not have licenses")
+        throw new IllegalStateException('Above files do not have licenses')
       }
     }
   }
   test.dependsOn verifyLicense
 
-  gradle.projectsEvaluated {
-    tasks.withType(JavaCompile) {
-      options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-    }
+  tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
   }
 
   // Dependencies
   // ------------
-
-  jacoco {
-    toolVersion = "0.8.5"
-  }
-
-  ext {
-    // Load Dependencies shared between Bazel and Gradle build scripts
-    libraries = new Properties()
-    file(new File(rootDir, "dependencies.properties")).withReader{ libraries.load((Reader) it) }
-
-    // Gradle-specific build script dependencies
-    libraries.putAll([
-      'maven.io_grpc_grpc_bom': "io.grpc:grpc-bom:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_core': "io.grpc:grpc-core:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_context': "io.grpc:grpc-context:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_stub': "io.grpc:grpc-stub:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_api': "io.grpc:grpc-api:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_auth': "io.grpc:grpc-auth:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_protobuf': "io.grpc:grpc-protobuf:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
-      'maven.io_grpc_grpc_alts': "io.grpc:grpc-alts:${libraries['version.io_grpc']}",
-      'maven.com_google_protobuf': "com.google.protobuf:protobuf-java:${libraries['version.com_google_protobuf']}",
-      'maven.com_google_protobuf_java_util': "com.google.protobuf:protobuf-java-util:${libraries['version.com_google_protobuf']}"
-    ])
-  }
 
   repositories {
     mavenLocal()
@@ -127,8 +116,15 @@ subprojects {
   configurations {
     shadowNoGuava
     linkageChecker
+    implementation.exclude group: 'com.google.guava', module: 'guava-jdk5'
   }
 
+  dependencies {
+    // Separate configuration (class path) for Linkage Checker
+    linkageChecker 'com.google.cloud.tools:dependencies:1.5.12'
+  }
+
+  jacoco.toolVersion = '0.8.5'
   jacocoTestReport {
     reports {
       xml.enabled true
@@ -136,12 +132,10 @@ subprojects {
     }
     afterEvaluate {
       getClassDirectories().setFrom files(classDirectories.files.collect {
-        fileTree(dir: it,
-                 exclude: ['**/AutoValue_*'])
-        })
+        fileTree(dir: it, exclude: ['**/AutoValue_*'])
+      })
     }
   }
-
   check.dependsOn jacocoTestReport
 
 
@@ -213,159 +207,100 @@ subprojects {
 
   test {
     testLogging {
-      events "passed", "skipped", "failed", "standardOut", "standardError"
+      events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
       exceptionFormat = 'full'
     }
   }
 
+  // Eclipse annotation processing auto-setup
+  eclipse.synchronizationTasks eclipseJdtApt, eclipseJdt, eclipseFactorypath
+}
 
-  // Eclipse Annotation Processing
-  // -----------------------------
-
-  ext {
-    eclipseAptFolder = '.apt_generated'
-    eclipseSettingsDir = file('.settings')
-  }
-
-  configurations {
-    codeGeneration
-    implementation.exclude group: 'com.google.guava', module: 'guava-jdk5'
-  }
-
-  dependencies {
-    codeGeneration (libraries['maven.com_google_auto_value_auto_value'],
-        libraries['maven.com_google_code_findbugs_jsr305'])
-
-    // Separate configuration (class path) for Linkage Checker
-    linkageChecker "com.google.cloud.tools:dependencies:1.5.12"
-  }
-
-  compileJava.classpath += configurations.codeGeneration
-
-  eclipse {
-    jdt.file.withProperties {
-      it['org.eclipse.jdt.core.compiler.processAnnotations'] = 'enabled'
-    }
-  }
-
-  tasks.eclipseJdt {
-    doFirst {
-      def aptPrefs =
-          file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs")
-      aptPrefs.parentFile.mkdirs()
-
-      aptPrefs.text = """\
-          eclipse.preferences.version=1
-          org.eclipse.jdt.apt.aptEnabled=true
-          org.eclipse.jdt.apt.genSrcDir=${eclipseAptFolder}
-          org.eclipse.jdt.apt.reconcileEnabled=true
-          """.stripIndent()
-
-      file('.factorypath').withWriter {
-        new groovy.xml.MarkupBuilder(it).'factorypath' {
-          project.configurations.codeGeneration.each { dep->
-            factorypathentry(
-              kind:'EXTJAR',
-              id:dep.absolutePath,
-              enabled:true,
-              runInBatchMode:false)
-          }
-        }
-      }
-    }
-  }
-
-  tasks.cleanEclipseJdt {
-    doFirst {
-      delete file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs"),
-        file('.factorypath')
-    }
-  }
-
-  // Publishing
-  // ----------
+def normalReleasableProjects = subprojects.findAll {
+  !nonReleaseProjects.contains(it.name) && !noDefaultPublications.contains(it.name)
+}
+configure(normalReleasableProjects) {
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
 
   afterEvaluate {
-    if (!noDefaultPublications.contains(project.name)) {
-      publishing {
-        publications {
-          mavenJava(MavenPublication) {
-            version = project.version
+    publishing {
+      publications {
+        mavenJava(MavenPublication) {
+          version = project.version
 
-            from components.java
+          from components.java
 
-            artifact javadocJar
-            artifact sourcesJar
-            artifact testlibJar
+          artifact javadocJar
+          artifact sourcesJar
+          artifact testlibJar
 
-            pom {
-              name = 'GAX (Google Api eXtensions) for Java'
-              packaging = 'jar'
-              artifactId = project.name
-              description = 'Google Api eXtensions for Java'
+          pom {
+            name = 'GAX (Google Api eXtensions) for Java'
+            packaging = 'jar'
+            artifactId = project.name
+            description = 'Google Api eXtensions for Java'
+            url = 'https://github.com/googleapis/gax-java'
+
+            scm {
               url = 'https://github.com/googleapis/gax-java'
+              connection = 'scm:git:https://github.com/googleapis/gax-java.git'
+            }
 
-              scm {
+            licenses {
+              license {
+                name = 'BSD'
+                url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+              }
+            }
+
+            developers {
+              developer {
+                id = 'GoogleAPIs'
+                name = 'GoogleAPIs'
+                email = 'googleapis@googlegroups.com'
                 url = 'https://github.com/googleapis/gax-java'
-                connection = 'scm:git:https://github.com/googleapis/gax-java.git'
-              }
-
-              licenses {
-                license {
-                  name = 'BSD'
-                  url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
-                }
-              }
-
-              developers {
-                developer {
-                  id = 'GoogleAPIs'
-                  name = 'GoogleAPIs'
-                  email = 'googleapis@googlegroups.com'
-                  url = 'https://github.com/googleapis/gax-java'
-                  organization = 'Google LLC'
-                  organizationUrl = 'https://www.google.com'
-                }
+                organization = 'Google LLC'
+                organizationUrl = 'https://www.google.com'
               }
             }
           }
         }
-        repositories {
-          maven {
-            url 'https://google.oss.sonatype.org/service/local/staging/deploy/maven2/'
-            credentials {
-              username = project.findProperty('ossrhUsername')
-              password = project.findProperty('ossrhPassword')
-            }
+      }
+      repositories {
+        maven {
+          url 'https://google.oss.sonatype.org/service/local/staging/deploy/maven2/'
+          credentials {
+            username = findProperty('ossrhUsername')
+            password = findProperty('ossrhPassword')
           }
         }
       }
-
-      task checkJavaLinkage(type: JavaExec) {
-        // Example invocation:
-        // ./gradlew gax-httpjson:checkJavaLinkage
-        dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
-        classpath = configurations.linkageChecker
-        main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
-
-        def arguments = ['-a', "com.google.api:${project.name}:${project.version}"]
-        if (project.name == 'gax-grpc') {
-          // The exclusion file can be regenerated by '-o' option. See its Wiki for details:
-          // https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/LinkageCheckerMain#exclusion-files
-          arguments += ['--exclusion-file', 'linkage-checker-exclusion.xml']
-        }
-        args arguments
-      }
     }
 
-    signing {
-      if (!project.hasProperty('skip.signing') && !noDefaultPublications.contains(project.name)) {
-        if (project.hasProperty('signing.gnupg.executable')) {
-          useGpgCmd()
-        }
-        sign publishing.publications.mavenJava
+    task checkJavaLinkage(type: JavaExec) {
+      // Example invocation:
+      // ./gradlew gax-httpjson:checkJavaLinkage
+      dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
+      classpath = configurations.linkageChecker
+      main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
+
+      def arguments = ['-a', "com.google.api:${project.name}:${project.version}"]
+      if (project.name == 'gax-grpc') {
+        // The exclusion file can be regenerated by '-o' option. See its Wiki for details:
+        // https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/LinkageCheckerMain#exclusion-files
+        arguments += ['--exclusion-file', 'linkage-checker-exclusion.xml']
       }
+      args arguments
     }
+  }
+
+  signing {
+    required { gradle.taskGraph.hasTask ":${name}:publishToSonatype" }
+    if (project.hasProperty('signing.gnupg.executable')) {
+      useGpgCmd()
+    }
+    sign publishing.publications
   }
 }
 
@@ -379,7 +314,7 @@ javadoc.options {
 task javadocCombined(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-  destinationDir = new File(projectDir, 'tmp_docs')
+  destinationDir = file('tmp_docs')
 }
 
 // JavaDocV3 docFX
@@ -387,12 +322,12 @@ task javadocCombined(type: Javadoc) {
 task javadocCombinedV3(type: Javadoc) {
   source subprojects.collect {project -> project.sourceSets.main.allJava }
   classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-  destinationDir = new File(projectDir, 'tmp_docs/docfx-yml')
+  destinationDir = file('tmp_docs/docfx-yml')
 
   options.addStringOption('encoding', 'UTF-8')
-  options.addStringOption("doclet", "com.microsoft.doclet.DocFxDoclet")
-  options.addStringOption("projectname", "gax")
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + "/java-docfx-doclet-1.3.0.jar")]
+  options.addStringOption('doclet', 'com.microsoft.doclet.DocFxDoclet')
+  options.addStringOption('projectname', 'gax')
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + '/java-docfx-doclet-1.3.0.jar')]
   // Newer Gradle 6 passes -notimestamp by default, which the doclet above doesn't understand:
   // https://github.com/gradle/gradle/issues/11898
   options.noTimestamp false
@@ -487,7 +422,7 @@ task stageRelease {
 // 3. Remove tmp_gh-pages
 // Note: This task assumes that the 'stage_release' task has been completed.
 task finalizeRelease {
-  dependsOn 'publishDocs'
+  dependsOn publishDocs
   doLast {
     exec {
       commandLine 'rm', '-r', 'tmp_gh-pages'
@@ -500,9 +435,9 @@ task finalizeRelease {
 // https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/Linkage-Monitor#linkage-monitor-artifactstxt
 task createLinkageMonitorArtifactList {
   doLast {
-    def httpJsonVersion = project(":gax-httpjson").version
+    def httpJsonVersion = project(':gax-httpjson').version
 
-    new File(projectDir, "linkage-monitor-artifacts.txt").text = """
+    new File('linkage-monitor-artifacts.txt').text = """
 com.google.api:gax:$version
 com.google.api:gax-grpc:$version
 com.google.api:gax-httpjson:$httpJsonVersion
