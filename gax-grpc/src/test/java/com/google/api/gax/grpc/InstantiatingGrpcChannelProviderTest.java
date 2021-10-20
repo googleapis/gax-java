@@ -67,22 +67,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportChannelTest {
-  static class TestEnvironmentProvider
-      implements InstantiatingGrpcChannelProvider.EnvironmentProvider {
-    private final String isDirectPathXdsEnabled;
-
-    TestEnvironmentProvider(String isDirectPathXdsEnabled) {
-      this.isDirectPathXdsEnabled = isDirectPathXdsEnabled;
-    }
-
-    @Override
-    public String getenv(String env) {
-      if (env.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS")) {
-        return isDirectPathXdsEnabled;
-      }
-      return System.getenv(env);
-    }
-  }
 
   @Test
   public void testEndpoint() {
@@ -181,11 +165,8 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     Duration keepaliveTime = Duration.ofSeconds(1);
     Duration keepaliveTimeout = Duration.ofSeconds(2);
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
-            throw new UnsupportedOperationException();
-          }
+        builder -> {
+          throw new UnsupportedOperationException();
         };
     Map<String, ?> directPathServiceConfig = ImmutableMap.of("loadbalancingConfig", "grpclb");
 
@@ -283,16 +264,13 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
-              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
-            } else {
-              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            }
-            return channelBuilder;
+        channelBuilder -> {
+          if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+            assertThat(channelBuilder).isInstanceOf(ComputeEngineChannelBuilder.class);
+          } else {
+            assertThat(channelBuilder).isNotInstanceOf(ComputeEngineChannelBuilder.class);
           }
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -321,13 +299,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients with non-GCE credentials will not attempt DirectPath.
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients with non-GCE credentials will not attempt DirectPath.
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -383,13 +358,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without setting attemptDirectPath flag will not attempt DirectPath
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients without setting attemptDirectPath flag will not attempt DirectPath
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -415,7 +387,13 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     InstantiatingGrpcChannelProvider grpcChannelProvider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .setAttemptDirectPath(true)
-            .setEnvProvider(new TestEnvironmentProvider(/*isDirectPathXdsEnabled = */ "true"))
+            .setEnvProvider(
+                envVar -> {
+                  if (envVar.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS")) {
+                    return "true";
+                  }
+                  return null;
+                })
             .build();
 
     TransportChannelProvider transportChannelProvider =
