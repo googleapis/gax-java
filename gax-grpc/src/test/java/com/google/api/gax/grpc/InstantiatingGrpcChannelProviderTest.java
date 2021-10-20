@@ -388,12 +388,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
         InstantiatingGrpcChannelProvider.newBuilder()
             .setAttemptDirectPath(true)
             .setEnvProvider(
-                envVar -> {
-                  if (envVar.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS")) {
-                    return "true";
-                  }
-                  return null;
-                })
+                envVar -> envVar.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS") ? "true" : null)
             .build();
 
     TransportChannelProvider transportChannelProvider =
