@@ -109,7 +109,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Boolean allowNonDefaultServiceAccount;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
   @Nullable private final MtlsProvider mtlsProvider;
-  @Nullable @VisibleForTesting private String activeEndpoint;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -137,7 +136,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         builder.directPathServiceConfig == null
             ? getDefaultDirectPathServiceConfig()
             : builder.directPathServiceConfig;
-    this.activeEndpoint = builder.endpoint;
   }
 
   /**
@@ -341,8 +339,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
-        activeEndpoint = "google-c2p:///" + serviceAddress;
-        builder = ComputeEngineChannelBuilder.forTarget(activeEndpoint);
+        builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
       } else {
         builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
         builder.defaultServiceConfig(directPathServiceConfig);
@@ -401,14 +398,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return managedChannel;
   }
 
-  /** The endpoint passed to the builder, which must have a port. */
+  /** The endpoint to be used for the channel. */
   public String getEndpoint() {
     return endpoint;
-  }
-
-  /** The actual endpoint to be used for building a channel. */
-  public String getActiveEndpoint() {
-    return activeEndpoint;
   }
 
   /** The time without read activity before sending a keepalive ping. */
@@ -540,12 +532,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @VisibleForTesting
     Builder setMtlsProvider(MtlsProvider mtlsProvider) {
       this.mtlsProvider = mtlsProvider;
-      return this;
-    }
-
-    @VisibleForTesting
-    Builder setEnvProvider(EnvironmentProvider envProvider) {
-      this.envProvider = envProvider;
       return this;
     }
 

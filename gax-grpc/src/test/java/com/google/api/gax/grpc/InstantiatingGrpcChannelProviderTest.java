@@ -380,30 +380,6 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
   }
 
   @Test
-  public void testWithDirectPathXds() throws IOException {
-    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
-    executor.shutdown();
-
-    InstantiatingGrpcChannelProvider grpcChannelProvider =
-        InstantiatingGrpcChannelProvider.newBuilder()
-            .setAttemptDirectPath(true)
-            .setEnvProvider(
-                envVar -> envVar.equals("GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS") ? "true" : null)
-            .build();
-
-    TransportChannelProvider transportChannelProvider =
-        grpcChannelProvider
-            .withHeaders(Collections.<String, String>emptyMap())
-            .withExecutor((Executor) executor)
-            .withEndpoint("localhost:8080")
-            .withCredentials(ComputeEngineCredentials.create());
-
-    transportChannelProvider.getTransportChannel().shutdownNow();
-
-    assertEquals(grpcChannelProvider.getActiveEndpoint(), "google-c2p:///localhost");
-  }
-
-  @Test
   public void testWithIPv6Address() throws IOException {
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
