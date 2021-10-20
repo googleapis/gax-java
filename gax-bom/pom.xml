@@ -55,12 +55,12 @@
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax-httpjson</artifactId>
-        <version>0.91.1-SNAPSHOT</version><!-- {x-version-update:gax-httpjson:current} -->
+        <version>0.91.1</version><!-- {x-version-update:gax-httpjson:current} -->
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax-httpjson</artifactId>
-        <version>0.91.1-SNAPSHOT</version><!-- {x-version-update:gax-httpjson:current} -->
+        <version>0.91.1</version><!-- {x-version-update:gax-httpjson:current} -->
         <classifier>testlib</classifier>
       </dependency>
     </dependencies>
