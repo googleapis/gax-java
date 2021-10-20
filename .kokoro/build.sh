@@ -23,4 +23,4 @@ cd ${scriptDir}/..
 java -version
 echo $JOB_TYPE
 
-./gradlew -Pskip.signing build publishToMavenLocal
+./gradlew build publishToMavenLocal
