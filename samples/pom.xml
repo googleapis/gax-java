@@ -14,7 +14,7 @@
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
       <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>2.6.1-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
+      <version>2.6.1</version><!-- {x-version-update:gax:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
