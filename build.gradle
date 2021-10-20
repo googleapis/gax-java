@@ -8,7 +8,6 @@ plugins {
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
   id 'com.github.sherter.google-java-format' version '0.8' apply false
-  id 'net.ltgt.apt' version '0.21' apply false
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
@@ -136,9 +135,8 @@ configure(javaProjects) {
     }
     afterEvaluate {
       getClassDirectories().setFrom files(classDirectories.files.collect {
-        fileTree(dir: it,
-                 exclude: ['**/AutoValue_*'])
-        })
+        fileTree(dir: it, exclude: ['**/AutoValue_*'])
+      })
     }
   }
   check.dependsOn jacocoTestReport
@@ -217,9 +215,7 @@ configure(javaProjects) {
     }
   }
 
-  eclipse {
-    synchronizationTasks eclipseJdtApt, eclipseJdt, eclipseFactorypath
-  }
+  eclipse.synchronizationTasks eclipseJdtApt, eclipseJdt, eclipseFactorypath
 }
 
 def normalReleasableProjects = subprojects.findAll {
