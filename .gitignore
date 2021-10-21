@@ -7,7 +7,7 @@ tmp_docs
 bazel-*
 
 # Eclipse
-.apt_generated
+.apt_generated*
 .classpath
 .factorypath
 .project

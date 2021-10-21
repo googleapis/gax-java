@@ -1,7 +1,7 @@
 Google API Extensions for Java
 ==============================
 
-[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)](https://travis-ci.org/googleapis/gax-java)
+[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=main)](https://travis-ci.org/googleapis/gax-java)
 
 - [Documentation](https://googleapis.dev/java/gax/latest/)
 
@@ -29,27 +29,27 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>2.5.0</version>
+  <version>2.6.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax-grpc</artifactId>
-  <version>2.5.0</version>
+  <version>2.6.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:2.5.0',
-  'com.google.api:gax-grpc:2.5.0'
+compile 'com.google.api:gax:2.6.0',
+  'com.google.api:gax-grpc:2.6.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "2.5.0"
-libraryDependencies += "com.google.api" % "gax-grpc" % "2.5.0"
+libraryDependencies += "com.google.api" % "gax" % "2.6.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "2.6.0"
 ```
 [//]: # ({x-version-update-end})
 
@@ -152,6 +152,6 @@ License
 
 BSD - See [LICENSE] for more information.
 
-[CONTRIBUTING]:https://github.com/googleapis/gax-java/blob/master/CONTRIBUTING.md
-[LICENSE]: https://github.com/googleapis/gax-java/blob/master/LICENSE
+[CONTRIBUTING]:https://github.com/googleapis/gax-java/blob/main/CONTRIBUTING.md
+[LICENSE]: https://github.com/googleapis/gax-java/blob/main/LICENSE
 

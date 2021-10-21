@@ -65,7 +65,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
@@ -73,7 +72,6 @@ import javax.annotation.Generated;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by gapic-generator-java")
 @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class HttpJsonOperationsStub extends OperationsStub {
   private static final ApiMethodDescriptor<ListOperationsRequest, ListOperationsResponse>
