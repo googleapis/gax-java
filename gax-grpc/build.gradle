@@ -18,8 +18,9 @@ dependencies {
     libraries['maven.io_grpc_grpc_auth'],
     libraries['maven.io_grpc_grpc_netty_shaded'],
     libraries['maven.io_grpc_grpc_protobuf'],
-    libraries['maven.io_grpc_grpc_stub'],
-    libraries['maven.io_grpc_grpc_xds'])
+    libraries['maven.io_grpc_grpc_stub'])
+
+  runtimeOnly libraries['maven.io_grpc_grpc_xds']
 
   compileOnly libraries['maven.com_google_auto_value_auto_value']
 
