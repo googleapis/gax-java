@@ -83,6 +83,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   private static final String DIRECT_PATH_ENV_DISABLE_DIRECT_PATH =
       "GOOGLE_CLOUD_DISABLE_DIRECT_PATH";
+  private static final String DIRECT_PATH_ENV_ENABLE_XDS = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
   // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
@@ -330,16 +331,23 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     ManagedChannelBuilder<?> builder;
 
-    // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
+    // Check DirectPath traffic.
+    boolean isDirectPathXdsEnabled = false;
     if (isDirectPathEnabled(serviceAddress)
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
-      builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+      isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
+      if (isDirectPathXdsEnabled) {
+        // google-c2p resolver target must not have a port number
+        builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
+      } else {
+        builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+        builder.defaultServiceConfig(directPathServiceConfig);
+      }
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
       // Will be overridden by user defined values if any.
       builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      builder.defaultServiceConfig(directPathServiceConfig);
     } else {
       ChannelCredentials channelCredentials = createMtlsChannelCredentials();
       if (channelCredentials != null) {
@@ -348,10 +356,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
       }
     }
+    // google-c2p resolver requires service config lookup
+    if (!isDirectPathXdsEnabled) {
+      // See https://github.com/googleapis/gapic-generator/issues/2816
+      builder.disableServiceConfigLookUp();
+    }
     builder =
         builder
-            // See https://github.com/googleapis/gapic-generator/issues/2816
-            .disableServiceConfigLookUp()
             .intercept(new GrpcChannelUUIDInterceptor())
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)

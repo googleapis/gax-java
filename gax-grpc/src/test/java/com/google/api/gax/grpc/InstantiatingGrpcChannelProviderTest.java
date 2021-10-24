@@ -67,6 +67,7 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportChannelTest {
+
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
@@ -164,11 +165,8 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     Duration keepaliveTime = Duration.ofSeconds(1);
     Duration keepaliveTimeout = Duration.ofSeconds(2);
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
-            throw new UnsupportedOperationException();
-          }
+        builder -> {
+          throw new UnsupportedOperationException();
         };
     Map<String, ?> directPathServiceConfig = ImmutableMap.of("loadbalancingConfig", "grpclb");
 
@@ -266,16 +264,13 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
-              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
-            } else {
-              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            }
-            return channelBuilder;
+        channelBuilder -> {
+          if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+            assertThat(channelBuilder).isInstanceOf(ComputeEngineChannelBuilder.class);
+          } else {
+            assertThat(channelBuilder).isNotInstanceOf(ComputeEngineChannelBuilder.class);
           }
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -304,13 +299,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients with non-GCE credentials will not attempt DirectPath.
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients with non-GCE credentials will not attempt DirectPath.
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -366,13 +358,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without setting attemptDirectPath flag will not attempt DirectPath
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients without setting attemptDirectPath flag will not attempt DirectPath
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
