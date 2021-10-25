@@ -95,7 +95,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private SettableApiFuture<Void> closeFuture;
   private final BatcherStats batcherStats = new BatcherStats();
   private final FlowController flowController;
-  private ApiCallContext callContext;
+  private final ApiCallContext callContext;
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
@@ -103,7 +103,9 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * @param unaryCallable a {@link UnaryCallable} object
    * @param prototype a {@link RequestT} object
    * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
+   * @deprecated Please use the constructor with FlowController and ApiCallContext instead
    */
+  @Deprecated
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,
@@ -122,7 +124,9 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
    * @param flowController a {@link FlowController} for throttling requests. If it's null, create a
    *     {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
+   * @deprecated Please use the constructor with ApiCallContext instead
    */
+  @Deprecated
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,
@@ -265,13 +269,14 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
     }
 
+    // This check is for the old constructors that don't have a call context
+    ApiCallContext callContextWithOption = null;
     if (callContext != null) {
-      callContext =
+      callContextWithOption =
           callContext.withOption(THROTTLED_TIME_KEY, accumulatedBatch.totalThrottledTimeMs);
-      unaryCallable.withDefaultCallContext(callContext);
     }
     final ApiFuture<ResponseT> batchResponse =
-        unaryCallable.futureCall(accumulatedBatch.builder.build(), callContext);
+        unaryCallable.futureCall(accumulatedBatch.builder.build(), callContextWithOption);
 
     numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(

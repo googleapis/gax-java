@@ -135,9 +135,4 @@ public class BaseApiTracer implements ApiTracer {
   public void batchRequestSent(long elementCount, long requestSize) {
     // noop
   }
-
-  @Override
-  public void batchRequestThrottled(long throttledTimeMs) {
-    // noop
-  }
 }
