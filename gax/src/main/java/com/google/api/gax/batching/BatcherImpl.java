@@ -103,7 +103,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * @param unaryCallable a {@link UnaryCallable} object
    * @param prototype a {@link RequestT} object
    * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
-   * @deprecated Please use the constructor with FlowController and ApiCallContext instead
+   * @deprecated Please instantiate the Batcher with {@link FlowController} and {@link
+   *     ApiCallContext}
    */
   @Deprecated
   public BatcherImpl(
@@ -124,7 +125,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
    * @param flowController a {@link FlowController} for throttling requests. If it's null, create a
    *     {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
-   * @deprecated Please use the constructor with ApiCallContext instead
+   * @deprecated Please instantiate the Batcher with {@link ApiCallContext}
    */
   @Deprecated
   public BatcherImpl(
@@ -269,7 +270,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
     }
 
-    // This check is for the old constructors that don't have a call context
+    // This check is for old clients that instantiated the batcher without ApiCallContext
     ApiCallContext callContextWithOption = null;
     if (callContext != null) {
       callContextWithOption =

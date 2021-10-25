@@ -936,7 +936,6 @@ public class BatcherImplTest {
         labeledIntList,
         settings,
         EXECUTOR,
-        flowController,
-        null);
+        flowController);
   }
 }
