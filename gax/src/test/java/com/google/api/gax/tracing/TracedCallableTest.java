@@ -112,7 +112,7 @@ public class TracedCallableTest {
 
     verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.Unary);
     verify(tracer, times(1)).attemptStarted(anyString(), anyInt());
-    verify(tracer, times(1)).attemptSucceeded(anyString());
+    verify(tracer, times(1)).attemptSucceeded();
     verify(tracer, times(1)).operationSucceeded();
     verifyNoMoreInteractions(tracer);
   }

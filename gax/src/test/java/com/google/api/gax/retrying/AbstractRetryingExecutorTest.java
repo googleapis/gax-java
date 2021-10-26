@@ -37,7 +37,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
@@ -127,7 +126,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
 
     verify(tracer, times(1)).attemptStarted(eq("request"), eq(0));
-    verify(tracer, times(1)).attemptSucceeded(anyString());
+    verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
   }
 
@@ -144,7 +143,7 @@ public abstract class AbstractRetryingExecutorTest {
 
     verify(tracer, times(6)).attemptStarted(eq("request"), anyInt());
     verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
-    verify(tracer, times(1)).attemptSucceeded(anyString());
+    verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
   }
 

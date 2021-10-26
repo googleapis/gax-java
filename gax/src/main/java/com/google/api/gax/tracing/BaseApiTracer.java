@@ -96,11 +96,6 @@ public class BaseApiTracer implements ApiTracer {
   }
 
   @Override
-  public void attemptSucceeded(Object response) {
-    attemptSucceeded();
-  }
-
-  @Override
   public void attemptCancelled() {
     // noop
   }

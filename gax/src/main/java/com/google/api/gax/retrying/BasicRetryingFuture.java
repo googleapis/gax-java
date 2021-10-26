@@ -199,7 +199,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           }
           super.setException(throwable);
         } else {
-          tracer.attemptSucceeded(response);
+          tracer.attemptSucceeded();
           super.set(response);
         }
       } catch (CancellationException e) {

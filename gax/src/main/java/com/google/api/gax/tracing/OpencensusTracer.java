@@ -328,12 +328,6 @@ public class OpencensusTracer extends BaseApiTracer {
 
   /** {@inheritDoc} */
   @Override
-  public void attemptSucceeded(Object response) {
-    attemptSucceeded();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void attemptCancelled() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
