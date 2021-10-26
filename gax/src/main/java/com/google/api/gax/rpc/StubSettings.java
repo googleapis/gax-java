@@ -176,6 +176,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return tracerFactory;
   }
 
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("backgroundExecutorProvider", backgroundExecutorProvider)
@@ -535,6 +536,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
 
+    @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("backgroundExecutorProvider", backgroundExecutorProvider)
