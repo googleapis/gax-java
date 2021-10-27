@@ -82,7 +82,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
 
       callContext
           .getTracer()
-          .attemptStarted(externalFuture.getAttemptSettings().getOverallAttemptCount());
+          .attemptStarted(request, externalFuture.getAttemptSettings().getOverallAttemptCount());
 
       ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
       externalFuture.setAttemptFuture(internalFuture);

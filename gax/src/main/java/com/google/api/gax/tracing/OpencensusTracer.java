@@ -309,6 +309,12 @@ public class OpencensusTracer extends BaseApiTracer {
 
   /** {@inheritDoc} */
   @Override
+  public void attemptStarted(Object request, int attemptNumber) {
+    attemptStarted(attemptNumber);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void attemptSucceeded() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
