@@ -62,10 +62,12 @@ class FailingCallable implements Callable<String> {
   private AtomicInteger attemptsCount = new AtomicInteger(0);
   private final ApiTracer tracer;
   private final int expectedFailuresCount;
+  private final String request;
   private final String result;
   private final CountDownLatch firstAttemptFinished = new CountDownLatch(1);
 
-  FailingCallable(int expectedFailuresCount, String result, ApiTracer tracer) {
+  FailingCallable(int expectedFailuresCount, String request, String result, ApiTracer tracer) {
+    this.request = request;
     this.tracer = tracer;
     this.expectedFailuresCount = expectedFailuresCount;
     this.result = result;
@@ -80,7 +82,7 @@ class FailingCallable implements Callable<String> {
     try {
       int attemptNumber = attemptsCount.getAndIncrement();
 
-      tracer.attemptStarted(attemptNumber);
+      tracer.attemptStarted(request, attemptNumber);
 
       if (attemptNumber < expectedFailuresCount) {
         throw new CustomException();
