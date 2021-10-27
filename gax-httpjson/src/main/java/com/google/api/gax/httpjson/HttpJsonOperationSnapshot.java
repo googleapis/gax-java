@@ -33,6 +33,8 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.longrunning.Operation;
 
 /**
  * Implementation of OperationSnapshot based on REST transport.
@@ -42,7 +44,6 @@ import com.google.api.gax.rpc.StatusCode;
 @BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 @InternalApi
 public class HttpJsonOperationSnapshot implements OperationSnapshot {
-
   private final String name;
   private final Object metadata;
   private final boolean done;
@@ -50,24 +51,19 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
   private final StatusCode errorCode;
   private final String errorMessage;
 
-  public HttpJsonOperationSnapshot(
+  private HttpJsonOperationSnapshot(
       String name,
       Object metadata,
       boolean done,
       Object response,
-      int errorCode,
+      StatusCode errorCode,
       String errorMessage) {
     this.name = name;
     this.metadata = metadata;
     this.done = done;
-    this.response = done ? response : null;
-    if (done && errorCode != 0) {
-      this.errorCode = HttpJsonStatusCode.of(errorCode, errorMessage);
-      this.errorMessage = errorMessage;
-    } else {
-      this.errorCode = null;
-      this.errorMessage = null;
-    }
+    this.response = response;
+    this.errorCode = errorCode;
+    this.errorMessage = errorMessage;
   }
 
   /** {@inheritDoc} */
@@ -106,6 +102,10 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
     return this.errorMessage;
   }
 
+  public static HttpJsonOperationSnapshot create(Operation operation) {
+    return newBuilder().setOperation(operation).build();
+  }
+
   public static Builder newBuilder() {
     return new HttpJsonOperationSnapshot.Builder();
   }
@@ -115,7 +115,7 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
     private Object metadata;
     private boolean done;
     private Object response;
-    private int errorCode;
+    private StatusCode errorCode;
     private String errorMessage;
 
     public Builder setName(String name) {
@@ -139,8 +139,21 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
     }
 
     public Builder setError(int errorCode, String errorMessage) {
-      this.errorCode = errorCode;
+      this.errorCode =
+          HttpJsonStatusCode.of(
+              errorCode == 0 ? Code.OK.getHttpStatusCode() : errorCode, errorMessage);
       this.errorMessage = errorMessage;
+      return this;
+    }
+
+    private Builder setOperation(Operation operation) {
+      this.name = operation.getName();
+      this.done = operation.getDone();
+      this.response = operation.getResponse();
+      this.metadata = operation.getMetadata();
+      this.errorCode =
+          HttpJsonStatusCode.of(com.google.rpc.Code.forNumber(operation.getError().getCode()));
+      this.errorMessage = operation.getError().getMessage();
       return this;
     }
 

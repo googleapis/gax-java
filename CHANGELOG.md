@@ -1,5 +1,74 @@
 # Changelog
 
+## [2.6.0](https://www.github.com/googleapis/gax-java/compare/v2.5.3...v2.6.0) (2021-10-15)
+
+
+### Features
+
+* remove deprecated Generated annotation ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Bug Fixes
+
+* Fix com.google.rpc.Code to StatusCode.Code conversion logic ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Dependencies
+
+* update api-common to 2.0.5 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update auto-value to 1.8.2 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update com_google_protobuf to 3.18.1 ([#1519](https://www.github.com/googleapis/gax-java/issues/1519)) ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update google-http-client to 1.40.1 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update grpc to 1.41.0 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update guava to v31 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+### [2.5.3](https://www.github.com/googleapis/gax-java/compare/v2.5.2...v2.5.3) (2021-10-13)
+
+
+### Bug Fixes
+
+* Fix `com.google.rpc.Code` to `StatusCode.Code` conversion  logic ([#1508](https://www.github.com/googleapis/gax-java/issues/1508)) ([61b1617](https://www.github.com/googleapis/gax-java/commit/61b161799faf292be1394111381f8a35e757b85a))
+
+### [2.5.2](https://www.github.com/googleapis/gax-java/compare/v2.5.1...v2.5.2) (2021-10-13)
+
+
+### Dependencies
+
+* release multiple artifacts at once ([#1506](https://www.github.com/googleapis/gax-java/issues/1506)) ([8c022f6](https://www.github.com/googleapis/gax-java/commit/8c022f69f7878280e00f200f65a931ff0f8cfe45))
+
+### [2.5.1](https://www.github.com/googleapis/gax-java/compare/v2.5.0...v2.5.1) (2021-10-08)
+
+
+### Dependencies
+
+* fix release pipeline ([#1500](https://www.github.com/googleapis/gax-java/issues/1500)) ([f8ae03b](https://www.github.com/googleapis/gax-java/commit/f8ae03bbf0389d5fd943d214c1058ee012be757b))
+
+## [2.5.0](https://www.github.com/googleapis/gax-java/compare/v2.4.1...v2.5.0) (2021-09-21)
+
+
+### Features
+
+* Add REST AIP-151 LRO support ([#1484](https://www.github.com/googleapis/gax-java/issues/1484)) ([95ca348](https://www.github.com/googleapis/gax-java/commit/95ca3482d272b5c5c5ac2c85ba007f0ba9f7b5cf))
+
+### [2.4.1](https://www.github.com/googleapis/gax-java/compare/v2.4.0...v2.4.1) (2021-09-08)
+
+
+### Bug Fixes
+
+* REGAPIC fix socket timeout for wait calls ([#1476](https://www.github.com/googleapis/gax-java/issues/1476)) ([86c68b3](https://www.github.com/googleapis/gax-java/commit/86c68b3ffd241f6932516d0e7b5d9ae5714b89e0))
+
+## [2.4.0](https://www.github.com/googleapis/gax-java/compare/v2.3.0...v2.4.0) (2021-08-27)
+
+
+### Bug Fixes
+
+* Fix PATCH being unsupported ([#1465](https://www.github.com/googleapis/gax-java/issues/1465)) ([2c6ac24](https://www.github.com/googleapis/gax-java/commit/2c6ac24b1fce1de356e69370bbe6a4348825e3f9))
+
+
+### Dependencies
+
+* update google-common-prots and google-http-client ([#1471](https://www.github.com/googleapis/gax-java/issues/1471)) ([80e17a3](https://www.github.com/googleapis/gax-java/commit/80e17a35feb00aff0af3a65876625c705eb6ca46))
+
 ## [2.3.0](https://www.github.com/googleapis/gax-java/compare/v2.2.0...v2.3.0) (2021-08-16)
 
 

@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.protobuf.Message;
+import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -40,40 +41,55 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
     implements HttpResponseParser<ResponseT> {
 
   private final ResponseT defaultInstance;
+  private final TypeRegistry defaultRegistry;
 
-  private ProtoMessageResponseParser(ResponseT defaultInstance) {
+  private ProtoMessageResponseParser(ResponseT defaultInstance, TypeRegistry defaultRegistry) {
     this.defaultInstance = defaultInstance;
+    this.defaultRegistry = defaultRegistry;
   }
 
   public static <RequestT extends Message>
       ProtoMessageResponseParser.Builder<RequestT> newBuilder() {
-    return new ProtoMessageResponseParser.Builder<>();
+    return new ProtoMessageResponseParser.Builder<RequestT>()
+        .setDefaultTypeRegistry(TypeRegistry.getEmptyTypeRegistry());
   }
 
   /* {@inheritDoc} */
   @Override
   public ResponseT parse(InputStream httpContent) {
-    return ProtoRestSerializer.<ResponseT>create()
+    return ProtoRestSerializer.<ResponseT>create(defaultRegistry)
+        .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
+  }
+
+  @Override
+  public ResponseT parse(InputStream httpContent, TypeRegistry registry) {
+    return ProtoRestSerializer.<ResponseT>create(registry)
         .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
   }
 
   /* {@inheritDoc} */
   @Override
   public String serialize(ResponseT response) {
-    return ProtoRestSerializer.create().toJson(response);
+    return ProtoRestSerializer.create(defaultRegistry).toJson(response);
   }
 
   // Convert to @AutoValue if this class gets more complicated
   public static class Builder<ResponseT extends Message> {
     private ResponseT defaultInstance;
+    private TypeRegistry defaultRegistry;
 
     public Builder<ResponseT> setDefaultInstance(ResponseT defaultInstance) {
       this.defaultInstance = defaultInstance;
       return this;
     }
 
+    public Builder<ResponseT> setDefaultTypeRegistry(TypeRegistry defaultRegistry) {
+      this.defaultRegistry = defaultRegistry;
+      return this;
+    }
+
     public ProtoMessageResponseParser<ResponseT> build() {
-      return new ProtoMessageResponseParser<>(defaultInstance);
+      return new ProtoMessageResponseParser<>(defaultInstance, defaultRegistry);
     }
   }
 }

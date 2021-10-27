@@ -32,39 +32,121 @@ package com.google.api.gax.httpjson;
 import com.google.api.gax.httpjson.ProtoOperationTransformers.MetadataTransformer;
 import com.google.api.gax.httpjson.ProtoOperationTransformers.ResponseTransformer;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.UnavailableException;
 import com.google.common.truth.Truth;
-import com.google.protobuf.Option;
+import com.google.longrunning.Operation;
+import com.google.protobuf.Any;
+import com.google.rpc.Code;
+import com.google.rpc.Status;
+import com.google.type.Color;
+import com.google.type.Money;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ProtoOperationTransformersTest {
 
   @Test
   public void testResponseTransformer() {
-    ResponseTransformer<Option> transformer = ResponseTransformer.create(Option.class);
-    Option inputOption = Option.newBuilder().setName("Paris").build();
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("UAH").build();
     OperationSnapshot operationSnapshot =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("Madrid")
             .setMetadata(2)
             .setDone(true)
-            .setResponse(inputOption)
+            .setResponse(inputMoney)
             .setError(0, "no error")
             .build();
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputOption);
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
   @Test
   public void testMetadataTransformer() {
-    MetadataTransformer<Option> transformer = MetadataTransformer.create(Option.class);
-    Option metaData = Option.newBuilder().setName("Valparaiso").build();
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("UAH").build();
     OperationSnapshot operationSnapshot =
         HttpJsonOperationSnapshot.newBuilder()
             .setName("Barcelona")
-            .setMetadata(metaData)
+            .setMetadata(inputMoney)
             .setDone(true)
             .setResponse("Gary")
             .setError(0, "no error")
             .build();
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(metaData);
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+  }
+
+  @Test
+  public void testAnyResponseTransformer() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+  }
+
+  @Test
+  public void testAnyResponseTransformer_exception() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (UnavailableException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("failed with status = HttpJsonStatusCode{statusCode=UNAVAILABLE}");
+    }
+  }
+
+  @Test
+  public void testAnyResponseTransformer_mismatchedTypes() {
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
+    Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder()
+                .setResponse(Any.pack(Color.getDefaultInstance()))
+                .setError(status)
+                .build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
+  }
+
+  @Test
+  public void testAnyMetadataTransformer() {
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
+    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+  }
+
+  @Test
+  public void testAnyMetadataTransformer_mismatchedTypes() {
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
+    Status status = Status.newBuilder().setCode(Code.OK.getNumber()).build();
+    OperationSnapshot operationSnapshot =
+        HttpJsonOperationSnapshot.create(
+            Operation.newBuilder()
+                .setMetadata(Any.pack(Color.getDefaultInstance()))
+                .setError(status)
+                .build());
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("MetadataTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
   }
 }

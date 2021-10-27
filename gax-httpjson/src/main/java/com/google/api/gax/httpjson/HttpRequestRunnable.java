@@ -33,6 +33,7 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -53,6 +54,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.threeten.bp.Duration;
+import org.threeten.bp.Instant;
 
 /** A runnable object that creates and executes an HTTP request. */
 @AutoValue
@@ -112,12 +115,57 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
     }
 
-    HttpRequest httpRequest =
-        requestFactory.buildRequest(getApiMethodDescriptor().getHttpMethod(), url, jsonHttpContent);
+    HttpRequest httpRequest = buildRequest(requestFactory, url, jsonHttpContent);
+
+    Instant deadline = getHttpJsonCallOptions().getDeadline();
+    if (deadline != null) {
+      long readTimeout = Duration.between(Instant.now(), deadline).toMillis();
+      if (httpRequest.getReadTimeout() > 0
+          && httpRequest.getReadTimeout() < readTimeout
+          && readTimeout < Integer.MAX_VALUE) {
+        httpRequest.setReadTimeout((int) readTimeout);
+      }
+    }
+
     for (HttpJsonHeaderEnhancer enhancer : getHeaderEnhancers()) {
       enhancer.enhance(httpRequest.getHeaders());
     }
     httpRequest.setParser(new JsonObjectParser(getJsonFactory()));
+    return httpRequest;
+  }
+
+  private HttpRequest buildRequest(
+      HttpRequestFactory requestFactory, GenericUrl url, HttpContent jsonHttpContent)
+      throws IOException {
+    // A workaround to support PATCH request. This assumes support of "X-HTTP-Method-Override"
+    // header on the server side, which GCP services usually do.
+    //
+    // Long story short, the problems is as follows: gax-httpjson depends on NetHttpTransport class
+    // from google-http-client, which depends on JDK standard java.net.HttpUrlConnection, which does
+    // not support PATCH http method.
+    //
+    // It is a won't fix for JDK8: https://bugs.openjdk.java.net/browse/JDK-8207840.
+    // A corresponding google-http-client issue:
+    // https://github.com/googleapis/google-http-java-client/issues/167
+    //
+    // In JDK11 there is java.net.http.HttpRequest with PATCH method support but, gax-httpjson must
+    // remain compatible with Java 8.
+    //
+    // Using "X-HTTP-Method-Override" header is probably the cleanest way to fix it. Other options
+    // would be: hideous reflection hacks (not a safe option in a generic library, which
+    // gax-httpjson is), writing own implementation of HttpUrlConnection (fragile and a lot of
+    // work), depending on v2.ApacheHttpTransport (it has many extra dependencies, does not support
+    // mtls etc).
+    String actualHttpMethod = getApiMethodDescriptor().getHttpMethod();
+    String originalHttpMethod = actualHttpMethod;
+    if (HttpMethods.PATCH.equals(actualHttpMethod)) {
+      actualHttpMethod = HttpMethods.POST;
+    }
+    HttpRequest httpRequest = requestFactory.buildRequest(actualHttpMethod, url, jsonHttpContent);
+    if (originalHttpMethod != null && !originalHttpMethod.equals(actualHttpMethod)) {
+      HttpHeadersUtils.setHeader(
+          httpRequest.getHeaders(), "X-HTTP-Method-Override", originalHttpMethod);
+    }
     return httpRequest;
   }
 
@@ -147,9 +195,13 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
       }
+
       if (getApiMethodDescriptor().getResponseParser() != null) {
         ResponseT response =
-            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
+            getApiMethodDescriptor()
+                .getResponseParser()
+                .parse(httpResponse.getContent(), getHttpJsonCallOptions().getTypeRegistry());
+
         getResponseFuture().set(response);
       } else {
         getResponseFuture().set(null);

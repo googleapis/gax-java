@@ -65,6 +65,11 @@ public class ProtoOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
+
+      if (!(operationSnapshot.getResponse() instanceof Any)) {
+        return (ResponseT) operationSnapshot.getResponse();
+      }
+
       try {
         return transformer.apply((Any) operationSnapshot.getResponse());
       } catch (RuntimeException e) {
@@ -94,9 +99,11 @@ public class ProtoOperationTransformers {
 
     @Override
     public MetadataT apply(OperationSnapshot operationSnapshot) {
+      if (!(operationSnapshot.getMetadata() instanceof Any)) {
+        return (MetadataT) operationSnapshot.getMetadata();
+      }
       try {
-        return transformer.apply(
-            operationSnapshot.getMetadata() != null ? (Any) operationSnapshot.getMetadata() : null);
+        return transformer.apply((Any) operationSnapshot.getMetadata());
       } catch (RuntimeException e) {
         throw ApiExceptionFactory.createException(
             "Polling operation with name \""

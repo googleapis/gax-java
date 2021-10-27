@@ -52,7 +52,6 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
@@ -85,7 +84,6 @@ import javax.annotation.Generated;
  * OperationsSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-@Generated("by gapic-generator-java")
 @BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
 

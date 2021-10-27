@@ -2,15 +2,13 @@ rebaseMergeAllowed: false
 squashMergeAllowed: true
 mergeCommitAllowed: false
 branchProtectionRules:
-  - pattern: master
+  - pattern: main
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: true
     requiredStatusCheckContexts:
       - bazel
-      - linkage-monitor (8)
-      - linkage-monitor (11)
       - units (8)
       - units (11)
       - cla/google
@@ -50,6 +48,16 @@ branchProtectionRules:
       - linkage-monitor (8)
       - linkage-monitor (11)
       - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 2.6.x
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
       - units (8)
       - units (11)
       - cla/google

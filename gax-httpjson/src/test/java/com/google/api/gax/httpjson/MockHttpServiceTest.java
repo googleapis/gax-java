@@ -51,6 +51,7 @@ import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -96,6 +97,11 @@ public class MockHttpServiceTest {
         @Override
         public PetMessage parse(InputStream httpContent) {
           return null;
+        }
+
+        @Override
+        public PetMessage parse(InputStream httpContent, TypeRegistry registry) {
+          return parse(httpContent);
         }
 
         @Override
