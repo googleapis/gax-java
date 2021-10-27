@@ -111,7 +111,7 @@ public class TracedCallableTest {
     ApiFuture<String> future = callable.futureCall("Is your refrigerator running?", callContext);
 
     verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.Unary);
-    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1)).attemptStarted(anyString(), anyInt());
     verify(tracer, times(1)).attemptSucceeded();
     verify(tracer, times(1)).operationSucceeded();
     verifyNoMoreInteractions(tracer);

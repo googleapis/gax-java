@@ -88,7 +88,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(15, "SUCCESS", tracer);
+      FailingCallable callable = new FailingCallable(15, "request", "SUCCESS", tracer);
 
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
@@ -139,7 +139,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(15, "SUCCESS", tracer);
+      FailingCallable callable = new FailingCallable(15, "request", "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -192,7 +192,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
       final int maxRetries = 100;
 
-      FailingCallable callable = new FailingCallable(maxRetries - 1, "SUCCESS", tracer);
+      FailingCallable callable = new FailingCallable(maxRetries - 1, "request", "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -249,7 +249,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   public void testCancelOuterFutureAfterStart() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
+      FailingCallable callable = new FailingCallable(4, "requset", "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -276,7 +276,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   @Test
   public void testCancelIsTraced() throws Exception {
     ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-    FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
+    FailingCallable callable = new FailingCallable(4, "request", "SUCCESS", tracer);
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
@@ -305,7 +305,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
     // this is a heavy test, which takes a lot of time, so only few executions.
     for (int executionsCount = 0; executionsCount < 2; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(5, "SUCCESS", tracer);
+      FailingCallable callable = new FailingCallable(5, "request", "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
