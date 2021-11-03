@@ -73,8 +73,8 @@ class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
 
               @Override
               public void onClose(Status status, Metadata trailers) {
-                super.onClose(status, trailers);
                 metadataHandler.onTrailers(trailers);
+                super.onClose(status, trailers);
               }
             };
         super.start(forwardingResponseListener, headers);
