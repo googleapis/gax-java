@@ -55,7 +55,7 @@ public class HttpJsonCallableFactoryTest {
 
     for (Entry<String, SpanName> entry : validNames.entrySet()) {
       @SuppressWarnings("unchecked")
-      ApiMethodDescriptor descriptor =
+      ApiMethodDescriptor<?, ?> descriptor =
           ApiMethodDescriptor.newBuilder()
               .setFullMethodName(entry.getKey())
               .setHttpMethod(HttpMethods.POST)
@@ -74,7 +74,7 @@ public class HttpJsonCallableFactoryTest {
 
     for (String invalidName : invalidNames) {
       @SuppressWarnings("unchecked")
-      ApiMethodDescriptor descriptor =
+      ApiMethodDescriptor<?, ?> descriptor =
           ApiMethodDescriptor.newBuilder()
               .setFullMethodName(invalidName)
               .setHttpMethod(HttpMethods.POST)

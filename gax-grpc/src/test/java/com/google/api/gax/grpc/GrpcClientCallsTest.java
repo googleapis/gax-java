@@ -53,8 +53,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 public class GrpcClientCallsTest {
@@ -105,22 +103,19 @@ public class GrpcClientCallsTest {
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
 
-    @SuppressWarnings("unchecked")
     Channel mockChannel = Mockito.mock(ManagedChannel.class);
 
     Mockito.doAnswer(
-            new Answer<Void>() {
-              public Void answer(InvocationOnMock invocation) {
-                Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
-                Metadata.Key<String> key1 =
-                    Metadata.Key.of("header-key-1", Metadata.ASCII_STRING_MARSHALLER);
-                Metadata.Key<String> key2 =
-                    Metadata.Key.of("header-key-2", Metadata.ASCII_STRING_MARSHALLER);
-                assertThat(clientCallHeaders.getAll(key1))
-                    .containsExactly("header-value-11", "header-value-12");
-                assertThat(clientCallHeaders.getAll(key2)).containsExactly("header-value-21");
-                return null;
-              }
+            invocation -> {
+              Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
+              Metadata.Key<String> key1 =
+                  Metadata.Key.of("header-key-1", Metadata.ASCII_STRING_MARSHALLER);
+              Metadata.Key<String> key2 =
+                  Metadata.Key.of("header-key-2", Metadata.ASCII_STRING_MARSHALLER);
+              assertThat(clientCallHeaders.getAll(key1))
+                  .containsExactly("header-value-11", "header-value-12");
+              assertThat(clientCallHeaders.getAll(key2)).containsExactly("header-value-21");
+              return null;
             })
         .when(mockClientCall)
         .start(Mockito.<ClientCall.Listener<Money>>any(), Mockito.<Metadata>any());
@@ -143,7 +138,6 @@ public class GrpcClientCallsTest {
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
 
-    @SuppressWarnings("unchecked")
     Channel mockChannel = Mockito.mock(ManagedChannel.class);
 
     ArgumentCaptor<CallOptions> capturedCallOptions = ArgumentCaptor.forClass(CallOptions.class);
@@ -175,7 +169,6 @@ public class GrpcClientCallsTest {
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
 
-    @SuppressWarnings("unchecked")
     Channel mockChannel = Mockito.mock(ManagedChannel.class);
 
     ArgumentCaptor<CallOptions> capturedCallOptions = ArgumentCaptor.forClass(CallOptions.class);
@@ -209,7 +202,6 @@ public class GrpcClientCallsTest {
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
 
-    @SuppressWarnings("unchecked")
     Channel mockChannel = Mockito.mock(ManagedChannel.class);
 
     ArgumentCaptor<CallOptions> capturedCallOptions = ArgumentCaptor.forClass(CallOptions.class);

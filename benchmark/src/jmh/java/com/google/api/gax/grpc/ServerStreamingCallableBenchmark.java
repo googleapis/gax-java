@@ -338,7 +338,7 @@ public class ServerStreamingCallableBenchmark {
     private final SettableFuture<Void> future = SettableFuture.create();
     private final boolean autoFlowControl;
     private final Blackhole blackhole;
-    private ClientCallStreamObserver inner;
+    private ClientCallStreamObserver<?> inner;
 
     public GrpcStreamingObserver(boolean autoFlowControl, Blackhole blackhole) {
       this.autoFlowControl = autoFlowControl;
@@ -350,11 +350,11 @@ public class ServerStreamingCallableBenchmark {
     }
 
     @Override
-    public void beforeStart(ClientCallStreamObserver observer) {
+    public void beforeStart(ClientCallStreamObserver<ReadRowsRequest> observer) {
       if (!autoFlowControl) {
         observer.disableAutoInboundFlowControl();
       }
-      this.inner = observer;
+      inner = observer;
     }
 
     @Override

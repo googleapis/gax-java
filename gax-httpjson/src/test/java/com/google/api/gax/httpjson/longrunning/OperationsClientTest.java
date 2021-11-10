@@ -29,10 +29,9 @@
  */
 package com.google.api.gax.httpjson.longrunning;
 
-import static com.google.api.gax.httpjson.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.httpjson.GaxHttpJsonProperties;
+import com.google.api.gax.httpjson.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.api.gax.httpjson.longrunning.stub.HttpJsonOperationsStub;
 import com.google.api.gax.httpjson.testing.MockHttpService;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -52,7 +51,6 @@ import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -81,16 +79,13 @@ public class OperationsClientTest {
     client.close();
   }
 
-  @Before
-  public void setUp() {}
-
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     mockService.reset();
   }
 
   @Test
-  public void listOperationsTest() throws Exception {
+  public void listOperationsTest() {
     Operation responsesElement = Operation.newBuilder().build();
     ListOperationsResponse expectedResponse =
         ListOperationsResponse.newBuilder()
@@ -125,7 +120,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void listOperationsExceptionTest() throws Exception {
+  public void listOperationsExceptionTest() {
     ApiException exception =
         ApiExceptionFactory.createException(
             new Exception(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false);
@@ -142,7 +137,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void getOperationTest() throws Exception {
+  public void getOperationTest() {
     Operation expectedResponse =
         Operation.newBuilder()
             .setName("operations/hey1")
@@ -172,7 +167,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void getOperationExceptionTest() throws Exception {
+  public void getOperationExceptionTest() {
     ApiException exception =
         ApiExceptionFactory.createException(
             new Exception(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false);
@@ -188,7 +183,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void deleteOperationTest() throws Exception {
+  public void deleteOperationTest() {
     Empty expectedResponse = Empty.newBuilder().build();
     mockService.addResponse(expectedResponse);
 
@@ -212,7 +207,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void deleteOperationExceptionTest() throws Exception {
+  public void deleteOperationExceptionTest() {
     ApiException exception =
         ApiExceptionFactory.createException(
             new Exception(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false);
@@ -228,7 +223,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void cancelOperationTest() throws Exception {
+  public void cancelOperationTest() {
     Empty expectedResponse = Empty.newBuilder().build();
     mockService.addResponse(expectedResponse);
 
@@ -252,7 +247,7 @@ public class OperationsClientTest {
   }
 
   @Test
-  public void cancelOperationExceptionTest() throws Exception {
+  public void cancelOperationExceptionTest() {
     ApiException exception =
         ApiExceptionFactory.createException(
             new Exception(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false);
