@@ -7,7 +7,7 @@ plugins {
   id 'com.diffplug.eclipse.apt' version '3.33.2' apply false
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
-  id 'com.github.sherter.google-java-format' version '0.8' apply false
+  id 'com.github.sherter.google-java-format' version '0.9' apply false
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
@@ -75,6 +75,7 @@ configure(javaProjects) {
   // Formatting tasks
   // ================
   googleJavaFormat {
+    toolVersion '1.7'
     exclude '.apt_generated*/**'
     exclude 'bin/**'
     exclude 'build/**'
@@ -128,8 +129,8 @@ configure(javaProjects) {
   jacoco.toolVersion = '0.8.5'
   jacocoTestReport {
     reports {
-      xml.enabled true
-      html.enabled true
+      xml.required = true
+      html.required = true
     }
     afterEvaluate {
       getClassDirectories().setFrom files(classDirectories.files.collect {
@@ -284,7 +285,7 @@ configure(normalReleasableProjects) {
       // ./gradlew gax-httpjson:checkJavaLinkage
       dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
       classpath = configurations.linkageChecker
-      main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
+      mainClass = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
 
       def arguments = ['-a', "com.google.api:${project.name}:${project.version}"]
       if (project.name == 'gax-grpc') {
