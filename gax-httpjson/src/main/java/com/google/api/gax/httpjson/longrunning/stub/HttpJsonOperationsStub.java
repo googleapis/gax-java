@@ -119,11 +119,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
                             serializer.putPathParam(fields, "name", request.getName());
                             return fields;
                           })
-                      .setQueryParamsExtractor(
-                          request -> {
-                            ProtoRestSerializer.create();
-                            return new HashMap<>();
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
                       .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
@@ -153,11 +149,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
                             serializer.putPathParam(fields, "name", request.getName());
                             return fields;
                           })
-                      .setQueryParamsExtractor(
-                          request -> {
-                            ProtoRestSerializer.create();
-                            return new HashMap<>();
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
                       .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
@@ -182,11 +174,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
                             serializer.putPathParam(fields, "name", request.getName());
                             return fields;
                           })
-                      .setQueryParamsExtractor(
-                          request -> {
-                            ProtoRestSerializer.create();
-                            return new HashMap<>();
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
                       .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
