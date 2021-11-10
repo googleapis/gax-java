@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.7.0](https://www.github.com/googleapis/gax-java/compare/v2.6.0...v2.7.0) (2021-11-03)
+
+
+### Features
+
+* add batch throttled time to tracer ([#1463](https://www.github.com/googleapis/gax-java/issues/1463)) ([14c25cd](https://www.github.com/googleapis/gax-java/commit/14c25cdfae2c0602d99fcd07c9067138fc172a7f))
+* add google-c2p dependence to DirectPath ([#1521](https://www.github.com/googleapis/gax-java/issues/1521)) ([d4222e7](https://www.github.com/googleapis/gax-java/commit/d4222e757d35e874a57d030f2f964e8d61c71d6d))
+* next release from main branch is 2.7.0 ([#1530](https://www.github.com/googleapis/gax-java/issues/1530)) ([a96953e](https://www.github.com/googleapis/gax-java/commit/a96953e2c889ad9195b420ce5ae49b20258fb6ea))
+* pass request in ApiTracer ([#1491](https://www.github.com/googleapis/gax-java/issues/1491)) ([27bf265](https://www.github.com/googleapis/gax-java/commit/27bf2655120972d929e6118b73d8d556b0440fcf))
+
+
+### Bug Fixes
+
+* call ResponseMetadataHanlder#onTrailers before calling onClose ([#1549](https://www.github.com/googleapis/gax-java/issues/1549)) ([19a77a4](https://www.github.com/googleapis/gax-java/commit/19a77a4f6c62e84bba4879690992bbc494730d23))
+* declare depenencies of API surfaces as api ([#1535](https://www.github.com/googleapis/gax-java/issues/1535)) ([725414f](https://www.github.com/googleapis/gax-java/commit/725414f4ccb1e5ac4625790ea990c6c8dfa4fdff))
+
 ## [2.6.0](https://www.github.com/googleapis/gax-java/compare/v2.5.3...v2.6.0) (2021-10-15)
 
 
