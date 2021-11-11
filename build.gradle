@@ -153,13 +153,13 @@ configure(javaProjects) {
 
   javadoc.options {
     encoding = 'UTF-8'
-    links 'https://docs.oracle.com/javase/7/docs/api/'
+    links 'https://docs.oracle.com/javase/8/docs/api/'
 
     if (JavaVersion.current().isJava8Compatible()) {
       addStringOption('Xdoclint:all,-missing', '-quiet')
     }
     if (JavaVersion.current().isJava11Compatible()) {
-      addStringOption('-release', '7')
+      addStringOption('-release', '8')
     }
   }
 

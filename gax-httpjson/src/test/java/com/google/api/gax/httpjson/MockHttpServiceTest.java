@@ -143,7 +143,7 @@ public class MockHttpServiceTest {
           .setResponseParser(PET_RESPONSE_PARSER)
           .build();
 
-  private static final List<ApiMethodDescriptor> SERVER_METHOD_DESCRIPTORS =
+  private static final List<ApiMethodDescriptor<?, ?>> SERVER_METHOD_DESCRIPTORS =
       Lists.newArrayList(methodDescriptor);
 
   private static MockHttpService testService =

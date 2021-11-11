@@ -29,25 +29,20 @@
  */
 package com.google.api.gax.httpjson.longrunning.stub;
 
-import static com.google.api.gax.httpjson.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.httpjson.ApiMethodDescriptor;
-import com.google.api.gax.httpjson.FieldsExtractor;
 import com.google.api.gax.httpjson.HttpJsonCallSettings;
 import com.google.api.gax.httpjson.HttpJsonLongRunningClient;
 import com.google.api.gax.httpjson.HttpJsonOperationSnapshot;
 import com.google.api.gax.httpjson.HttpJsonStubCallableFactory;
-import com.google.api.gax.httpjson.OperationSnapshotFactory;
-import com.google.api.gax.httpjson.PollingRequestFactory;
 import com.google.api.gax.httpjson.ProtoMessageRequestFormatter;
 import com.google.api.gax.httpjson.ProtoMessageResponseParser;
 import com.google.api.gax.httpjson.ProtoRestSerializer;
-import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.httpjson.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -83,37 +78,24 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   ProtoMessageRequestFormatter.<ListOperationsRequest>newBuilder()
                       .setPath(
                           "/v1/{name=operations}",
-                          new FieldsExtractor<ListOperationsRequest, Map<String, String>>() {
-                            @Override
-                            public Map<String, String> extract(ListOperationsRequest request) {
-                              Map<String, String> fields = new HashMap<>();
-                              ProtoRestSerializer<ListOperationsRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              serializer.putPathParam(fields, "name", request.getName());
-                              return fields;
-                            }
+                          request -> {
+                            Map<String, String> fields = new HashMap<>();
+                            ProtoRestSerializer<ListOperationsRequest> serializer =
+                                ProtoRestSerializer.create();
+                            serializer.putPathParam(fields, "name", request.getName());
+                            return fields;
                           })
                       .setQueryParamsExtractor(
-                          new FieldsExtractor<ListOperationsRequest, Map<String, List<String>>>() {
-                            @Override
-                            public Map<String, List<String>> extract(
-                                ListOperationsRequest request) {
-                              Map<String, List<String>> fields = new HashMap<>();
-                              ProtoRestSerializer<ListOperationsRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              serializer.putQueryParam(fields, "filter", request.getFilter());
-                              serializer.putQueryParam(fields, "pageSize", request.getPageSize());
-                              serializer.putQueryParam(fields, "pageToken", request.getPageToken());
-                              return fields;
-                            }
+                          request -> {
+                            Map<String, List<String>> fields = new HashMap<>();
+                            ProtoRestSerializer<ListOperationsRequest> serializer =
+                                ProtoRestSerializer.create();
+                            serializer.putQueryParam(fields, "filter", request.getFilter());
+                            serializer.putQueryParam(fields, "pageSize", request.getPageSize());
+                            serializer.putQueryParam(fields, "pageToken", request.getPageToken());
+                            return fields;
                           })
-                      .setRequestBodyExtractor(
-                          new FieldsExtractor<ListOperationsRequest, String>() {
-                            @Override
-                            public String extract(ListOperationsRequest request) {
-                              return null;
-                            }
-                          })
+                      .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
                   ProtoMessageResponseParser.<ListOperationsResponse>newBuilder()
@@ -130,53 +112,25 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   ProtoMessageRequestFormatter.<GetOperationRequest>newBuilder()
                       .setPath(
                           "/v1/{name=operations/**}",
-                          new FieldsExtractor<GetOperationRequest, Map<String, String>>() {
-                            @Override
-                            public Map<String, String> extract(GetOperationRequest request) {
-                              Map<String, String> fields = new HashMap<>();
-                              ProtoRestSerializer<GetOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              serializer.putPathParam(fields, "name", request.getName());
-                              return fields;
-                            }
+                          request -> {
+                            Map<String, String> fields = new HashMap<>();
+                            ProtoRestSerializer<GetOperationRequest> serializer =
+                                ProtoRestSerializer.create();
+                            serializer.putPathParam(fields, "name", request.getName());
+                            return fields;
                           })
-                      .setQueryParamsExtractor(
-                          new FieldsExtractor<GetOperationRequest, Map<String, List<String>>>() {
-                            @Override
-                            public Map<String, List<String>> extract(GetOperationRequest request) {
-                              Map<String, List<String>> fields = new HashMap<>();
-                              ProtoRestSerializer<GetOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              return fields;
-                            }
-                          })
-                      .setRequestBodyExtractor(
-                          new FieldsExtractor<GetOperationRequest, String>() {
-                            @Override
-                            public String extract(GetOperationRequest request) {
-                              return null;
-                            }
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
+                      .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
                   ProtoMessageResponseParser.<Operation>newBuilder()
                       .setDefaultInstance(Operation.getDefaultInstance())
                       .build())
               .setOperationSnapshotFactory(
-                  new OperationSnapshotFactory<GetOperationRequest, Operation>() {
-                    @Override
-                    public OperationSnapshot create(
-                        GetOperationRequest request, Operation response) {
-                      return HttpJsonOperationSnapshot.create(response);
-                    }
-                  })
+                  (request, response) -> HttpJsonOperationSnapshot.create(response))
               .setPollingRequestFactory(
-                  new PollingRequestFactory<GetOperationRequest>() {
-                    @Override
-                    public GetOperationRequest create(String compoundOperationId) {
-                      return GetOperationRequest.newBuilder().setName(compoundOperationId).build();
-                    }
-                  })
+                  compoundOperationId ->
+                      GetOperationRequest.newBuilder().setName(compoundOperationId).build())
               .build();
 
   private static final ApiMethodDescriptor<DeleteOperationRequest, Empty>
@@ -188,34 +142,15 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   ProtoMessageRequestFormatter.<DeleteOperationRequest>newBuilder()
                       .setPath(
                           "/v1/{name=operations/**}",
-                          new FieldsExtractor<DeleteOperationRequest, Map<String, String>>() {
-                            @Override
-                            public Map<String, String> extract(DeleteOperationRequest request) {
-                              Map<String, String> fields = new HashMap<>();
-                              ProtoRestSerializer<DeleteOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              serializer.putPathParam(fields, "name", request.getName());
-                              return fields;
-                            }
+                          request -> {
+                            Map<String, String> fields = new HashMap<>();
+                            ProtoRestSerializer<DeleteOperationRequest> serializer =
+                                ProtoRestSerializer.create();
+                            serializer.putPathParam(fields, "name", request.getName());
+                            return fields;
                           })
-                      .setQueryParamsExtractor(
-                          new FieldsExtractor<DeleteOperationRequest, Map<String, List<String>>>() {
-                            @Override
-                            public Map<String, List<String>> extract(
-                                DeleteOperationRequest request) {
-                              Map<String, List<String>> fields = new HashMap<>();
-                              ProtoRestSerializer<DeleteOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              return fields;
-                            }
-                          })
-                      .setRequestBodyExtractor(
-                          new FieldsExtractor<DeleteOperationRequest, String>() {
-                            @Override
-                            public String extract(DeleteOperationRequest request) {
-                              return null;
-                            }
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
+                      .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
                   ProtoMessageResponseParser.<Empty>newBuilder()
@@ -232,34 +167,15 @@ public class HttpJsonOperationsStub extends OperationsStub {
                   ProtoMessageRequestFormatter.<CancelOperationRequest>newBuilder()
                       .setPath(
                           "/v1/{name=operations/**}:cancel",
-                          new FieldsExtractor<CancelOperationRequest, Map<String, String>>() {
-                            @Override
-                            public Map<String, String> extract(CancelOperationRequest request) {
-                              Map<String, String> fields = new HashMap<>();
-                              ProtoRestSerializer<CancelOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              serializer.putPathParam(fields, "name", request.getName());
-                              return fields;
-                            }
+                          request -> {
+                            Map<String, String> fields = new HashMap<>();
+                            ProtoRestSerializer<CancelOperationRequest> serializer =
+                                ProtoRestSerializer.create();
+                            serializer.putPathParam(fields, "name", request.getName());
+                            return fields;
                           })
-                      .setQueryParamsExtractor(
-                          new FieldsExtractor<CancelOperationRequest, Map<String, List<String>>>() {
-                            @Override
-                            public Map<String, List<String>> extract(
-                                CancelOperationRequest request) {
-                              Map<String, List<String>> fields = new HashMap<>();
-                              ProtoRestSerializer<CancelOperationRequest> serializer =
-                                  ProtoRestSerializer.create();
-                              return fields;
-                            }
-                          })
-                      .setRequestBodyExtractor(
-                          new FieldsExtractor<CancelOperationRequest, String>() {
-                            @Override
-                            public String extract(CancelOperationRequest request) {
-                              return null;
-                            }
-                          })
+                      .setQueryParamsExtractor(request -> new HashMap<>())
+                      .setRequestBodyExtractor(request -> null)
                       .build())
               .setResponseParser(
                   ProtoMessageResponseParser.<Empty>newBuilder()
@@ -355,35 +271,34 @@ public class HttpJsonOperationsStub extends OperationsStub {
             .setTypeRegistry(typeRegistry)
             .build();
 
-    this.listOperationsCallable =
+    listOperationsCallable =
         callableFactory.createUnaryCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
-    this.listOperationsPagedCallable =
+    listOperationsPagedCallable =
         callableFactory.createPagedCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
-    this.getOperationCallable =
+    getOperationCallable =
         callableFactory.createUnaryCallable(
             getOperationTransportSettings, settings.getOperationSettings(), clientContext);
-    this.deleteOperationCallable =
+    deleteOperationCallable =
         callableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
-    this.cancelOperationCallable =
+    cancelOperationCallable =
         callableFactory.createUnaryCallable(
             cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
 
-    this.longRunningClient =
-        new HttpJsonLongRunningClient<GetOperationRequest, Operation>(
+    longRunningClient =
+        new HttpJsonLongRunningClient<>(
             getOperationCallable,
             getOperationMethodDescriptor.getOperationSnapshotFactory(),
             getOperationMethodDescriptor.getPollingRequestFactory());
 
-    this.backgroundResources =
-        new BackgroundResourceAggregation(clientContext.getBackgroundResources());
+    backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
 
   @InternalApi
-  public static List<ApiMethodDescriptor> getMethodDescriptors() {
-    List<ApiMethodDescriptor> methodDescriptors = new ArrayList<>();
+  public static List<ApiMethodDescriptor<?, ?>> getMethodDescriptors() {
+    List<ApiMethodDescriptor<?, ?>> methodDescriptors = new ArrayList<>();
     methodDescriptors.add(listOperationsMethodDescriptor);
     methodDescriptors.add(getOperationMethodDescriptor);
     methodDescriptors.add(deleteOperationMethodDescriptor);

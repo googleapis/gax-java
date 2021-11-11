@@ -180,23 +180,21 @@ public class ChannelPoolTest {
 
   // Test channelPrimer is called periodically, if there's an executorService
   @Test
-  public void channelPrimerIsCalledPeriodically() throws IOException, InterruptedException {
+  public void channelPrimerIsCalledPeriodically() throws IOException {
     ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
     ManagedChannel channel1 = Mockito.mock(RefreshingManagedChannel.class);
     ManagedChannel channel2 = Mockito.mock(RefreshingManagedChannel.class);
     ManagedChannel channel3 = Mockito.mock(RefreshingManagedChannel.class);
 
-    final List<Runnable> channelRefreshers = new ArrayList<>();
+    List<Runnable> channelRefreshers = new ArrayList<>();
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
 
-    Answer extractChannelRefresher =
-        new Answer() {
-          public Object answer(InvocationOnMock invocation) {
-            channelRefreshers.add((Runnable) invocation.getArgument(0));
-            return Mockito.mock(ScheduledFuture.class);
-          }
+    Answer<?> extractChannelRefresher =
+        invocation -> {
+          channelRefreshers.add((Runnable) invocation.getArgument(0));
+          return Mockito.mock(ScheduledFuture.class);
         };
 
     Mockito.doAnswer(extractChannelRefresher)

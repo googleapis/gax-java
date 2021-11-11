@@ -88,7 +88,7 @@ public class GrpcCallableFactoryTest {
   }
 
   @Test
-  public void createServerStreamingCallableRetryableExceptions() throws Exception {
+  public void createServerStreamingCallableRetryableExceptions() {
     GrpcCallSettings<Color, Money> grpcCallSettings =
         GrpcCallSettings.create(FakeServiceGrpc.METHOD_STREAMING_RECOGNIZE_ERROR);
 
@@ -147,7 +147,7 @@ public class GrpcCallableFactoryTest {
   @Test
   public void testGetSpanName() {
     @SuppressWarnings("unchecked")
-    MethodDescriptor descriptor =
+    MethodDescriptor<?, ?> descriptor =
         MethodDescriptor.newBuilder()
             .setType(MethodType.SERVER_STREAMING)
             .setFullMethodName("google.bigtable.v2.Bigtable/ReadRows")
@@ -162,7 +162,7 @@ public class GrpcCallableFactoryTest {
   @Test
   public void testGetSpanNameUnqualified() {
     @SuppressWarnings("unchecked")
-    MethodDescriptor descriptor =
+    MethodDescriptor<?, ?> descriptor =
         MethodDescriptor.newBuilder()
             .setType(MethodType.SERVER_STREAMING)
             .setFullMethodName("UnqualifiedService/ReadRows")
@@ -180,7 +180,7 @@ public class GrpcCallableFactoryTest {
 
     for (String invalidName : invalidNames) {
       @SuppressWarnings("unchecked")
-      MethodDescriptor descriptor =
+      MethodDescriptor<?, ?> descriptor =
           MethodDescriptor.newBuilder()
               .setType(MethodType.SERVER_STREAMING)
               .setFullMethodName(invalidName)

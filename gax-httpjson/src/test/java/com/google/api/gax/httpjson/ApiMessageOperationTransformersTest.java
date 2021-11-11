@@ -54,7 +54,7 @@ public class ApiMessageOperationTransformersTest {
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
 
-    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
+    FakeMetadataMessage<?> metadata = new FakeMetadataMessage<>(Status.PENDING, Code.OK);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("Pending; no response method", emptyResponse, metadata));
@@ -66,7 +66,7 @@ public class ApiMessageOperationTransformersTest {
   public void testResponseTransformer_exception() {
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
-    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.UNAVAILABLE);
+    FakeMetadataMessage<?> metadata = new FakeMetadataMessage<>(Status.PENDING, Code.UNAVAILABLE);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("Unavailable; no response method", emptyResponse, metadata));
@@ -81,7 +81,7 @@ public class ApiMessageOperationTransformersTest {
   @Test
   public void testResponseTransformer_mismatchedTypes() {
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
-    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
+    FakeMetadataMessage<?> metadata = new FakeMetadataMessage<>(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
     OperationSnapshot operationSnapshot =
@@ -100,8 +100,9 @@ public class ApiMessageOperationTransformersTest {
     MetadataTransformer<FakeMetadataMessage> transformer =
         MetadataTransformer.create(FakeMetadataMessage.class);
     EmptyMessage returnType = EmptyMessage.getDefaultInstance();
-    FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
-    FakeOperationMessage operation = new FakeOperationMessage<>("foo", returnType, metadataMessage);
+    FakeMetadataMessage<?> metadataMessage = new FakeMetadataMessage<>(Status.PENDING, Code.OK);
+    FakeOperationMessage<?, ?> operation =
+        new FakeOperationMessage<>("foo", returnType, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(operation);
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(metadataMessage);
   }
@@ -110,10 +111,10 @@ public class ApiMessageOperationTransformersTest {
   public void testMetadataTransformer_mismatchedTypes() {
     MetadataTransformer<FakeOperationMessage> transformer =
         MetadataTransformer.create(FakeOperationMessage.class);
-    FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
+    FakeMetadataMessage<?> metadataMessage = new FakeMetadataMessage<>(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
-    FakeOperationMessage metadata =
+    FakeOperationMessage<?, ?> metadata =
         new FakeOperationMessage<>("No response method", bananaResponse, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(metadata);
     try {
@@ -139,6 +140,7 @@ public class ApiMessageOperationTransformersTest {
       this.code = code;
     }
 
+    @Override
     public Object getFieldValue(String fieldName) {
       if ("status".equals(fieldName)) {
         return status;
@@ -149,10 +151,12 @@ public class ApiMessageOperationTransformersTest {
       return null;
     }
 
+    @Override
     public List<String> getFieldMask() {
       return null;
     }
 
+    @Override
     public ApiMessage getApiMessageRequestBody() {
       return null;
     }
@@ -172,6 +176,7 @@ public class ApiMessageOperationTransformersTest {
       this.metadata = metadata;
     }
 
+    @Override
     public Object getFieldValue(String fieldName) {
       if ("name".equals(fieldName)) {
         return name;
@@ -185,10 +190,12 @@ public class ApiMessageOperationTransformersTest {
       return null;
     }
 
+    @Override
     public List<String> getFieldMask() {
       return null;
     }
 
+    @Override
     public ResponseT getApiMessageRequestBody() {
       return responseT;
     }
@@ -196,9 +203,9 @@ public class ApiMessageOperationTransformersTest {
 
   private static class OperationSnapshotImpl implements OperationSnapshot {
 
-    private final FakeOperationMessage operation;
+    private final FakeOperationMessage<?, ?> operation;
 
-    public OperationSnapshotImpl(FakeOperationMessage operation) {
+    public OperationSnapshotImpl(FakeOperationMessage<?, ?> operation) {
       this.operation = operation;
     }
 

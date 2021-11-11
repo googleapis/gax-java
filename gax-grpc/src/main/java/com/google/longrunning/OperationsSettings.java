@@ -29,8 +29,6 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
@@ -40,6 +38,7 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.longrunning.stub.OperationsStubSettings;
 import com.google.protobuf.Empty;
 import java.io.IOException;
@@ -103,6 +102,7 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   }
 
   /** Returns a builder containing all the values of this settings class. */
+  @Override
   public Builder toBuilder() {
     return new Builder(this);
   }
