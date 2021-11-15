@@ -43,8 +43,6 @@ public class ApiExceptionFactory {
         return new CancelledException(cause, statusCode, retryable);
       case NOT_FOUND:
         return new NotFoundException(cause, statusCode, retryable);
-      case UNKNOWN:
-        return new UnknownException(cause, statusCode, retryable);
       case INVALID_ARGUMENT:
         return new InvalidArgumentException(cause, statusCode, retryable);
       case DEADLINE_EXCEEDED:
@@ -72,6 +70,7 @@ public class ApiExceptionFactory {
       case UNAUTHENTICATED:
         return new UnauthenticatedException(cause, statusCode, retryable);
 
+      case UNKNOWN: // Fall through.
       default:
         return new UnknownException(cause, statusCode, retryable);
     }
@@ -84,8 +83,6 @@ public class ApiExceptionFactory {
         return new CancelledException(message, cause, statusCode, retryable);
       case NOT_FOUND:
         return new NotFoundException(message, cause, statusCode, retryable);
-      case UNKNOWN:
-        return new UnknownException(message, cause, statusCode, retryable);
       case INVALID_ARGUMENT:
         return new InvalidArgumentException(message, cause, statusCode, retryable);
       case DEADLINE_EXCEEDED:
@@ -113,8 +110,9 @@ public class ApiExceptionFactory {
       case UNAUTHENTICATED:
         return new UnauthenticatedException(message, cause, statusCode, retryable);
 
+      case UNKNOWN: // Fall through.
       default:
-        return new UnknownException(cause, statusCode, retryable);
+        return new UnknownException(message, cause, statusCode, retryable);
     }
   }
 }
