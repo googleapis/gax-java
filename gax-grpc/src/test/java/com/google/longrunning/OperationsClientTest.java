@@ -29,14 +29,13 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.testing.LocalChannelProvider;
 import com.google.api.gax.grpc.testing.MockGrpcService;
 import com.google.api.gax.grpc.testing.MockServiceHelper;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.common.collect.Lists;
+import com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Empty;
@@ -84,7 +83,7 @@ public class OperationsClientTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     client.close();
   }
 

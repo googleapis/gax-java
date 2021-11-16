@@ -232,10 +232,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         Mockito.mock(ApiFunction.class);
 
-    ArgumentCaptor<ManagedChannelBuilder> channelBuilderCaptor =
+    ArgumentCaptor<ManagedChannelBuilder<?>> channelBuilderCaptor =
         ArgumentCaptor.forClass(ManagedChannelBuilder.class);
 
-    ManagedChannelBuilder swappedBuilder = Mockito.mock(ManagedChannelBuilder.class);
+    ManagedChannelBuilder<?> swappedBuilder = Mockito.mock(ManagedChannelBuilder.class);
     ManagedChannel fakeChannel = Mockito.mock(ManagedChannel.class);
     Mockito.when(swappedBuilder.build()).thenReturn(fakeChannel);
 
@@ -327,13 +327,10 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without setting attemptDirectPath flag will not attempt DirectPath
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients without setting attemptDirectPath flag will not attempt DirectPath
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
