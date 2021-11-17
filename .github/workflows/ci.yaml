@@ -22,7 +22,8 @@ jobs:
 
   bazel:
     runs-on: ubuntu-latest
-    container: gcr.io/gapic-images/googleapis-bazel:20210105
+    # Do we need to use gcr.io/gapic-images/googleapis-bazel:20210105 ?
+    container: gcr.io/cloud-devrel-kokoro-resources/java8
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
