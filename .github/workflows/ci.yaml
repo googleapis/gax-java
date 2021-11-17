@@ -52,6 +52,11 @@ jobs:
           echo "and it will start over with a clean cache."
           echo "The old one will disappear after 7 days."
 
+      - name: Show Bazel installation
+        run: |
+          bazel version
+          which bazel
+
       - name: Run bazel tests
         run: bazel --batch test //... --noshow_progress --test_output=errors
 
