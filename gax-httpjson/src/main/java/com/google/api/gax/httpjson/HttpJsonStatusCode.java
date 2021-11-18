@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Strings;
 import java.util.Objects;
 
@@ -46,22 +47,22 @@ public class HttpJsonStatusCode implements StatusCode {
   static final String UNKNOWN = "UNKNOWN";
 
   private final int httpStatus;
-  private final StatusCode.Code statusCode;
+  private final Code statusCode;
 
   /** Creates a new instance with the given status code. */
   public static HttpJsonStatusCode of(int httpStatus, String errorMessage) {
     return new HttpJsonStatusCode(httpStatus, httpStatusToStatusCode(httpStatus, errorMessage));
   }
 
-  public static HttpJsonStatusCode of(StatusCode.Code statusCode) {
+  public static HttpJsonStatusCode of(Code statusCode) {
     return new HttpJsonStatusCode(statusCode.getHttpStatusCode(), statusCode);
   }
 
   public static HttpJsonStatusCode of(com.google.rpc.Code rpcCode) {
-    return new HttpJsonStatusCode(rpcCode.getNumber(), rpcCodeToStatusCode(rpcCode));
+    return HttpJsonStatusCode.of(rpcCodeToStatusCode(rpcCode));
   }
 
-  static StatusCode.Code rpcCodeToStatusCode(com.google.rpc.Code rpcCode) {
+  static Code rpcCodeToStatusCode(com.google.rpc.Code rpcCode) {
     switch (rpcCode) {
       case OK:
         return Code.OK;
@@ -102,7 +103,7 @@ public class HttpJsonStatusCode implements StatusCode {
     }
   }
 
-  static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
+  static Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
     String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
     switch (httpStatus) {
       case 200:
@@ -155,7 +156,7 @@ public class HttpJsonStatusCode implements StatusCode {
   }
 
   @Override
-  public StatusCode.Code getCode() {
+  public Code getCode() {
     return statusCode;
   }
 
@@ -165,8 +166,8 @@ public class HttpJsonStatusCode implements StatusCode {
     return httpStatus;
   }
 
-  private HttpJsonStatusCode(int code, StatusCode.Code statusCode) {
-    this.httpStatus = code;
+  private HttpJsonStatusCode(int httpStatus, Code statusCode) {
+    this.httpStatus = httpStatus;
     this.statusCode = statusCode;
   }
 
