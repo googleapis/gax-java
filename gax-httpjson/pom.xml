@@ -3,9 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>gax-grpc</artifactId>
+  <version>0.92.1-SNAPSHOT</version> <!-- {x-version-update:gax-httpjson:current} -->
   <packaging>jar</packaging>
-  <name>GAX (Google Api eXtensions) for Java (gRPC)</name>
-  <description>Google Api eXtensions for Java (gRPC)</description>
+  <name>GAX (Google Api eXtensions) for Java (HTTP JSON)</name>
+  <description>Google Api eXtensions for Java (HTTP JSON)</description>
 
   <parent>
     <groupId>com.google.api</groupId>
@@ -31,12 +32,20 @@
       <artifactId>google-auth-library-credentials</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-api</artifactId>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
     </dependency>
     <dependency>
       <groupId>org.threeten</groupId>
@@ -52,30 +61,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-alts</artifactId>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-gson</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-auth</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-xds</artifactId>
-      <scope>runtime</scope>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
@@ -88,11 +79,6 @@
     </dependency>
 
     <!-- test dependencies -->
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>grpc-google-common-protos</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>

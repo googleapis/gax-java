@@ -5,6 +5,7 @@ build
 tmp_gh-pages
 tmp_docs
 bazel-*
+target
 
 # Eclipse
 .apt_generated*
