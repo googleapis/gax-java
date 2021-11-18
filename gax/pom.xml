@@ -4,8 +4,8 @@
 
   <artifactId>gax</artifactId>
   <packaging>jar</packaging>
-  <name>GAX (Google Api eXtensions) for Java</name>
-  <description>Google Api eXtensions for Java (Parent)</description>
+  <name>GAX (Google Api eXtensions) for Java (Core)</name>
+  <description>Google Api eXtensions for Java (Core)</description>
 
   <parent>
     <groupId>com.google.api</groupId>
@@ -52,7 +52,21 @@
       <artifactId>auto-value</artifactId>
       <scope>provided</scope>
     </dependency>
-
-
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
