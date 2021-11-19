@@ -184,9 +184,9 @@ public class ChannelPoolTest {
   @Test
   public void channelPrimerIsCalledPeriodically() throws IOException {
     ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
-    ManagedChannel channel1 = Mockito.mock(RefreshingManagedChannel.class);
-    ManagedChannel channel2 = Mockito.mock(RefreshingManagedChannel.class);
-    ManagedChannel channel3 = Mockito.mock(RefreshingManagedChannel.class);
+    ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel3 = Mockito.mock(ManagedChannel.class);
 
     List<Runnable> channelRefreshers = new ArrayList<>();
 
@@ -378,5 +378,46 @@ public class ChannelPoolTest {
     pool.refresh();
     // shutdown is called because the outstanding call has completed
     Mockito.verify(underlyingChannel, Mockito.atLeastOnce()).shutdown();
+  }
+
+  @Test
+  public void channelRefreshShouldSwapChannels() throws IOException {
+    ManagedChannel underlyingChannel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel underlyingChannel2 = Mockito.mock(ManagedChannel.class);
+
+    // mock executor service to capture the runnable scheduled so we can invoke it when we want to
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+    final List<Runnable> channelRefreshers = new ArrayList<>();
+    Answer extractChannelRefresher =
+        new Answer() {
+          public Object answer(InvocationOnMock invocation) {
+            channelRefreshers.add(invocation.getArgument(0));
+            return null;
+          }
+        };
+
+    Mockito.doAnswer(extractChannelRefresher)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(ImmutableList.of(underlyingChannel1, underlyingChannel2));
+    ChannelPool pool = ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    Mockito.reset(underlyingChannel1);
+
+    pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
+
+    Mockito.verify(underlyingChannel1, Mockito.only())
+        .newCall(Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
+
+    // swap channel
+    pool.refresh();
+
+    pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
+
+    Mockito.verify(underlyingChannel2, Mockito.only())
+        .newCall(Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
   }
 }
