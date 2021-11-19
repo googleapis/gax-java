@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
@@ -285,7 +286,8 @@ class ChannelPool extends ManagedChannel {
    * <p>This is done on a best effort basis. If the replacement channel fails to construct, the old
    * channel will continue to be used.
    */
-  private void refresh() {
+  @InternalApi("Visible for testing")
+  void refresh() {
     List<Entry> localEntries = entries.get();
     ArrayList<Entry> newEntries = new ArrayList<>(localEntries);
     ArrayList<Entry> removedEntries = new ArrayList<>();
