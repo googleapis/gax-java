@@ -2,7 +2,6 @@
 bin
 build
 .gradle
-tmp_gh-pages
 tmp_docs
 bazel-*
 
