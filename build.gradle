@@ -18,7 +18,6 @@ allprojects {
 }
 
 // Project names not using the default publication configuration
-def noDefaultPublications = ['gax-bom']
 def nonJavaProjects = ['gax-bom']
 
 ext {
@@ -217,7 +216,7 @@ configure(javaProjects) {
 }
 
 def normalReleasableProjects = subprojects.findAll {
-  !noDefaultPublications.contains(it.name)
+  !nonJavaProjects.contains(it.name)
 }
 configure(normalReleasableProjects) {
   apply plugin: 'maven-publish'
