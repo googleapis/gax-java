@@ -142,6 +142,8 @@ configure(javaProjects) {
   // ----------
 
   task sourcesJar(type: Jar, dependsOn: classes) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     archiveClassifier = 'sources'
 
     from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.resources.srcDirs
