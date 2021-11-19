@@ -95,16 +95,13 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
     public void onFailure(Throwable throwable) {
       if (throwable instanceof HttpResponseException) {
         HttpResponseException e = (HttpResponseException) throwable;
-        StatusCode.Code statusCode =
-            HttpJsonStatusCode.httpStatusToStatusCode(e.getStatusCode(), e.getMessage());
-        boolean canRetry = retryableCodes.contains(statusCode);
+        StatusCode statusCode = HttpJsonStatusCode.of(e.getStatusCode(), e.getMessage());
+        boolean canRetry = retryableCodes.contains(statusCode.getCode());
         String message = e.getStatusMessage();
         ApiException newException =
             message == null
-                ? ApiExceptionFactory.createException(
-                    throwable, HttpJsonStatusCode.of(statusCode), canRetry)
-                : ApiExceptionFactory.createException(
-                    message, throwable, HttpJsonStatusCode.of(statusCode), canRetry);
+                ? ApiExceptionFactory.createException(throwable, statusCode, canRetry)
+                : ApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
         super.setException(newException);
       } else if (throwable instanceof CancellationException && cancelled) {
         // this just circled around, so ignore.
