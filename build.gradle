@@ -17,10 +17,8 @@ allprojects {
   group = 'com.google.api'
 }
 
-// Project names not used for release
-def nonReleaseProjects = ['benchmark']
 // Project names not using the default publication configuration
-def noDefaultPublications = ['benchmark', 'gax-bom']
+def noDefaultPublications = ['gax-bom']
 def nonJavaProjects = ['gax-bom']
 
 ext {
@@ -219,7 +217,7 @@ configure(javaProjects) {
 }
 
 def normalReleasableProjects = subprojects.findAll {
-  !nonReleaseProjects.contains(it.name) && !noDefaultPublications.contains(it.name)
+  !noDefaultPublications.contains(it.name)
 }
 configure(normalReleasableProjects) {
   apply plugin: 'maven-publish'
