@@ -91,15 +91,13 @@ public class ChannelPoolTest {
     @SuppressWarnings("unchecked")
     ClientCall<Color, Money> expectedClientCall = Mockito.mock(ClientCall.class);
 
-    for (ManagedChannel channel : channels) {
-      Mockito.reset(channel);
-    }
+    channels.forEach(Mockito::reset);
     Mockito.doReturn(expectedClientCall).when(targetChannel).newCall(methodDescriptor, callOptions);
 
     ClientCall<Color, Money> actualCall = pool.newCall(methodDescriptor, callOptions);
-
-    Truth.assertThat(actualCall).isSameInstanceAs(expectedClientCall);
     Mockito.verify(targetChannel, Mockito.times(1)).newCall(methodDescriptor, callOptions);
+    actualCall.start(null, null);
+    Mockito.verify(expectedClientCall, Mockito.times(1)).start(Mockito.any(), Mockito.any());
 
     for (ManagedChannel otherChannel : channels) {
       if (otherChannel != targetChannel) {
