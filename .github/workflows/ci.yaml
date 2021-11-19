@@ -22,7 +22,6 @@ jobs:
 
   bazel:
     runs-on: ubuntu-latest
-    container: gcr.io/gapic-images/googleapis:latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
