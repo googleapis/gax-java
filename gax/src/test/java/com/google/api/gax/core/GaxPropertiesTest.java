@@ -32,13 +32,11 @@ package com.google.api.gax.core;
 import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-@Ignore // TODO: move this test to another module to make it work for Maven
 public class GaxPropertiesTest {
 
   @Test

@@ -47,10 +47,7 @@
     <module>gax</module>
     <module>gax-grpc</module>
     <module>gax-httpjson</module>
-    <!--
-<module>gax-bom</module>
-<module>benchmark</module>
--->
+    <module>gax-bom</module>
   </modules>
 
   <dependencyManagement>
