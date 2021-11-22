@@ -140,8 +140,7 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
 
     public Builder setError(int errorCode, String errorMessage) {
       this.errorCode =
-          HttpJsonStatusCode.of(
-              errorCode == 0 ? Code.OK.getHttpStatusCode() : errorCode, errorMessage);
+          errorCode == 0 ? HttpJsonStatusCode.of(Code.OK) : HttpJsonStatusCode.of(errorCode);
       this.errorMessage = errorMessage;
       return this;
     }
