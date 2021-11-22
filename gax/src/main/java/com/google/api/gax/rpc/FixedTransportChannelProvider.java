@@ -92,14 +92,16 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
         "FixedTransportChannelProvider doesn't need an endpoint");
   }
 
+  /** @deprecated FixedTransportChannelProvider doesn't support ChannelPool configuration */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return false;
   }
 
+  /** @deprecated FixedTransportChannelProvider doesn't support ChannelPool configuration */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "FixedTransportChannelProvider doesn't allow pool size customization");
