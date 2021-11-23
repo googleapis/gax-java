@@ -29,12 +29,10 @@
  */
 package com.google.api.gax.httpjson;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.api.gax.rpc.StatusCode.Code;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
@@ -55,34 +53,39 @@ public class HttpJsonStatusCodeTest {
         continue;
       }
 
-      assertNotNull(statusCode);
+      assertThat(statusCode).isNotNull();
       allCodes.add(statusCode);
     }
 
-    assertEquals(allCodes, new HashSet<>(Arrays.asList(Code.values())));
+    assertThat(Code.values()).asList().containsExactlyElementsIn(allCodes);
   }
 
   @Test
   public void httpStatusToStatusCodeTest() {
-    assertEquals(Code.OK, HttpJsonStatusCode.httpStatusToStatusCode(200));
-    assertEquals(Code.OK, HttpJsonStatusCode.httpStatusToStatusCode(201));
-    assertEquals(Code.INVALID_ARGUMENT, HttpJsonStatusCode.httpStatusToStatusCode(400));
-    assertEquals(Code.UNAUTHENTICATED, HttpJsonStatusCode.httpStatusToStatusCode(401));
-    assertEquals(Code.PERMISSION_DENIED, HttpJsonStatusCode.httpStatusToStatusCode(403));
-    assertEquals(Code.NOT_FOUND, HttpJsonStatusCode.httpStatusToStatusCode(404));
-    assertEquals(Code.ABORTED, HttpJsonStatusCode.httpStatusToStatusCode(409));
-    assertEquals(Code.OUT_OF_RANGE, HttpJsonStatusCode.httpStatusToStatusCode(416));
-    assertEquals(Code.RESOURCE_EXHAUSTED, HttpJsonStatusCode.httpStatusToStatusCode(429));
-    assertEquals(Code.CANCELLED, HttpJsonStatusCode.httpStatusToStatusCode(499));
-    assertEquals(Code.INTERNAL, HttpJsonStatusCode.httpStatusToStatusCode(500));
-    assertEquals(Code.UNIMPLEMENTED, HttpJsonStatusCode.httpStatusToStatusCode(501));
-    assertEquals(Code.INTERNAL, HttpJsonStatusCode.httpStatusToStatusCode(502));
-    assertEquals(Code.UNAVAILABLE, HttpJsonStatusCode.httpStatusToStatusCode(503));
-    assertEquals(Code.DEADLINE_EXCEEDED, HttpJsonStatusCode.httpStatusToStatusCode(504));
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(200)).isEqualTo(Code.OK);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(201)).isEqualTo(Code.OK);
 
-    assertEquals(Code.UNKNOWN, HttpJsonStatusCode.httpStatusToStatusCode(100));
-    assertEquals(Code.UNKNOWN, HttpJsonStatusCode.httpStatusToStatusCode(300));
-    assertEquals(Code.UNKNOWN, HttpJsonStatusCode.httpStatusToStatusCode(302));
-    assertEquals(Code.UNKNOWN, HttpJsonStatusCode.httpStatusToStatusCode(600));
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(400)).isEqualTo(Code.INVALID_ARGUMENT);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(401)).isEqualTo(Code.UNAUTHENTICATED);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(403)).isEqualTo(Code.PERMISSION_DENIED);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(404)).isEqualTo(Code.NOT_FOUND);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(409)).isEqualTo(Code.ABORTED);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(416)).isEqualTo(Code.OUT_OF_RANGE);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(429)).isEqualTo(Code.RESOURCE_EXHAUSTED);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(499)).isEqualTo(Code.CANCELLED);
+
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(405)).isEqualTo(Code.FAILED_PRECONDITION);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(408)).isEqualTo(Code.FAILED_PRECONDITION);
+
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(500)).isEqualTo(Code.INTERNAL);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(501)).isEqualTo(Code.UNIMPLEMENTED);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(502)).isEqualTo(Code.INTERNAL);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(503)).isEqualTo(Code.UNAVAILABLE);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(504)).isEqualTo(Code.DEADLINE_EXCEEDED);
+
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(100)).isEqualTo(Code.UNKNOWN);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(300)).isEqualTo(Code.UNKNOWN);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(302)).isEqualTo(Code.UNKNOWN);
+    assertThat(HttpJsonStatusCode.httpStatusToStatusCode(600)).isEqualTo(Code.UNKNOWN);
   }
 }
