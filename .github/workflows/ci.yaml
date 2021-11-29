@@ -22,7 +22,9 @@ jobs:
 
   bazel:
     runs-on: ubuntu-latest
-    container: gcr.io/gapic-images/googleapis-bazel:20210105
+    # Not using a container. The ubuntu-latest has Bazel 4.2 installed as of
+    # November 2021. gRPC 1.42 requires Bazel 4.
+    # https://github.com/grpc/grpc-java/pull/7598
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
