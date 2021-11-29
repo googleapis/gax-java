@@ -53,7 +53,10 @@ jobs:
           echo "The old one will disappear after 7 days."
 
       - name: Run bazel tests
-        run: bazel --batch test //... --noshow_progress --test_output=errors
+        run: |
+          which bazel
+          bazel --version
+          bazel --batch test //... --noshow_progress --test_output=errors
 
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
