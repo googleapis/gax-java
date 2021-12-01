@@ -66,8 +66,7 @@ public final class MockHttpService extends MockHttpTransport {
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path
    *     template substring.
    */
-  public MockHttpService(
-      List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
+  public MockHttpService(List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
     this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     endpoint = pathPrefix;
   }
