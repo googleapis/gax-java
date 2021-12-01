@@ -55,7 +55,7 @@ public final class MockHttpService extends MockHttpTransport {
   private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private List<ApiMethodDescriptor<?, ?>> serviceMethodDescriptors;
+  private List<ApiMethodDescriptor> serviceMethodDescriptors;
   private String endpoint;
 
   /**
