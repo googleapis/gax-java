@@ -67,7 +67,7 @@ public final class MockHttpService extends MockHttpTransport {
    *     template substring.
    */
   public MockHttpService(
-      List<ApiMethodDescriptor<?, ?>> serviceMethodDescriptors, String pathPrefix) {
+      List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
     this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     endpoint = pathPrefix;
   }
