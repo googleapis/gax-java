@@ -95,7 +95,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
     public void onFailure(Throwable throwable) {
       if (throwable instanceof HttpResponseException) {
         HttpResponseException e = (HttpResponseException) throwable;
-        StatusCode statusCode = HttpJsonStatusCode.of(e.getStatusCode(), e.getMessage());
+        StatusCode statusCode = HttpJsonStatusCode.of(e.getStatusCode());
         boolean canRetry = retryableCodes.contains(statusCode.getCode());
         String message = e.getStatusMessage();
         ApiException newException =
