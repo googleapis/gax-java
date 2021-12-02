@@ -1,5 +1,21 @@
 # Changelog
 
+### [2.7.1](https://www.github.com/googleapis/gax-java/compare/v2.7.0...v2.7.1) (2021-12-02)
+
+
+### Bug Fixes
+
+* fix gRPC code conversion ([#1555](https://www.github.com/googleapis/gax-java/issues/1555)) ([09b99d5](https://www.github.com/googleapis/gax-java/commit/09b99d591497b44c3c25b1a54abb0f1cb69d7376))
+* pass error message when creating ApiException ([#1556](https://www.github.com/googleapis/gax-java/issues/1556)) ([918ae41](https://www.github.com/googleapis/gax-java/commit/918ae419f84ad5721638ca10eca992333e9f7c3d))
+* revert generics syntax change in MockHttpService test utility ([#1574](https://www.github.com/googleapis/gax-java/issues/1574)) ([b629488](https://www.github.com/googleapis/gax-java/commit/b629488ffc7d68158158d9197695158f97229c7b))
+* update exception mapping on HTTP error responses ([#1570](https://www.github.com/googleapis/gax-java/issues/1570)) ([8a170d1](https://www.github.com/googleapis/gax-java/commit/8a170d19b42e9b13d4c69dcfbe531d4d4ca69c90))
+
+
+### Dependencies
+
+* update grpc to 1.42.1 ([#1559](https://www.github.com/googleapis/gax-java/issues/1559)) ([92b7632](https://www.github.com/googleapis/gax-java/commit/92b76325d54604c98c798c489b3a963fdf21a75c))
+* upgrade protobuf to 3.19.1 ([#1571](https://www.github.com/googleapis/gax-java/issues/1571)) ([7b354e7](https://www.github.com/googleapis/gax-java/commit/7b354e73b8ce49008bed51076afb255ca5dc68e4))
+
 ## [2.7.0](https://www.github.com/googleapis/gax-java/compare/v2.6.0...v2.7.0) (2021-11-03)
 
 
