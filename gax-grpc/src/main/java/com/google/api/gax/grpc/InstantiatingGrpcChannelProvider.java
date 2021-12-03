@@ -53,7 +53,7 @@ import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.TlsChannelCredentials;
-import io.grpc.alts.ComputeEngineChannelCredentials;
+import io.grpc.alts.GoogleDefaultChannelCredentials;
 import io.grpc.auth.MoreCallCredentials;
 import java.io.File;
 import java.io.IOException;
@@ -338,7 +338,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         && isOnComputeEngine()) {
       CallCredentials callCreds = MoreCallCredentials.from(credentials);
       ChannelCredentials channelCreds =
-          ComputeEngineChannelCredentials.newBuilder().setCallCredentials(callCreds).build();
+          GoogleDefaultChannelCredentials.newBuilder().callCredentias(callCreds).build();
       builder = Grpc.newChannelBuilderForAddress(serviceAddress, port, channelCreds);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
       // Will be overridden by user defined values if any.
