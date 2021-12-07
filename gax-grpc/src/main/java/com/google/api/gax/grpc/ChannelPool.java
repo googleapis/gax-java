@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
- * A {@link ManagedChannel} that will send requests round robin via a set of channels.
+ * A {@link ManagedChannel} that will send requests round-robin via a set of channels.
  *
  * <p>Package-private for internal use.
  */
@@ -57,14 +57,14 @@ class ChannelPool extends ManagedChannel {
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
   // if set, ChannelPool will manage the life cycle of channelRefreshExecutorService
-  @Nullable private ScheduledExecutorService channelRefreshExecutorService;
+  @Nullable private final ScheduledExecutorService channelRefreshExecutorService;
 
   /**
    * Factory method to create a non-refreshing channel pool
    *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
-   * @return ChannelPool of non refreshing channels
+   * @return ChannelPool of non-refreshing channels
    */
   static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
     List<ManagedChannel> channels = new ArrayList<>();
@@ -163,10 +163,7 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isShutdown()) {
-      return false;
-    }
-    return true;
+    return channelRefreshExecutorService == null || channelRefreshExecutorService.isShutdown();
   }
 
   /** {@inheritDoc} */
@@ -177,10 +174,7 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isTerminated()) {
-      return false;
-    }
-    return true;
+    return channelRefreshExecutorService == null || channelRefreshExecutorService.isTerminated();
   }
 
   /** {@inheritDoc} */
@@ -214,7 +208,7 @@ class ChannelPool extends ManagedChannel {
   }
 
   /**
-   * Performs a simple round robin on the list of {@link ManagedChannel}s in the {@code channels}
+   * Performs a simple round-robin on the list of {@link ManagedChannel}s in the {@code channels}
    * list.
    *
    * @return A {@link ManagedChannel} that can be used for a single RPC call.
@@ -232,12 +226,7 @@ class ChannelPool extends ManagedChannel {
    *     However, the implementation should attempt to spread load evenly.
    */
   ManagedChannel getChannel(int affinity) {
-    int index = affinity % channels.size();
-    index = Math.abs(index);
-    // If index is the most negative int, abs(index) is still negative.
-    if (index < 0) {
-      index = 0;
-    }
+    int index = Math.abs(affinity % channels.size());
     return channels.get(index);
   }
 }
