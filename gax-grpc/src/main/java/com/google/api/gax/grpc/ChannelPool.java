@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
- * A {@link ManagedChannel} that will send requests round robin via a set of channels.
+ * A {@link ManagedChannel} that will send requests round-robin via a set of channels.
  *
  * <p>In addition to spreading requests over a set of child connections, the pool will also actively
  * manage the lifecycle of the channels. Currently lifecycle management is limited to pre-emptively
@@ -90,7 +90,7 @@ class ChannelPool extends ManagedChannel {
    *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
-   * @return ChannelPool of non refreshing channels
+   * @return ChannelPool of non-refreshing channels
    */
   static ChannelPool create(int poolSize, ChannelFactory channelFactory) throws IOException {
     return new ChannelPool(channelFactory, poolSize, null);
@@ -206,10 +206,7 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isShutdown()) {
-      return false;
-    }
-    return true;
+    return channelRefreshExecutorService == null || channelRefreshExecutorService.isShutdown();
   }
 
   /** {@inheritDoc} */
@@ -221,10 +218,7 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isTerminated()) {
-      return false;
-    }
-    return true;
+    return channelRefreshExecutorService == null || channelRefreshExecutorService.isTerminated();
   }
 
   /** {@inheritDoc} */
@@ -318,6 +312,7 @@ class ChannelPool extends ManagedChannel {
     }
     throw new IllegalStateException("Failed to retain a channel");
   }
+
   /**
    * Returns one of the channels managed by this pool. The pool continues to "own" the channel, and
    * the caller should not shut it down.
@@ -329,13 +324,7 @@ class ChannelPool extends ManagedChannel {
   private Entry getEntry(int affinity) {
     List<Entry> localEntries = entries.get();
 
-    int index = affinity % localEntries.size();
-    index = Math.abs(index);
-    // If index is the most negative int, abs(index) is still negative.
-    if (index < 0) {
-      index = 0;
-    }
-
+    int index = Math.abs(affinity % localEntries.size());
     return localEntries.get(index);
   }
 

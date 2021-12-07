@@ -32,26 +32,18 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.common.base.Strings;
 import java.util.Objects;
 
 /** A failure code specific to an HTTP call. */
 @BetaApi
 @InternalExtensionOnly
 public class HttpJsonStatusCode implements StatusCode {
-  static final String FAILED_PRECONDITION = "FAILED_PRECONDITION";
-  static final String OUT_OF_RANGE = "OUT_OF_RANGE";
-  static final String ALREADY_EXISTS = "ALREADY_EXISTS";
-  static final String DATA_LOSS = "DATA_LOSS";
-  static final String UNKNOWN = "UNKNOWN";
-
   private final int httpStatus;
   private final Code statusCode;
 
   /** Creates a new instance with the given status code. */
-  public static HttpJsonStatusCode of(int httpStatus, String errorMessage) {
-    return new HttpJsonStatusCode(httpStatus, httpStatusToStatusCode(httpStatus, errorMessage));
+  public static HttpJsonStatusCode of(int httpStatus) {
+    return new HttpJsonStatusCode(httpStatus, httpStatusToStatusCode(httpStatus));
   }
 
   public static HttpJsonStatusCode of(Code statusCode) {
@@ -103,56 +95,43 @@ public class HttpJsonStatusCode implements StatusCode {
     }
   }
 
-  static Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
-    String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
-    switch (httpStatus) {
-      case 200:
-        return Code.OK;
-      case 400:
-        if (causeMessage.contains(OUT_OF_RANGE)) {
-          return Code.OUT_OF_RANGE;
-        } else if (causeMessage.contains(FAILED_PRECONDITION)) {
-          return Code.FAILED_PRECONDITION;
-        } else {
+  static Code httpStatusToStatusCode(int httpStatus) {
+    if (200 <= httpStatus && httpStatus < 300) {
+      return Code.OK;
+    } else if (400 <= httpStatus && httpStatus < 500) {
+      switch (httpStatus) {
+        case 400:
           return Code.INVALID_ARGUMENT;
-        }
-      case 401:
-        return Code.UNAUTHENTICATED;
-      case 403:
-        return Code.PERMISSION_DENIED;
-      case 404:
-        return Code.NOT_FOUND;
-      case 409:
-        if (causeMessage.contains(ALREADY_EXISTS)) {
-          return Code.ALREADY_EXISTS;
-        } else {
+        case 401:
+          return Code.UNAUTHENTICATED;
+        case 403:
+          return Code.PERMISSION_DENIED;
+        case 404:
+          return Code.NOT_FOUND;
+        case 409:
           return Code.ABORTED;
-        }
-      case 411:
-        throw new IllegalStateException(
-            "411 status code received (Content-Length header not given.) Please file a bug against https://github.com/googleapis/gax-java/\n"
-                + httpStatus);
-      case 429:
-        return Code.RESOURCE_EXHAUSTED;
-      case 499:
-        return Code.CANCELLED;
-      case 500:
-        if (causeMessage.contains(DATA_LOSS)) {
-          return Code.DATA_LOSS;
-        } else if (causeMessage.contains(UNKNOWN)) {
-          return Code.UNKNOWN;
-        } else {
+        case 416:
+          return Code.OUT_OF_RANGE;
+        case 429:
+          return Code.RESOURCE_EXHAUSTED;
+        case 499:
+          return Code.CANCELLED;
+        default:
+          return Code.FAILED_PRECONDITION;
+      }
+    } else if (500 <= httpStatus && httpStatus < 600) {
+      switch (httpStatus) {
+        case 501:
+          return Code.UNIMPLEMENTED;
+        case 503:
+          return Code.UNAVAILABLE;
+        case 504:
+          return Code.DEADLINE_EXCEEDED;
+        default:
           return Code.INTERNAL;
-        }
-      case 501:
-        return Code.UNIMPLEMENTED;
-      case 503:
-        return Code.UNAVAILABLE;
-      case 504:
-        return Code.DEADLINE_EXCEEDED;
-      default:
-        throw new IllegalArgumentException("Unrecognized http status code: " + httpStatus);
+      }
     }
+    return Code.UNKNOWN;
   }
 
   @Override
