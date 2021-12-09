@@ -55,7 +55,7 @@ public final class MockHttpService extends MockHttpTransport {
   private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private List<ApiMethodDescriptor<?, ?>> serviceMethodDescriptors;
+  private List<ApiMethodDescriptor> serviceMethodDescriptors;
   private String endpoint;
 
   /**
@@ -66,8 +66,7 @@ public final class MockHttpService extends MockHttpTransport {
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path
    *     template substring.
    */
-  public MockHttpService(
-      List<ApiMethodDescriptor<?, ?>> serviceMethodDescriptors, String pathPrefix) {
+  public MockHttpService(List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
     this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     endpoint = pathPrefix;
   }
