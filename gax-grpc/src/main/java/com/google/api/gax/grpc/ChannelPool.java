@@ -75,8 +75,7 @@ class ChannelPool extends ManagedChannel {
   private static final Duration REFRESH_PERIOD = Duration.ofMinutes(50);
   private static final double JITTER_PERCENTAGE = 0.15;
 
-  // A copy on write list of child channels.
-  private final AtomicReference<List<Entry>> entries = new AtomicReference<>();
+  private final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
   // if set, ChannelPool will manage the life cycle of channelRefreshExecutorService
@@ -269,11 +268,8 @@ class ChannelPool extends ManagedChannel {
     long delay = jitter + delayPeriod;
     return channelRefreshExecutorService.schedule(
         () -> {
-          try {
-            refresh();
-          } finally {
-            scheduleNextRefresh();
-          }
+          scheduleNextRefresh();
+          refresh();
         },
         delay,
         TimeUnit.MILLISECONDS);
@@ -300,31 +296,48 @@ class ChannelPool extends ManagedChannel {
         LOG.log(Level.WARNING, "Failed to refresh channel, leaving old channel", e);
       }
     }
-    entries.set(ImmutableList.copyOf(newEntries));
+
+    ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
+
+    // In the unlikely case that the list was modified while the new channels were being created,
+    // shutdown the unexpected channels.
+    for (Entry e : replacedEntries) {
+      if (!newEntries.contains(e) && !removedEntries.contains(e)) {
+        removedEntries.add(e);
+      }
+    }
 
     removedEntries.forEach(Entry::requestShutdown);
   }
 
   /**
-   * Get and retain a Channel Entry. The returned will have its rpc count incremented, preventing it
-   * from getting recycled.
+   * Get and retain a Channel Entry. The returned Entry will have its rpc count incremented,
+   * preventing it from getting recycled.
    */
   Entry getRetainedEntry(int affinity) {
+    // The maximum number of concurrent calls to this method for any given time span is at most 2,
+    // so the loop can actually be 2 times. But going for 5 times for a safety margin for potential
+    // code evolving
     for (int i = 0; i < 5; i++) {
       Entry entry = getEntry(affinity);
       if (entry.retain()) {
         return entry;
       }
     }
-    throw new IllegalStateException("Failed to retain a channel");
+    // It is unlikely to reach here unless the pool code evolves to increase the maximum possible
+    // concurrent calls to this method. If it does, this is a bug in the channel pool implementation
+    // the number of retries above should be greater than the number of contending maintenance
+    // tasks.
+    throw new IllegalStateException("Bug: failed to retain a channel");
   }
   /**
    * Returns one of the channels managed by this pool. The pool continues to "own" the channel, and
    * the caller should not shut it down.
    *
-   * @param affinity Two calls to this method with the same affinity returns the same channel. The
-   *     reverse is not true: Two calls with different affinities might return the same channel.
-   *     However, the implementation should attempt to spread load evenly.
+   * @param affinity Two calls to this method with the same affinity returns the same channel most
+   *     of the time, if the channel pool was refreshed since the last call, a new channel will be
+   *     returned. The reverse is not true: Two calls with different affinities might return the
+   *     same channel. However, the implementation should attempt to spread load evenly.
    */
   private Entry getEntry(int affinity) {
     List<Entry> localEntries = entries.get();
@@ -378,10 +391,12 @@ class ChannelPool extends ManagedChannel {
     private void release() {
       int newCount = outstandingRpcs.decrementAndGet();
       if (newCount < 0) {
-        LOG.log(Level.SEVERE, "Reference count is negative!: " + newCount);
+        throw new IllegalStateException("Bug: reference count is negative!: " + newCount);
       }
 
-      if (newCount == 0 && shutdownRequested.get()) {
+      // Must check outstandingRpcs after shutdownRequested (in reverse order of retain()) to ensure
+      // mutual exclusion.
+      if (shutdownRequested.get() && outstandingRpcs.get() == 0) {
         shutdown();
       }
     }
