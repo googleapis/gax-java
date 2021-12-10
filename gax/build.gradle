@@ -2,6 +2,12 @@ archivesBaseName = "gax"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "2.7.2-SNAPSHOT" // {x-version-update:gax:current}
+// print project version
+task printVersionGax {
+  doLast {
+    println project.version
+  }
+}
 
 dependencies {
   api(libraries['maven.com_google_api_api_common'],
