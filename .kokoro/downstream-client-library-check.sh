@@ -32,7 +32,7 @@ GAX_VERSION=`gradle -q pVG`
 echo $GAX_VERSION
 popd
 
- Round 1
+# Round 1
 # Check this gax-java against HEAD of java-shared dependencies
 
 git clone "https://github.com/googleapis/java-shared-dependencies.git" --depth=1
