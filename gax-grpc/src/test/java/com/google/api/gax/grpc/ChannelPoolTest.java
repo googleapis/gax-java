@@ -322,7 +322,7 @@ public class ChannelPoolTest {
   // Channel should be shutdown after a refresh all the calls have completed
   @Test
   public void channelShouldShutdown() throws IOException {
-    final ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
     ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
 
     FakeChannelFactory channelFactory =
