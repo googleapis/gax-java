@@ -278,14 +278,11 @@ class ChannelPool extends ManagedChannel {
    */
   @InternalApi("Visible for testing")
   void refresh() {
-    List<Entry> localEntries = entries.get();
-    ArrayList<Entry> newEntries = new ArrayList<>(localEntries);
-    ArrayList<Entry> removedEntries = new ArrayList<>();
+    ArrayList<Entry> newEntries = new ArrayList<>(entries.get());
 
-    for (int i = 0; i < localEntries.size(); i++) {
+    for (int i = 0; i < newEntries.size(); i++) {
       try {
-        Entry removed = newEntries.set(i, new Entry(channelFactory.createSingleChannel()));
-        removedEntries.add(removed);
+        newEntries.set(i, new Entry(channelFactory.createSingleChannel()));
       } catch (IOException e) {
         LOG.log(Level.WARNING, "Failed to refresh channel, leaving old channel", e);
       }
@@ -293,15 +290,13 @@ class ChannelPool extends ManagedChannel {
 
     ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
 
-    // In the unlikely case that the list was modified while the new channels were being created,
-    // shutdown the unexpected channels.
+    // Shutdown the channels that were cycled out. This will either be the channels we just
+    // refreshed or in case of a race, the channels that the other thread set.
     for (Entry e : replacedEntries) {
-      if (!newEntries.contains(e) && !removedEntries.contains(e)) {
-        removedEntries.add(e);
+      if (!newEntries.contains(e)) {
+        e.requestShutdown();
       }
     }
-
-    removedEntries.forEach(Entry::requestShutdown);
   }
 
   /**
