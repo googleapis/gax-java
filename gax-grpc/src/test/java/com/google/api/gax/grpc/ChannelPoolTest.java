@@ -229,7 +229,7 @@ public class ChannelPoolTest {
   // call should be allowed to complete and the channel should not be shutdown
   @Test
   public void callShouldCompleteAfterCreation() throws IOException {
-    final ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
     ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
