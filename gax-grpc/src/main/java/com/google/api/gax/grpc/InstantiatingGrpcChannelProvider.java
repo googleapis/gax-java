@@ -339,7 +339,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
-        builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
+        builder =
+            ComputeEngineChannelBuilder.forTarget("google-c2p-experimental:///" + serviceAddress);
       } else {
         builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
         builder.defaultServiceConfig(directPathServiceConfig);
