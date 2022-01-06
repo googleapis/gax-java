@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.8.1](https://www.github.com/googleapis/gax-java/compare/v2.8.0...v2.8.1) (2022-01-06)
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to 2.1.2 ([#1590](https://www.github.com/googleapis/gax-java/issues/1590)) ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+* update dependency com.google.auto.value:auto-value to v1.9 ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+
 ## [2.8.0](https://www.github.com/googleapis/gax-java/compare/v2.7.1...v2.8.0) (2022-01-06)
 
 
