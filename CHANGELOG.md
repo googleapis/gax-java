@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.8.0](https://www.github.com/googleapis/gax-java/compare/v2.7.1...v2.8.0) (2022-01-06)
+
+
+### Features
+
+* update DirectPath xds scheme ([#1585](https://www.github.com/googleapis/gax-java/issues/1585)) ([7915f85](https://www.github.com/googleapis/gax-java/commit/7915f850313ddfdf35332d976d2567f31c2aa8a7))
+
+
+### Dependencies
+
+* update dependency com.google.api.grpc:proto-google-common-protos to v2.7.1 ([#1587](https://www.github.com/googleapis/gax-java/issues/1587)) ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.http-client:google-http-client-bom to v1.41.0 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.protobuf:protobuf-bom to v3.19.2 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* upgrade common-protos to 2.7.0 ([#1579](https://www.github.com/googleapis/gax-java/issues/1579)) ([0a10f5f](https://www.github.com/googleapis/gax-java/commit/0a10f5fe77ab26b3ac7d4c590360945ead72eca1))
+
 ### [2.7.1](https://www.github.com/googleapis/gax-java/compare/v2.7.0...v2.7.1) (2021-12-02)
 
 
