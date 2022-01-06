@@ -75,6 +75,7 @@ class ChannelPool extends ManagedChannel {
   private static final Duration REFRESH_PERIOD = Duration.ofMinutes(50);
   private static final double JITTER_PERCENTAGE = 0.15;
 
+  private final Object entryWriteLock = new Object();
   private final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
@@ -278,23 +279,31 @@ class ChannelPool extends ManagedChannel {
    */
   @InternalApi("Visible for testing")
   void refresh() {
-    ArrayList<Entry> newEntries = new ArrayList<>(entries.get());
+    // Note: synchronization is necessary in case refresh is called concurrently:
+    // - thread1 fails to replace a single entry
+    // - thread2 succeeds replacing an entry
+    // - thread1 loses the race to replace the list
+    // - then thread2 will shut down channel that thread1 will put back into circulation (after it
+    //   replaces the list)
+    synchronized (entryWriteLock) {
+      ArrayList<Entry> newEntries = new ArrayList<>(entries.get());
 
-    for (int i = 0; i < newEntries.size(); i++) {
-      try {
-        newEntries.set(i, new Entry(channelFactory.createSingleChannel()));
-      } catch (IOException e) {
-        LOG.log(Level.WARNING, "Failed to refresh channel, leaving old channel", e);
+      for (int i = 0; i < newEntries.size(); i++) {
+        try {
+          newEntries.set(i, new Entry(channelFactory.createSingleChannel()));
+        } catch (IOException e) {
+          LOG.log(Level.WARNING, "Failed to refresh channel, leaving old channel", e);
+        }
       }
-    }
 
-    ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
+      ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
 
-    // Shutdown the channels that were cycled out. This will either be the channels we just
-    // refreshed or in case of a race, the channels that the other thread set.
-    for (Entry e : replacedEntries) {
-      if (!newEntries.contains(e)) {
-        e.requestShutdown();
+      // Shutdown the channels that were cycled out. This will either be the channels we just
+      // refreshed or in case of a race, the channels that the other thread set.
+      for (Entry e : replacedEntries) {
+        if (!newEntries.contains(e)) {
+          e.requestShutdown();
+        }
       }
     }
   }
