@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.verify;
 
 import com.google.api.gax.grpc.testing.FakeChannelFactory;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
@@ -83,8 +84,8 @@ public class GrpcClientCallsTest {
     ClientCall<Color, Money> gotCallC =
         GrpcClientCalls.newCall(descriptor, context.withChannelAffinity(1));
 
-    assertThat(gotCallA).isSameInstanceAs(gotCallB);
-    assertThat(gotCallA).isNotSameInstanceAs(gotCallC);
+    verify(channel0, Mockito.times(2)).newCall(Mockito.eq(descriptor), Mockito.any());
+    verify(channel1, Mockito.times(1)).newCall(Mockito.eq(descriptor), Mockito.any());
   }
 
   @Test
