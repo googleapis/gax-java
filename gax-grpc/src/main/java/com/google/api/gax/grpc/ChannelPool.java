@@ -298,8 +298,7 @@ class ChannelPool extends ManagedChannel {
 
       ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
 
-      // Shutdown the channels that were cycled out. This will either be the channels we just
-      // refreshed or in case of a race, the channels that the other thread set.
+      // Shutdown the channels that were cycled out.
       for (Entry e : replacedEntries) {
         if (!newEntries.contains(e)) {
           e.requestShutdown();
