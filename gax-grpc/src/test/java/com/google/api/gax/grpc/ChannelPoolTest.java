@@ -30,7 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.grpc.testing.FakeChannelFactory;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
@@ -38,7 +40,9 @@ import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +57,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
@@ -91,15 +94,13 @@ public class ChannelPoolTest {
     @SuppressWarnings("unchecked")
     ClientCall<Color, Money> expectedClientCall = Mockito.mock(ClientCall.class);
 
-    for (ManagedChannel channel : channels) {
-      Mockito.reset(channel);
-    }
+    channels.forEach(Mockito::reset);
     Mockito.doReturn(expectedClientCall).when(targetChannel).newCall(methodDescriptor, callOptions);
 
     ClientCall<Color, Money> actualCall = pool.newCall(methodDescriptor, callOptions);
-
-    Truth.assertThat(actualCall).isSameInstanceAs(expectedClientCall);
     Mockito.verify(targetChannel, Mockito.times(1)).newCall(methodDescriptor, callOptions);
+    actualCall.start(null, null);
+    Mockito.verify(expectedClientCall, Mockito.times(1)).start(Mockito.any(), Mockito.any());
 
     for (ManagedChannel otherChannel : channels) {
       if (otherChannel != targetChannel) {
@@ -127,13 +128,9 @@ public class ChannelPoolTest {
       channels[i] = Mockito.mock(ManagedChannel.class);
       Mockito.when(channels[i].newCall(methodDescriptor, callOptions))
           .thenAnswer(
-              new Answer<ClientCall<Color, Money>>() {
-                @Override
-                public ClientCall<Color, Money> answer(InvocationOnMock invocationOnMock)
-                    throws Throwable {
-                  counts[index].incrementAndGet();
-                  return clientCall;
-                }
+              (ignored) -> {
+                counts[index].incrementAndGet();
+                return clientCall;
               });
     }
 
@@ -146,12 +143,9 @@ public class ChannelPoolTest {
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
     for (int i = 0; i < numThreads; i++) {
       executor.submit(
-          new Runnable() {
-            @Override
-            public void run() {
-              for (int j = 0; j < numPerThread; j++) {
-                pool.newCall(methodDescriptor, callOptions);
-              }
+          () -> {
+            for (int j = 0; j < numPerThread; j++) {
+              pool.newCall(methodDescriptor, callOptions);
             }
           });
     }
@@ -182,9 +176,9 @@ public class ChannelPoolTest {
   @Test
   public void channelPrimerIsCalledPeriodically() throws IOException {
     ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
-    ManagedChannel channel1 = Mockito.mock(RefreshingManagedChannel.class);
-    ManagedChannel channel2 = Mockito.mock(RefreshingManagedChannel.class);
-    ManagedChannel channel3 = Mockito.mock(RefreshingManagedChannel.class);
+    ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel3 = Mockito.mock(ManagedChannel.class);
 
     List<Runnable> channelRefreshers = new ArrayList<>();
 
@@ -193,7 +187,7 @@ public class ChannelPoolTest {
 
     Answer<?> extractChannelRefresher =
         invocation -> {
-          channelRefreshers.add((Runnable) invocation.getArgument(0));
+          channelRefreshers.add(invocation.getArgument(0));
           return Mockito.mock(ScheduledFuture.class);
         };
 
@@ -229,5 +223,176 @@ public class ChannelPoolTest {
         .schedule(
             Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
     scheduledExecutorService.shutdown();
+  }
+
+  // ----
+  // call should be allowed to complete and the channel should not be shutdown
+  @Test
+  public void callShouldCompleteAfterCreation() throws IOException {
+    ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
+    ChannelPool pool = ChannelPool.create(1, channelFactory);
+
+    // create a mock call when new call comes to the underlying channel
+    MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
+    MockClientCall<String, Integer> spyClientCall = Mockito.spy(mockClientCall);
+    Mockito.when(
+            underlyingChannel.newCall(
+                Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
+        .thenReturn(spyClientCall);
+
+    Answer<Object> verifyChannelNotShutdown =
+        invocation -> {
+          Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+          return invocation.callRealMethod();
+        };
+
+    // verify that underlying channel is not shutdown when clientCall is still sending message
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
+
+    // create a new call on entry
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+    ClientCall<String, Integer> call =
+        pool.newCall(FakeMethodDescriptor.create(), CallOptions.DEFAULT);
+
+    pool.refresh();
+    // shutdown is not called because there is still an outstanding call, even if it hasn't started
+    Mockito.verify(underlyingChannel, Mockito.after(200).never()).shutdown();
+
+    // start clientCall
+    call.start(listener, new Metadata());
+    // send message and end the call
+    call.sendMessage("message");
+    // shutdown is called because the outstanding call has completed
+    Mockito.verify(underlyingChannel, Mockito.atLeastOnce()).shutdown();
+
+    // Replacement channel shouldn't be touched
+    Mockito.verify(replacementChannel, Mockito.never()).shutdown();
+    Mockito.verify(replacementChannel, Mockito.never()).newCall(Mockito.any(), Mockito.any());
+  }
+
+  // call should be allowed to complete and the channel should not be shutdown
+  @Test
+  public void callShouldCompleteAfterStarted() throws IOException {
+    final ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
+    ChannelPool pool = ChannelPool.create(1, channelFactory);
+
+    // create a mock call when new call comes to the underlying channel
+    MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
+    MockClientCall<String, Integer> spyClientCall = Mockito.spy(mockClientCall);
+    Mockito.when(
+            underlyingChannel.newCall(
+                Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
+        .thenReturn(spyClientCall);
+
+    Answer<Object> verifyChannelNotShutdown =
+        invocation -> {
+          Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+          return invocation.callRealMethod();
+        };
+
+    // verify that underlying channel is not shutdown when clientCall is still sending message
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
+
+    // create a new call on safeShutdownManagedChannel
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+    ClientCall<String, Integer> call =
+        pool.newCall(FakeMethodDescriptor.create(), CallOptions.DEFAULT);
+
+    // start clientCall
+    call.start(listener, new Metadata());
+    pool.refresh();
+
+    // shutdown is not called because there is still an outstanding call
+    Mockito.verify(underlyingChannel, Mockito.after(200).never()).shutdown();
+    // send message and end the call
+    call.sendMessage("message");
+    // shutdown is called because the outstanding call has completed
+    Mockito.verify(underlyingChannel, Mockito.atLeastOnce()).shutdown();
+  }
+
+  // Channel should be shutdown after a refresh all the calls have completed
+  @Test
+  public void channelShouldShutdown() throws IOException {
+    ManagedChannel underlyingChannel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
+    ChannelPool pool = ChannelPool.create(1, channelFactory);
+
+    // create a mock call when new call comes to the underlying channel
+    MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
+    MockClientCall<String, Integer> spyClientCall = Mockito.spy(mockClientCall);
+    Mockito.when(
+            underlyingChannel.newCall(
+                Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
+        .thenReturn(spyClientCall);
+
+    Answer<Object> verifyChannelNotShutdown =
+        invocation -> {
+          Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+          return invocation.callRealMethod();
+        };
+
+    // verify that underlying channel is not shutdown when clientCall is still sending message
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
+
+    // create a new call on safeShutdownManagedChannel
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+    ClientCall<String, Integer> call =
+        pool.newCall(FakeMethodDescriptor.create(), CallOptions.DEFAULT);
+
+    // start clientCall
+    call.start(listener, new Metadata());
+    // send message and end the call
+    call.sendMessage("message");
+    // shutdown is not called because it has not been shutdown yet
+    Mockito.verify(underlyingChannel, Mockito.after(200).never()).shutdown();
+    pool.refresh();
+    // shutdown is called because the outstanding call has completed
+    Mockito.verify(underlyingChannel, Mockito.atLeastOnce()).shutdown();
+  }
+
+  @Test
+  public void channelRefreshShouldSwapChannels() throws IOException {
+    ManagedChannel underlyingChannel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel underlyingChannel2 = Mockito.mock(ManagedChannel.class);
+
+    // mock executor service to capture the runnable scheduled, so we can invoke it when we want to
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+
+    Mockito.doReturn(null)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(ImmutableList.of(underlyingChannel1, underlyingChannel2));
+    ChannelPool pool = ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    Mockito.reset(underlyingChannel1);
+
+    pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
+
+    Mockito.verify(underlyingChannel1, Mockito.only())
+        .newCall(Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
+
+    // swap channel
+    pool.refresh();
+
+    pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
+
+    Mockito.verify(underlyingChannel2, Mockito.only())
+        .newCall(Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
   }
 }
