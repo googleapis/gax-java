@@ -340,7 +340,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         && isOnComputeEngine()) {
       CallCredentials callCreds = MoreCallCredentials.from(credentials);
       ChannelCredentials channelCreds =
-          GoogleDefaultChannelCredentials.newBuilder().callCredentias(callCreds).build();
+          GoogleDefaultChannelCredentials.newBuilder().callCredentials(callCreds).build();
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
