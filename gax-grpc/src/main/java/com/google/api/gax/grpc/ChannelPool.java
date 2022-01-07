@@ -74,8 +74,7 @@ class ChannelPool extends ManagedChannel {
   private final ScheduledExecutorService executor;
 
   private final Object entryWriteLock = new Object();
-  @VisibleForTesting
-  final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
+  @VisibleForTesting final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
