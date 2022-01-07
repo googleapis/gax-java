@@ -47,12 +47,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import io.grpc.CallCredentials;
 import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.TlsChannelCredentials;
-import io.grpc.alts.ComputeEngineChannelBuilder;
+import io.grpc.alts.GoogleDefaultChannelCredentials;
+import io.grpc.auth.MoreCallCredentials;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -336,13 +338,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (isDirectPathEnabled(serviceAddress)
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
+      CallCredentials callCreds = MoreCallCredentials.from(credentials);
+      ChannelCredentials channelCreds =
+          GoogleDefaultChannelCredentials.newBuilder().callCredentials(callCreds).build();
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
         builder =
-            ComputeEngineChannelBuilder.forTarget("google-c2p-experimental:///" + serviceAddress);
+            Grpc.newChannelBuilder("google-c2p-experimental:///" + serviceAddress, channelCreds);
       } else {
-        builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+        builder = Grpc.newChannelBuilderForAddress(serviceAddress, port, channelCreds);
         builder.defaultServiceConfig(directPathServiceConfig);
       }
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
