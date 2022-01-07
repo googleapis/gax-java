@@ -33,7 +33,6 @@ import com.google.api.core.InternalApi;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
-import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
@@ -73,8 +72,8 @@ class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
 
               @Override
               public void onClose(Status status, Metadata trailers) {
-                super.onClose(status, trailers);
                 metadataHandler.onTrailers(trailers);
+                super.onClose(status, trailers);
               }
             };
         super.start(forwardingResponseListener, headers);

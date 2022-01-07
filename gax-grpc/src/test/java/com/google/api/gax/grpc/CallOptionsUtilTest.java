@@ -41,7 +41,7 @@ import org.junit.Test;
 
 public class CallOptionsUtilTest {
   @Test
-  public void testPutAndGetDynamicHeaderOption() throws Exception {
+  public void testPutAndGetDynamicHeaderOption() {
     String encodedRequestParams = "param1=value&param2.param3=value23";
     CallOptions options =
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(
@@ -54,7 +54,7 @@ public class CallOptionsUtilTest {
   }
 
   @Test
-  public void testPutAndGetDynamicHeaderOptionEmpty() throws Exception {
+  public void testPutAndGetDynamicHeaderOptionEmpty() {
     CallOptions options =
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, "");
     assertSame(CallOptions.DEFAULT, options);
@@ -63,7 +63,7 @@ public class CallOptionsUtilTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void testPutAndGetHeaderOptionNull() throws Exception {
+  public void testPutAndGetHeaderOptionNull() {
     CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, null);
   }
 }

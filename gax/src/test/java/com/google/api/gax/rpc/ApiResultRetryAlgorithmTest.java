@@ -36,11 +36,11 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.internal.util.collections.Sets;
 
 @RunWith(JUnit4.class)
 public class ApiResultRetryAlgorithmTest {
@@ -78,7 +78,8 @@ public class ApiResultRetryAlgorithmTest {
   public void testShouldRetryWithContextWithRetryableCodes() {
     ApiCallContext context = mock(ApiCallContext.class);
     when(context.getRetryableCodes())
-        .thenReturn(Sets.newSet(StatusCode.Code.DEADLINE_EXCEEDED, StatusCode.Code.UNAVAILABLE));
+        .thenReturn(
+            Sets.newHashSet(StatusCode.Code.DEADLINE_EXCEEDED, StatusCode.Code.UNAVAILABLE));
 
     StatusCode unavailable = mock(StatusCode.class);
     when(unavailable.getCode()).thenReturn(Code.UNAVAILABLE);

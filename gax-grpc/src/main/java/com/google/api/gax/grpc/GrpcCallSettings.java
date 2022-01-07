@@ -40,7 +40,7 @@ public class GrpcCallSettings<RequestT, ResponseT> {
   private final RequestParamsExtractor<RequestT> paramsExtractor;
   private final boolean alwaysAwaitTrailers;
 
-  private GrpcCallSettings(Builder builder) {
+  private GrpcCallSettings(Builder<RequestT, ResponseT> builder) {
     this.methodDescriptor = builder.methodDescriptor;
     this.paramsExtractor = builder.paramsExtractor;
     this.alwaysAwaitTrailers = builder.shouldAwaitTrailers;

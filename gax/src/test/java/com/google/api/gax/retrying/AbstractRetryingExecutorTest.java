@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.times;
@@ -115,7 +116,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Test
   public void testSuccess() throws Exception {
-    FailingCallable callable = new FailingCallable(0, "SUCCESS", tracer);
+    FailingCallable callable = new FailingCallable(0, "request", "SUCCESS", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 0, null));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -124,14 +125,14 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
 
-    verify(tracer, times(1)).attemptStarted(0);
+    verify(tracer, times(1)).attemptStarted(eq("request"), eq(0));
     verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
   }
 
   @Test
   public void testSuccessWithFailures() throws Exception {
-    FailingCallable callable = new FailingCallable(5, "SUCCESS", tracer);
+    FailingCallable callable = new FailingCallable(5, "request", "SUCCESS", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 0, null));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -140,7 +141,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
-    verify(tracer, times(6)).attemptStarted(anyInt());
+    verify(tracer, times(6)).attemptStarted(eq("request"), anyInt());
     verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
     verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
@@ -148,7 +149,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Test
   public void testSuccessWithFailuresPeekGetAttempt() throws Exception {
-    FailingCallable callable = new FailingCallable(5, "SUCCESS", tracer);
+    FailingCallable callable = new FailingCallable(5, "request", "SUCCESS", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 0, null));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -174,7 +175,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Test
   public void testMaxRetriesExceeded() throws Exception {
-    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    FailingCallable callable = new FailingCallable(6, "request", "FAILURE", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 0, null));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -183,7 +184,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
-    verify(tracer, times(6)).attemptStarted(anyInt());
+    verify(tracer, times(6)).attemptStarted(eq("request"), anyInt());
     verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
     verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
@@ -202,7 +203,7 @@ public abstract class AbstractRetryingExecutorTest {
         getExecutor(
             getAlgorithm(
                 useContextRetrySettings ? getDefaultRetrySettings() : retrySettings, 0, null));
-    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    FailingCallable callable = new FailingCallable(6, "request", "FAILURE", tracer);
     RetryingContext context;
     if (useContextRetrySettings) {
       context = FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings);
@@ -215,14 +216,14 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
-    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1)).attemptStarted(eq("request"), anyInt());
     verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
   }
 
   @Test
   public void testCancelOuterFutureBeforeStart() throws Exception {
-    FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
+    FailingCallable callable = new FailingCallable(4, "request", "SUCCESS", tracer);
 
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
@@ -248,7 +249,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Test
   public void testCancelByRetryingAlgorithm() throws Exception {
-    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    FailingCallable callable = new FailingCallable(6, "request", "FAILURE", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 5, new CancellationException()));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -257,7 +258,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureCancel(future);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
-    verify(tracer, times(5)).attemptStarted(anyInt());
+    verify(tracer, times(5)).attemptStarted(eq("request"), anyInt());
     // Pre-apocalypse failures
     verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
@@ -267,7 +268,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Test
   public void testUnexpectedExceptionFromRetryAlgorithm() throws Exception {
-    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    FailingCallable callable = new FailingCallable(6, "request", "FAILURE", tracer);
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(getDefaultRetrySettings(), 5, new RuntimeException()));
     RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
@@ -276,7 +277,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, RuntimeException.class);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
-    verify(tracer, times(5)).attemptStarted(anyInt());
+    verify(tracer, times(5)).attemptStarted(eq("request"), anyInt());
     // Pre-apocalypse failures
     verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
@@ -302,7 +303,7 @@ public abstract class AbstractRetryingExecutorTest {
                 NanoClock.getDefaultClock()));
 
     RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
-    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    FailingCallable callable = new FailingCallable(6, "request", "FAILURE", tracer);
     RetryingContext context;
     if (useContextRetrySettings) {
       context = FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings);
@@ -315,7 +316,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, PollException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
-    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1)).attemptStarted(eq("request"), anyInt());
     verify(tracer, times(1)).attemptPermanentFailure(any(PollException.class));
     verifyNoMoreInteractions(tracer);
   }

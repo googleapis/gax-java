@@ -129,7 +129,7 @@ public class GrpcDirectServerStreamingCallableTest {
   }
 
   @Test
-  public void testServerStreamingStart() throws Exception {
+  public void testServerStreamingStart() {
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(true, latch);
 
@@ -240,7 +240,7 @@ public class GrpcDirectServerStreamingCallableTest {
   }
 
   @Test
-  public void testBlockingServerStreaming() throws Exception {
+  public void testBlockingServerStreaming() {
     Color request = Color.newBuilder().setRed(0.5f).build();
     ServerStream<Money> response = streamingCallable.call(request);
     List<Money> responseData = Lists.newArrayList(response);

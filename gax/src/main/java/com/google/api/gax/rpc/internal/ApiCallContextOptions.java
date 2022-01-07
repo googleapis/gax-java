@@ -57,7 +57,7 @@ public final class ApiCallContextOptions {
   public <T> ApiCallContextOptions withOption(Key<T> key, T value) {
     Preconditions.checkNotNull(key);
     Preconditions.checkNotNull(value);
-    ImmutableMap.Builder builder = ImmutableMap.<Key, Object>builder();
+    ImmutableMap.Builder<Key, Object> builder = ImmutableMap.builder();
     if (!options.containsKey(key)) {
       builder.putAll(options).put(key, value);
     } else {
@@ -80,7 +80,8 @@ public final class ApiCallContextOptions {
   /** Merge new options into existing ones. Any existing values of the keys are overwritten. */
   public ApiCallContextOptions merge(ApiCallContextOptions newOptions) {
     Preconditions.checkNotNull(newOptions);
-    ImmutableMap.Builder builder = ImmutableMap.<Key, Object>builder().putAll(newOptions.options);
+    ImmutableMap.Builder<Key, Object> builder =
+        ImmutableMap.<Key, Object>builder().putAll(newOptions.options);
     for (Key key : options.keySet()) {
       if (!newOptions.options.containsKey(key)) {
         builder.put(key, options.get(key));

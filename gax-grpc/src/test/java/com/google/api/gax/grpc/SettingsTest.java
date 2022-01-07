@@ -170,16 +170,17 @@ public class SettingsTest {
       return Builder.createDefault();
     }
 
+    @Override
     public Builder toBuilder() {
       return new Builder(this);
     }
 
-    private FakeStubSettings(Builder settingsBuilder) throws IOException {
+    private FakeStubSettings(Builder settingsBuilder) {
       super(settingsBuilder);
 
-      this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
-      this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
-      this.fakeMethodBatching = settingsBuilder.fakeMethodBatching().build();
+      fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
+      fakePagedMethod = settingsBuilder.fakePagedMethod().build();
+      fakeMethodBatching = settingsBuilder.fakeMethodBatching().build();
     }
 
     private static class Builder extends StubSettings.Builder<FakeStubSettings, Builder> {
@@ -318,24 +319,24 @@ public class SettingsTest {
   // ====
 
   @Test
-  public void callSettingsToBuilder() throws IOException {
-    UnaryCallSettings.Builder builderA = UnaryCallSettings.newUnaryCallSettingsBuilder();
-    UnaryCallSettings settingsA = builderA.build();
-    UnaryCallSettings.Builder builderB = settingsA.toBuilder();
-    UnaryCallSettings settingsB = builderB.build();
+  public void callSettingsToBuilder() {
+    UnaryCallSettings.Builder<?, ?> builderA = UnaryCallSettings.newUnaryCallSettingsBuilder();
+    UnaryCallSettings<?, ?> settingsA = builderA.build();
+    UnaryCallSettings.Builder<?, ?> builderB = settingsA.toBuilder();
+    UnaryCallSettings<?, ?> settingsB = builderB.build();
 
     assertEquals(settingsA, settingsB);
   }
 
   @Test
-  public void unaryCallSettingsBuilderBuildDoesNotFailUnsetProperties() throws IOException {
+  public void unaryCallSettingsBuilderBuildDoesNotFailUnsetProperties() {
     UnaryCallSettings.Builder<Integer, Integer> builder =
         UnaryCallSettings.newUnaryCallSettingsBuilder();
     builder.build();
   }
 
   @Test
-  public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
+  public void callSettingsBuildFromTimeoutNoRetries() {
     Duration timeout = Duration.ofMillis(60000);
 
     UnaryCallSettings.Builder<Integer, Integer> builderA =

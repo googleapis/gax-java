@@ -29,11 +29,13 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertThrows;
+
 import com.google.api.gax.grpc.ProtoOperationTransformers.MetadataTransformer;
 import com.google.api.gax.grpc.ProtoOperationTransformers.ResponseTransformer;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.UnavailableException;
+import com.google.api.gax.rpc.UnknownException;
 import com.google.common.truth.Truth;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
@@ -41,7 +43,6 @@ import com.google.rpc.Status;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.Status.Code;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -66,14 +67,11 @@ public class ProtoOperationTransformersTest {
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("ResponseTransformer should have thrown an exception");
-    } catch (UnavailableException expected) {
-      Truth.assertThat(expected)
-          .hasMessageThat()
-          .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
-    }
+    Exception exception =
+        assertThrows(UnavailableException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception)
+        .hasMessageThat()
+        .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
   }
 
   @Test
@@ -86,12 +84,9 @@ public class ProtoOperationTransformersTest {
                 .setResponse(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("ResponseTransformer should have thrown an exception");
-    } catch (ApiException expected) {
-      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-    }
+    Exception exception =
+        assertThrows(UnknownException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception).hasMessageThat().contains("encountered a problem unpacking it");
   }
 
   @Test
@@ -114,11 +109,8 @@ public class ProtoOperationTransformersTest {
                 .setMetadata(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("MetadataTransformer should have thrown an exception");
-    } catch (ApiException expected) {
-      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-    }
+    Exception exception =
+        assertThrows(UnknownException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception).hasMessageThat().contains("encountered a problem unpacking it");
   }
 }

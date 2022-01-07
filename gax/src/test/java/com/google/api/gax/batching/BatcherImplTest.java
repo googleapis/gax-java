@@ -33,6 +33,7 @@ import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_D
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -75,6 +76,8 @@ import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -132,9 +135,10 @@ public class BatcherImplTest {
             SQUARER_BATCHING_DESC_V2,
             new LabeledIntSquarerCallable() {
               @Override
-              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+              public ApiFuture<List<Integer>> futureCall(
+                  LabeledIntList request, ApiCallContext context) {
                 callableCounter.incrementAndGet();
-                return super.futureCall(request);
+                return super.futureCall(request, context);
               }
             },
             labeledIntList,
@@ -837,9 +841,24 @@ public class BatcherImplTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .setMaxOutstandingElementCount(1L)
                 .build());
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    ApiCallContext callContext = Mockito.mock(ApiCallContext.class);
+    ArgumentCaptor<ApiCallContext.Key<Long>> key =
+        ArgumentCaptor.forClass(ApiCallContext.Key.class);
+    ArgumentCaptor<Long> value = ArgumentCaptor.forClass(Long.class);
+    when(callContext.withOption(key.capture(), value.capture())).thenReturn(callContext);
+    long throttledTime = 50;
+
     try (final Batcher<Integer, Integer> batcher =
-        createDefaultBatcherImpl(settings, flowController)) {
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            settings,
+            EXECUTOR,
+            flowController,
+            callContext)) {
       flowController.reserve(1, 1);
       Future future =
           executor.submit(
@@ -849,18 +868,30 @@ public class BatcherImplTest {
                   batcher.add(1);
                 }
               });
+      executor.submit(
+          () -> {
+            try {
+              Thread.sleep(throttledTime);
+              flowController.release(1, 1);
+            } catch (InterruptedException e) {
+            }
+          });
+
       try {
         future.get(10, TimeUnit.MILLISECONDS);
         assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
       } catch (TimeoutException e) {
         // expected
       }
-      flowController.release(1, 1);
+
       try {
         future.get(100, TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {
         assertWithMessage("adding elements to batcher should not be blocked").fail();
       }
+      // Verify that throttled time is recorded in ApiCallContext
+      assertThat(key.getValue()).isSameInstanceAs(Batcher.THROTTLED_TIME_KEY);
+      assertThat(value.getValue()).isAtLeast(throttledTime);
     } finally {
       executor.shutdownNow();
     }

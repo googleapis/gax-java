@@ -43,7 +43,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auto.value.AutoValue;
@@ -189,12 +188,6 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     try {
       HttpRequest httpRequest = createHttpRequest();
       HttpResponse httpResponse = httpRequest.execute();
-      if (!httpResponse.isSuccessStatusCode()) {
-        ApiExceptionFactory.createException(
-            null,
-            HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
-            false);
-      }
 
       if (getApiMethodDescriptor().getResponseParser() != null) {
         ResponseT response =
@@ -213,7 +206,7 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
   static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new AutoValue_HttpRequestRunnable.Builder<RequestT, ResponseT>()
-        .setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
+        .setHeaderEnhancers(new LinkedList<>());
   }
 
   @AutoValue.Builder

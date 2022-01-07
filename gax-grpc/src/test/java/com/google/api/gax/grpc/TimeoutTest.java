@@ -32,12 +32,10 @@ package com.google.api.gax.grpc;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.times;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.RequestParamsExtractor;
-import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode;
@@ -365,7 +363,7 @@ public class TimeoutTest {
             ClientContext.newBuilder().setDefaultCallContext(context).build());
 
     try {
-      ApiFuture<String> future = callable.futureCall("Is your refrigerator running?");
+      callable.futureCall("Is your refrigerator running?");
     } catch (ApiException e) {
     }
 
@@ -426,7 +424,7 @@ public class TimeoutTest {
             ClientContext.newBuilder().setDefaultCallContext(context).build());
 
     try {
-      ServerStream<String> stream = callable.call("Is your refrigerator running?");
+      callable.call("Is your refrigerator running?");
     } catch (ApiException e) {
     }
 

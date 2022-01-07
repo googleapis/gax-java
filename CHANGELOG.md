@@ -1,5 +1,103 @@
 # Changelog
 
+### [2.8.1](https://www.github.com/googleapis/gax-java/compare/v2.8.0...v2.8.1) (2022-01-06)
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to 2.1.2 ([#1590](https://www.github.com/googleapis/gax-java/issues/1590)) ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+* update dependency com.google.auto.value:auto-value to v1.9 ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+
+## [2.8.0](https://www.github.com/googleapis/gax-java/compare/v2.7.1...v2.8.0) (2022-01-06)
+
+
+### Features
+
+* update DirectPath xds scheme ([#1585](https://www.github.com/googleapis/gax-java/issues/1585)) ([7915f85](https://www.github.com/googleapis/gax-java/commit/7915f850313ddfdf35332d976d2567f31c2aa8a7))
+
+
+### Dependencies
+
+* update dependency com.google.api.grpc:proto-google-common-protos to v2.7.1 ([#1587](https://www.github.com/googleapis/gax-java/issues/1587)) ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.http-client:google-http-client-bom to v1.41.0 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.protobuf:protobuf-bom to v3.19.2 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* upgrade common-protos to 2.7.0 ([#1579](https://www.github.com/googleapis/gax-java/issues/1579)) ([0a10f5f](https://www.github.com/googleapis/gax-java/commit/0a10f5fe77ab26b3ac7d4c590360945ead72eca1))
+
+### [2.7.1](https://www.github.com/googleapis/gax-java/compare/v2.7.0...v2.7.1) (2021-12-02)
+
+
+### Bug Fixes
+
+* fix gRPC code conversion ([#1555](https://www.github.com/googleapis/gax-java/issues/1555)) ([09b99d5](https://www.github.com/googleapis/gax-java/commit/09b99d591497b44c3c25b1a54abb0f1cb69d7376))
+* pass error message when creating ApiException ([#1556](https://www.github.com/googleapis/gax-java/issues/1556)) ([918ae41](https://www.github.com/googleapis/gax-java/commit/918ae419f84ad5721638ca10eca992333e9f7c3d))
+* revert generics syntax change in MockHttpService test utility ([#1574](https://www.github.com/googleapis/gax-java/issues/1574)) ([b629488](https://www.github.com/googleapis/gax-java/commit/b629488ffc7d68158158d9197695158f97229c7b))
+* update exception mapping on HTTP error responses ([#1570](https://www.github.com/googleapis/gax-java/issues/1570)) ([8a170d1](https://www.github.com/googleapis/gax-java/commit/8a170d19b42e9b13d4c69dcfbe531d4d4ca69c90))
+
+
+### Dependencies
+
+* update grpc to 1.42.1 ([#1559](https://www.github.com/googleapis/gax-java/issues/1559)) ([92b7632](https://www.github.com/googleapis/gax-java/commit/92b76325d54604c98c798c489b3a963fdf21a75c))
+* upgrade protobuf to 3.19.1 ([#1571](https://www.github.com/googleapis/gax-java/issues/1571)) ([7b354e7](https://www.github.com/googleapis/gax-java/commit/7b354e73b8ce49008bed51076afb255ca5dc68e4))
+
+## [2.7.0](https://www.github.com/googleapis/gax-java/compare/v2.6.0...v2.7.0) (2021-11-03)
+
+
+### Features
+
+* add batch throttled time to tracer ([#1463](https://www.github.com/googleapis/gax-java/issues/1463)) ([14c25cd](https://www.github.com/googleapis/gax-java/commit/14c25cdfae2c0602d99fcd07c9067138fc172a7f))
+* add google-c2p dependence to DirectPath ([#1521](https://www.github.com/googleapis/gax-java/issues/1521)) ([d4222e7](https://www.github.com/googleapis/gax-java/commit/d4222e757d35e874a57d030f2f964e8d61c71d6d))
+* next release from main branch is 2.7.0 ([#1530](https://www.github.com/googleapis/gax-java/issues/1530)) ([a96953e](https://www.github.com/googleapis/gax-java/commit/a96953e2c889ad9195b420ce5ae49b20258fb6ea))
+* pass request in ApiTracer ([#1491](https://www.github.com/googleapis/gax-java/issues/1491)) ([27bf265](https://www.github.com/googleapis/gax-java/commit/27bf2655120972d929e6118b73d8d556b0440fcf))
+
+
+### Bug Fixes
+
+* call ResponseMetadataHanlder#onTrailers before calling onClose ([#1549](https://www.github.com/googleapis/gax-java/issues/1549)) ([19a77a4](https://www.github.com/googleapis/gax-java/commit/19a77a4f6c62e84bba4879690992bbc494730d23))
+* declare depenencies of API surfaces as api ([#1535](https://www.github.com/googleapis/gax-java/issues/1535)) ([725414f](https://www.github.com/googleapis/gax-java/commit/725414f4ccb1e5ac4625790ea990c6c8dfa4fdff))
+
+## [2.6.0](https://www.github.com/googleapis/gax-java/compare/v2.5.3...v2.6.0) (2021-10-15)
+
+
+### Features
+
+* remove deprecated Generated annotation ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Bug Fixes
+
+* Fix com.google.rpc.Code to StatusCode.Code conversion logic ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+
+### Dependencies
+
+* update api-common to 2.0.5 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update auto-value to 1.8.2 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update com_google_protobuf to 3.18.1 ([#1519](https://www.github.com/googleapis/gax-java/issues/1519)) ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update google-http-client to 1.40.1 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update grpc to 1.41.0 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+* update guava to v31 ([2d76bff](https://www.github.com/googleapis/gax-java/commit/2d76bff6d64da818a3aff7ea0bdf5a36b82c3464))
+
+### [2.5.3](https://www.github.com/googleapis/gax-java/compare/v2.5.2...v2.5.3) (2021-10-13)
+
+
+### Bug Fixes
+
+* Fix `com.google.rpc.Code` to `StatusCode.Code` conversion  logic ([#1508](https://www.github.com/googleapis/gax-java/issues/1508)) ([61b1617](https://www.github.com/googleapis/gax-java/commit/61b161799faf292be1394111381f8a35e757b85a))
+
+### [2.5.2](https://www.github.com/googleapis/gax-java/compare/v2.5.1...v2.5.2) (2021-10-13)
+
+
+### Dependencies
+
+* release multiple artifacts at once ([#1506](https://www.github.com/googleapis/gax-java/issues/1506)) ([8c022f6](https://www.github.com/googleapis/gax-java/commit/8c022f69f7878280e00f200f65a931ff0f8cfe45))
+
+### [2.5.1](https://www.github.com/googleapis/gax-java/compare/v2.5.0...v2.5.1) (2021-10-08)
+
+
+### Dependencies
+
+* fix release pipeline ([#1500](https://www.github.com/googleapis/gax-java/issues/1500)) ([f8ae03b](https://www.github.com/googleapis/gax-java/commit/f8ae03bbf0389d5fd943d214c1058ee012be757b))
+
 ## [2.5.0](https://www.github.com/googleapis/gax-java/compare/v2.4.1...v2.5.0) (2021-09-21)
 
 

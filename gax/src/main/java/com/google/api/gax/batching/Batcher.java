@@ -32,6 +32,7 @@ package com.google.api.gax.batching;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.rpc.ApiCallContext;
 
 /**
  * Represents a batching context where individual elements will be accumulated and flushed in a
@@ -48,6 +49,9 @@ import com.google.api.core.InternalExtensionOnly;
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalExtensionOnly
 public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
+
+  /** {@link ApiCallContext.Key} for tracking batch total throttled time */
+  ApiCallContext.Key<Long> THROTTLED_TIME_KEY = ApiCallContext.Key.create("total_throttled_time");
 
   /**
    * Queues the passed in element to be sent at some point in the future.
