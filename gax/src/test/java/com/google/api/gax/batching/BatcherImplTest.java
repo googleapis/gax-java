@@ -841,14 +841,14 @@ public class BatcherImplTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .setMaxOutstandingElementCount(1L)
                 .build());
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorService executor = Executors.newFixedThreadPool(2);
 
     ApiCallContext callContext = Mockito.mock(ApiCallContext.class);
     ArgumentCaptor<ApiCallContext.Key<Long>> key =
         ArgumentCaptor.forClass(ApiCallContext.Key.class);
     ArgumentCaptor<Long> value = ArgumentCaptor.forClass(Long.class);
     when(callContext.withOption(key.capture(), value.capture())).thenReturn(callContext);
-    long throttledTime = 10;
+    long throttledTime = 50;
 
     try (final Batcher<Integer, Integer> batcher =
         new BatcherImpl<>(
@@ -868,14 +868,22 @@ public class BatcherImplTest {
                   batcher.add(1);
                 }
               });
+      executor.submit(
+          () -> {
+            try {
+              Thread.sleep(throttledTime);
+              flowController.release(1, 1);
+            } catch (InterruptedException e) {
+            }
+          });
+
       try {
         future.get(10, TimeUnit.MILLISECONDS);
-        Thread.sleep(throttledTime);
         assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
       } catch (TimeoutException e) {
         // expected
       }
-      flowController.release(1, 1);
+
       try {
         future.get(100, TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {
