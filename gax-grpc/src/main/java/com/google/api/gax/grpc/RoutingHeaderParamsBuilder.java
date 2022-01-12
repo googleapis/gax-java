@@ -28,24 +28,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.api.gax.rpc.internal;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.InternalApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
-@InternalApi
-public class RoutingHeaderHelper {
+/**
+ * This builder class builds a params map that will be used for creating {@link
+ * CallOptionsUtil#REQUEST_PARAMS_HEADER_KEY routing header} in {@link
+ * CallOptionsUtil#putRequestParamsDynamicHeaderOption} for gRPC requests
+ */
+public class RoutingHeaderParamsBuilder {
 
-  public static void addParams(
-      ImmutableMap.Builder<String, String> paramsBuilder,
-      String fieldValue,
-      String headerKey,
-      PathTemplate pattern) {
+  private final ImmutableMap.Builder<String, String> paramsBuilder;
+
+  public RoutingHeaderParamsBuilder() {
+    this.paramsBuilder = ImmutableMap.builder();
+  }
+
+  public void add(String fieldValue, String headerKey, PathTemplate pattern) {
     Map<String, String> matchedValues = pattern.match(fieldValue);
     if (matchedValues != null && matchedValues.containsKey(headerKey)) {
       paramsBuilder.put(headerKey, matchedValues.get(headerKey));
     }
+  }
+
+  public Map<String, String> build() {
+    return paramsBuilder.build();
   }
 }

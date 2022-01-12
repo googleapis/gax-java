@@ -28,44 +28,59 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.api.gax.rpc.internal;
+package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.pathtemplate.PathTemplate;
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class RoutingHeaderHelperTest {
+public class RoutingHeaderParamsBuilderTest {
 
-  @Test
-  public void shouldAddParamsIfThereAreMatchedValuesWithRoutingHeader() {
-    PathTemplate pathTemplate = PathTemplate.create("projects/**/{table_location=instances/*}");
-    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
-    String headerKey = "table_location";
-    RoutingHeaderHelper.addParams(
-        params, "projects/my_cozy_home/instances/living_room", headerKey, pathTemplate);
-    assertThat(params.build()).containsExactly(headerKey, "instances/living_room");
+  private RoutingHeaderParamsBuilder routingHeaderParamsBuilder;
+
+  @Before
+  public void setUp() throws Exception {
+    routingHeaderParamsBuilder = new RoutingHeaderParamsBuilder();
   }
 
   @Test
-  public void shouldNotAddParamsIfThereAreMatchedValuesWithNoRoutingHeaders() {
-    PathTemplate pathTemplate = PathTemplate.create("projects/**");
-    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+  public void add_happyPath() {
     String headerKey = "table_location";
-    RoutingHeaderHelper.addParams(params, "projects/my_cozy_home/", headerKey, pathTemplate);
-    assertThat(params.build()).isEmpty();
+    Map<String, String> actual =
+        getRoutingHeaders(
+            headerKey,
+            "projects/**/{table_location=instances/*}",
+            "projects/my_cozy_home/instances/living_room");
+    assertThat(actual).containsExactly(headerKey, "instances/living_room");
   }
 
   @Test
-  public void shouldNotAddParamsIfThereAreNoMatchedValues() {
-    PathTemplate pathTemplate = PathTemplate.create("projects/**/{table_location=instances/*}");
-    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
-    String headerKey = "table_location";
-    RoutingHeaderHelper.addParams(params, "projects/does_not_matter", headerKey, pathTemplate);
-    assertThat(params.build()).isEmpty();
+  public void add_matchedValuesWithNoRoutingHeaderKey() {
+    Map<String, String> actual =
+        getRoutingHeaders("table_location", "projects/**", "projects/my_cozy_home/");
+    assertThat(actual).isEmpty();
+  }
+
+  @Test
+  public void add_emptyMatchedValues() {
+    Map<String, String> actual =
+        getRoutingHeaders(
+            "table_location",
+            "projects/**/{table_location=instances/*}",
+            "projects/does_not_matter");
+    assertThat(actual).isEmpty();
+  }
+
+  private Map<String, String> getRoutingHeaders(
+      String headerKey, String patternString, String fieldValue) {
+    PathTemplate pathTemplate = PathTemplate.create(patternString);
+    routingHeaderParamsBuilder.add(fieldValue, headerKey, pathTemplate);
+    return routingHeaderParamsBuilder.build();
   }
 }
