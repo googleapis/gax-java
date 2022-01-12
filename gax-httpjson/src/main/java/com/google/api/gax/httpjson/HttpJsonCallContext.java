@@ -62,9 +62,8 @@ import org.threeten.bp.Instant;
 @BetaApi
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
+  private final HttpJsonCallOptions callOptions;
   private final Duration timeout;
-  private final Instant deadline;
-  private final Credentials credentials;
   private final ImmutableMap<String, List<String>> extraHeaders;
   private final ApiCallContextOptions options;
   private final ApiTracer tracer;
@@ -75,10 +74,21 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public static HttpJsonCallContext createDefault() {
     return new HttpJsonCallContext(
         null,
+        HttpJsonCallOptions.newBuilder().build(),
+        null,
+        ImmutableMap.of(),
+        ApiCallContextOptions.getDefaultOptions(),
         null,
         null,
+        null);
+  }
+
+  public static HttpJsonCallContext of(HttpJsonChannel channel, HttpJsonCallOptions options) {
+    return new HttpJsonCallContext(
+        channel,
+        options,
         null,
-        ImmutableMap.<String, List<String>>of(),
+        ImmutableMap.of(),
         ApiCallContextOptions.getDefaultOptions(),
         null,
         null,
@@ -87,18 +97,16 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   private HttpJsonCallContext(
       HttpJsonChannel channel,
+      HttpJsonCallOptions callOptions,
       Duration timeout,
-      Instant deadline,
-      Credentials credentials,
       ImmutableMap<String, List<String>> extraHeaders,
       ApiCallContextOptions options,
       ApiTracer tracer,
       RetrySettings defaultRetrySettings,
       Set<StatusCode.Code> defaultRetryableCodes) {
     this.channel = channel;
+    this.callOptions = callOptions;
     this.timeout = timeout;
-    this.deadline = deadline;
-    this.credentials = credentials;
     this.extraHeaders = extraHeaders;
     this.options = options;
     this.tracer = tracer;
@@ -146,19 +154,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newChannel = this.channel;
     }
 
+    // Do deep merge of callOptions
+    HttpJsonCallOptions newCallOptions = callOptions.merge(httpJsonCallContext.callOptions);
+
     Duration newTimeout = httpJsonCallContext.timeout;
     if (newTimeout == null) {
       newTimeout = this.timeout;
-    }
-
-    Instant newDeadline = httpJsonCallContext.deadline;
-    if (newDeadline == null) {
-      newDeadline = this.deadline;
-    }
-
-    Credentials newCredentials = httpJsonCallContext.credentials;
-    if (newCredentials == null) {
-      newCredentials = this.credentials;
     }
 
     ImmutableMap<String, List<String>> newExtraHeaders =
@@ -183,9 +184,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
     return new HttpJsonCallContext(
         newChannel,
+        newCallOptions,
         newTimeout,
-        newDeadline,
-        newCredentials,
         newExtraHeaders,
         newOptions,
         newTracer,
@@ -195,16 +195,9 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
-    return new HttpJsonCallContext(
-        this.channel,
-        this.timeout,
-        this.deadline,
-        newCredentials,
-        this.extraHeaders,
-        this.options,
-        this.tracer,
-        this.retrySettings,
-        this.retryableCodes);
+    HttpJsonCallOptions.Builder builder =
+        callOptions != null ? callOptions.toBuilder() : HttpJsonCallOptions.newBuilder();
+    return withCallOptions(builder.setCredentials(newCredentials).build());
   }
 
   @Override
@@ -232,9 +225,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -278,9 +270,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         Headers.mergeHeaders(this.extraHeaders, extraHeaders);
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         newExtraHeaders,
         this.options,
         this.tracer,
@@ -300,9 +291,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
     ApiCallContextOptions newOptions = options.withOption(key, value);
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         newOptions,
         this.tracer,
@@ -320,12 +310,18 @@ public final class HttpJsonCallContext implements ApiCallContext {
     return channel;
   }
 
-  public Instant getDeadline() {
-    return deadline;
+  public HttpJsonCallOptions getCallOptions() {
+    return callOptions;
   }
 
+  @Deprecated
+  public Instant getDeadline() {
+    return getCallOptions() != null ? getCallOptions().getDeadline() : null;
+  }
+
+  @Deprecated
   public Credentials getCredentials() {
-    return credentials;
+    return getCallOptions() != null ? getCallOptions().getCredentials() : null;
   }
 
   @Override
@@ -337,9 +333,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public HttpJsonCallContext withRetrySettings(RetrySettings retrySettings) {
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -356,9 +351,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public HttpJsonCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes) {
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -369,9 +363,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
     return new HttpJsonCallContext(
         newChannel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -379,17 +372,23 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.retryableCodes);
   }
 
-  public HttpJsonCallContext withDeadline(Instant newDeadline) {
+  public HttpJsonCallContext withCallOptions(HttpJsonCallOptions newCallOptions) {
     return new HttpJsonCallContext(
         this.channel,
+        newCallOptions,
         this.timeout,
-        newDeadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         this.tracer,
         this.retrySettings,
         this.retryableCodes);
+  }
+
+  @Deprecated
+  public HttpJsonCallContext withDeadline(Instant newDeadline) {
+    HttpJsonCallOptions.Builder builder =
+        callOptions != null ? callOptions.toBuilder() : HttpJsonCallOptions.newBuilder();
+    return withCallOptions(builder.setDeadline(newDeadline).build());
   }
 
   @Nonnull
@@ -408,9 +407,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
     return new HttpJsonCallContext(
         this.channel,
+        this.callOptions,
         this.timeout,
-        this.deadline,
-        this.credentials,
         this.extraHeaders,
         this.options,
         newTracer,
@@ -428,9 +426,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
     HttpJsonCallContext that = (HttpJsonCallContext) o;
     return Objects.equals(this.channel, that.channel)
+        && Objects.equals(this.callOptions, that.callOptions)
         && Objects.equals(this.timeout, that.timeout)
-        && Objects.equals(this.deadline, that.deadline)
-        && Objects.equals(this.credentials, that.credentials)
         && Objects.equals(this.extraHeaders, that.extraHeaders)
         && Objects.equals(this.options, that.options)
         && Objects.equals(this.tracer, that.tracer)
@@ -442,9 +439,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public int hashCode() {
     return Objects.hash(
         channel,
+        callOptions,
         timeout,
-        deadline,
-        credentials,
         extraHeaders,
         options,
         tracer,

@@ -37,6 +37,7 @@ task generateProjectProperties {
 sourceSets.main.output.dir generatedOutputDir, builtBy: generateProjectProperties
 
 jar {
+  duplicatesStrategy = 'include'
   manifest {
     attributes 'Specification-Title': project.name,
       'Specification-Version': project.version,
