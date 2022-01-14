@@ -46,7 +46,7 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
   private final ResponseT defaultInstance;
   private final TypeRegistry defaultRegistry;
 
-  protected ProtoMessageResponseParser(ResponseT defaultInstance, TypeRegistry defaultRegistry) {
+  private ProtoMessageResponseParser(ResponseT defaultInstance, TypeRegistry defaultRegistry) {
     this.defaultInstance = defaultInstance;
     this.defaultRegistry = defaultRegistry;
   }

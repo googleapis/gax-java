@@ -56,10 +56,7 @@ class HttpJsonApiExceptionFactory {
       StatusRuntimeException e = (StatusRuntimeException) throwable;
       StatusCode statusCode = HttpJsonStatusCode.of(e.getStatusCode());
       return createApiException(
-          throwable,
-          HttpJsonStatusCode.of(e.getStatusCode()),
-          e.getMessage(),
-          retryableCodes.contains(statusCode.getCode()));
+          throwable, statusCode, e.getMessage(), retryableCodes.contains(statusCode.getCode()));
     } else if (throwable instanceof CancellationException) {
       return ApiExceptionFactory.createException(
           throwable, HttpJsonStatusCode.of(Code.CANCELLED), false);

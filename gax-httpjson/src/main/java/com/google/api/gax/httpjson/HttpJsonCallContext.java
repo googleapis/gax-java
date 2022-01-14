@@ -315,11 +315,13 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   @Deprecated
+  @Nullable
   public Instant getDeadline() {
     return getCallOptions() != null ? getCallOptions().getDeadline() : null;
   }
 
   @Deprecated
+  @Nullable
   public Credentials getCredentials() {
     return getCallOptions() != null ? getCallOptions().getCredentials() : null;
   }
