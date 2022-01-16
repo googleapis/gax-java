@@ -63,18 +63,22 @@ import org.threeten.bp.Instant;
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final HttpJsonCallOptions callOptions;
-  private final Duration timeout;
+  @Nullable private final Duration timeout;
+  @Nullable private final Duration streamWaitTimeout;
+  @Nullable private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
   private final ApiCallContextOptions options;
   private final ApiTracer tracer;
-  private final RetrySettings retrySettings;
-  private final ImmutableSet<StatusCode.Code> retryableCodes;
+  @Nullable private final RetrySettings retrySettings;
+  @Nullable private final ImmutableSet<StatusCode.Code> retryableCodes;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
     return new HttpJsonCallContext(
         null,
         HttpJsonCallOptions.newBuilder().build(),
+        null,
+        null,
         null,
         ImmutableMap.of(),
         ApiCallContextOptions.getDefaultOptions(),
@@ -88,6 +92,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         channel,
         options,
         null,
+        null,
+        null,
         ImmutableMap.of(),
         ApiCallContextOptions.getDefaultOptions(),
         null,
@@ -99,6 +105,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
       HttpJsonChannel channel,
       HttpJsonCallOptions callOptions,
       Duration timeout,
+      Duration streamWaitTimeout,
+      Duration streamIdleTimeout,
       ImmutableMap<String, List<String>> extraHeaders,
       ApiCallContextOptions options,
       ApiTracer tracer,
@@ -107,6 +115,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
     this.channel = channel;
     this.callOptions = callOptions;
     this.timeout = timeout;
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
     this.options = options;
     this.tracer = tracer;
@@ -162,6 +172,16 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newTimeout = this.timeout;
     }
 
+    Duration newStreamWaitTimeout = httpJsonCallContext.streamWaitTimeout;
+    if (newStreamWaitTimeout == null) {
+      newStreamWaitTimeout = streamWaitTimeout;
+    }
+
+    Duration newStreamIdleTimeout = httpJsonCallContext.streamIdleTimeout;
+    if (newStreamIdleTimeout == null) {
+      newStreamIdleTimeout = streamIdleTimeout;
+    }
+
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
 
@@ -186,6 +206,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         newChannel,
         newCallOptions,
         newTimeout,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
         newExtraHeaders,
         newOptions,
         newTracer,
@@ -227,6 +249,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -241,25 +265,65 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   @Override
-  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  public HttpJsonCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
+    if (streamWaitTimeout != null) {
+      Preconditions.checkArgument(
+          streamWaitTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
-  @Nullable
+  /**
+   * The stream wait timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamWaitTimeout(Duration)
+   */
   @Override
+  @Nullable
   public Duration getStreamWaitTimeout() {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+    return streamWaitTimeout;
   }
 
   @Override
-  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  public HttpJsonCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
+    if (streamIdleTimeout != null) {
+      Preconditions.checkArgument(
+          streamIdleTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
+  /**
+   * The stream idle timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamIdleTimeout(Duration)
+   */
+  @Override
   @Nullable
-  @Override
   public Duration getStreamIdleTimeout() {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+    return streamIdleTimeout;
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -272,6 +336,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         newExtraHeaders,
         this.options,
         this.tracer,
@@ -293,6 +359,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         newOptions,
         this.tracer,
@@ -337,6 +405,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -355,6 +425,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -367,6 +439,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         newChannel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -379,6 +453,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         newCallOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         this.tracer,
@@ -411,6 +487,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
         this.extraHeaders,
         this.options,
         newTracer,
