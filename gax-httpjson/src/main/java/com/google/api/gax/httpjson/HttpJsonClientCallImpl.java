@@ -67,10 +67,8 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   //
   private final Lock lock = new ReentrantLock();
 
-  //
-  // An active delivery loops counter, used to make sure there is only one a See delivery() method
-  // comments, which explain the purpose of this field.
-  //
+  // An active delivery loops counter, used to make sure there is only one active delivery loop.
+  // See delivery() method comments for details.
   @GuardedBy("lock")
   private int activeDeliveryLoops = 0;
 
@@ -353,8 +351,8 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
       } catch (Throwable e) {
         // Exceptions in message delivery result into cancellation of the call to stay consistent
         // with other transport implementations.
-        StatusRuntimeException ex =
-            new StatusRuntimeException(499, "Exception in message delivery", e);
+        HttpJsonStatusRuntimeException ex =
+            new HttpJsonStatusRuntimeException(499, "Exception in message delivery", e);
         // If we are already closed the exception will be swallowed, which is the best thing we
         // can do in such an unlikely situation (otherwise we would stay forever in the delivery
         // loop).

@@ -52,8 +52,8 @@ class HttpJsonApiExceptionFactory {
       boolean canRetry = retryableCodes.contains(statusCode.getCode());
       String message = e.getStatusMessage();
       return createApiException(throwable, statusCode, message, canRetry);
-    } else if (throwable instanceof StatusRuntimeException) {
-      StatusRuntimeException e = (StatusRuntimeException) throwable;
+    } else if (throwable instanceof HttpJsonStatusRuntimeException) {
+      HttpJsonStatusRuntimeException e = (HttpJsonStatusRuntimeException) throwable;
       StatusCode statusCode = HttpJsonStatusCode.of(e.getStatusCode());
       return createApiException(
           throwable, statusCode, e.getMessage(), retryableCodes.contains(statusCode.getCode()));

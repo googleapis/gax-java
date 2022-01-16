@@ -308,7 +308,7 @@ public class HttpJsonDirectServerStreamingCallableTest {
         .isEqualTo(StatusCode.Code.CANCELLED);
 
     // gax httpjson transport layer is responsible for the immediate cancellation
-    Truth.assertThat(actualError.getCause()).isInstanceOf(StatusRuntimeException.class);
+    Truth.assertThat(actualError.getCause()).isInstanceOf(HttpJsonStatusRuntimeException.class);
     // and the client error is cause for httpjson transport layer to cancel it
     Truth.assertThat(actualError.getCause().getCause()).isSameInstanceAs(expectedCause);
   }

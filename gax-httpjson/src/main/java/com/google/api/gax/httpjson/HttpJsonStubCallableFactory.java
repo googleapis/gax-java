@@ -112,16 +112,15 @@ public interface HttpJsonStubCallableFactory<
    * Create a server-streaming callable with. Designed for use by generated code.
    *
    * @param httpJsonCallSettings the gRPC call settings
-   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
-   *     settings with.
+   * @param callSettings {@link StreamingCallSettings} to configure the method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    */
   default <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
-          ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
           ClientContext clientContext) {
     return HttpJsonCallableFactory.createServerStreamingCallable(
-        httpJsonCallSettings, streamingCallSettings, clientContext);
+        httpJsonCallSettings, callSettings, clientContext);
   }
 }
