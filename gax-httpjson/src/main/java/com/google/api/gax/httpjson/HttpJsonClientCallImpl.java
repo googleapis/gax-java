@@ -44,8 +44,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -65,12 +63,11 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   //
   // A lock to guard the state of this call (and the response stream).
   //
-  private final Lock lock = new ReentrantLock();
+  private final Object lock = new Object();
 
-  // An active delivery loops counter, used to make sure there is only one active delivery loop.
-  // See delivery() method comments for details.
+  // An active delivery loop marker.
   @GuardedBy("lock")
-  private int activeDeliveryLoops = 0;
+  private boolean inDelivery = false;
 
   // A queue to keep "scheduled" calls to HttpJsonClientCall.Listener<ResponseT> in a form of tasks.
   // It may seem like an overkill, but it exists to implement the following listeners contract:
@@ -141,8 +138,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   @Override
   public void setResult(RunnableResult runnableResult) {
     Preconditions.checkNotNull(runnableResult);
-    lock.lock();
-    try {
+    synchronized (lock) {
       if (closed) {
         return;
       }
@@ -152,8 +148,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         pendingNotifications.offer(
             new OnHeadersNotificationTask<>(listener, runnableResult.getResponseHeaders()));
       }
-    } finally {
-      lock.unlock();
     }
 
     // trigger delivery loop if not already running
@@ -164,8 +158,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   public void start(Listener<ResponseT> responseListener, HttpJsonMetadata requestHeaders) {
     Preconditions.checkNotNull(responseListener);
     Preconditions.checkNotNull(requestHeaders);
-    lock.lock();
-    try {
+    synchronized (lock) {
       if (closed) {
         return;
       }
@@ -177,8 +170,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
               .putAll(requestHeaders.getHeaders())
               .build();
       this.requestHeaders = requestHeaders.toBuilder().setHeaders(mergedHeaders).build();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -187,14 +178,11 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     if (numMessages < 0) {
       throw new IllegalArgumentException("numMessages must be non-negative");
     }
-    lock.lock();
-    try {
+    synchronized (lock) {
       if (closed) {
         return;
       }
       pendingNumMessages += numMessages;
-    } finally {
-      lock.unlock();
     }
 
     // trigger delivery loop if not already running
@@ -208,11 +196,8 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
       actualCause = new CancellationException(message);
     }
 
-    lock.lock();
-    try {
+    synchronized (lock) {
       close(499, message, actualCause, true);
-    } finally {
-      lock.unlock();
     }
 
     // trigger delivery loop if not already running
@@ -223,8 +208,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   public void sendMessage(RequestT message) {
     Preconditions.checkNotNull(message);
     HttpRequestRunnable<RequestT, ResponseT> localRunnable;
-    lock.lock();
-    try {
+    synchronized (lock) {
       if (closed) {
         return;
       }
@@ -243,8 +227,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
               requestHeaders,
               this);
       localRunnable = requestRunnable;
-    } finally {
-      lock.unlock();
     }
     executor.execute(localRunnable);
   }
@@ -273,19 +255,13 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // make sure that the activeDeliveryLoops counter stays correct.
         //
         // Note, we must enter the loop before doing the check.
-        lock.lock();
-        try {
-          if (newActiveDeliveryLoop) {
-            activeDeliveryLoops = Math.max(1, activeDeliveryLoops + 1);
-            newActiveDeliveryLoop = false;
-          }
-          if (activeDeliveryLoops > 1) {
-            activeDeliveryLoops--;
+        synchronized (lock) {
+          if (inDelivery && newActiveDeliveryLoop) {
             // EXIT delivery loop because another active delivery loop has been detected.
             break;
           }
-        } finally {
-          lock.unlock();
+          newActiveDeliveryLoop = false;
+          inDelivery = true;
         }
 
         if (Thread.interrupted()) {
@@ -299,10 +275,9 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // indefinitely deep in the stack if delivery logic is called recursively via listeners.
         notifyListeners();
 
-        // The blocking try block around message reading and cancellation notification processing
+        // The synchronized block around message reading and cancellation notification processing
         // logic
-        lock.lock();
-        try {
+        synchronized (lock) {
           if (allMessagesConsumed) {
             // allMessagesProcessed was set to true on previous loop iteration. We do it this
             // way to make sure that notifyListeners() is called in between consuming the last
@@ -334,7 +309,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
             if (pendingNotifications.isEmpty()) {
               // EXIT delivery loop because there is no more work left to do. This is expected to be
               // the only active delivery loop.
-              activeDeliveryLoops--;
+              inDelivery = false;
               break;
             } else {
               // We still have some stuff in notiticationTasksQueue so continue the loop, most
@@ -344,9 +319,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
           }
           pendingNumMessages--;
           allMessagesConsumed = consumeMessageFromStream();
-
-        } finally {
-          lock.unlock();
         }
       } catch (Throwable e) {
         // Exceptions in message delivery result into cancellation of the call to stay consistent
@@ -356,13 +328,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // If we are already closed the exception will be swallowed, which is the best thing we
         // can do in such an unlikely situation (otherwise we would stay forever in the delivery
         // loop).
-        lock.lock();
-        try {
+        synchronized (lock) {
           // Close the call immediately marking it cancelled. If already closed close() will have no
           // effect.
           close(ex.getStatusCode(), ex.getMessage(), ex, true);
-        } finally {
-          lock.unlock();
         }
       }
     }
@@ -370,15 +339,12 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   private void notifyListeners() {
     while (true) {
-      lock.lock();
       NotificationTask<ResponseT> notification;
-      try {
+      synchronized (lock) {
         if (pendingNotifications.isEmpty()) {
           return;
         }
         notification = pendingNotifications.poll();
-      } finally {
-        lock.unlock();
       }
       notification.call();
     }
