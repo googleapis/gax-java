@@ -24,15 +24,15 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 ## cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
+# Round 1
 # Publish gax to local maven to make it available for downstream libraries
 ./gradlew publishToMavenLocal
 
-# Round 1
 # Run gax against shared-dependencies
 GAX_VERSION=$( ./gradlew -q :gax:properties | grep '^version: ' | cut -d' ' -f2 )
 
 # Round 2
-# Check this gax-java against HEAD of java-shared dependencies
+# Run this gax-java against HEAD of java-shared dependencies
 
 git clone "https://github.com/googleapis/java-shared-dependencies.git" --depth=1
 pushd java-shared-dependencies/first-party-dependencies
@@ -50,7 +50,6 @@ set ${GAX_VERSION}
 save pom.xml
 EOF
 
-# run dependencies script
 cd ..
 mvn -Denforcer.skip=true clean install
 
@@ -63,7 +62,7 @@ if [ -z "${SHARED_DEPS_VERSION}" ]; then
 fi
 
 # Round 3
-# Check this BOM against java client libraries
+# Run this shared-dependencies BOM against java client libraries
 git clone "https://github.com/googleapis/java-${CLIENT_LIBRARY}.git" --depth=1
 pushd java-${CLIENT_LIBRARY}
 
