@@ -57,12 +57,11 @@ EOF
 cd ..
 mvn -Denforcer.skip=true clean install
 
-SHARED_DEPS_VERSION_POM=pom.xml
 # Namespace (xmlns) prevents xmllint from specifying tag names in XPath
-SHARED_DEPS_VERSION=`sed -e 's/xmlns=".*"//' ${SHARED_DEPS_VERSION_POM} | xmllint --xpath '/project/version/text()' -`
+SHARED_DEPS_VERSION=$( sed -e 's/xmlns=".*"//' pom.xml | xmllint --xpath '/project/version/text()' - )
 
 if [ -z "${SHARED_DEPS_VERSION}" ]; then
-  echo "Version is not found in ${SHARED_DEPS_VERSION_POM}"
+  echo "Version is not found in pom.xml"
   exit 1
 fi
 
