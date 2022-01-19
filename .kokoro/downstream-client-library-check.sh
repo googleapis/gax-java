@@ -38,7 +38,7 @@ git clone "https://github.com/googleapis/java-shared-dependencies.git" --depth=1
 pushd java-shared-dependencies/first-party-dependencies
 
 # replace version
-xmllint --shell <(cat pom.xml) << EOF
+xmllint --shell pom.xml << EOF
 setns x=http://maven.apache.org/POM/4.0.0
 cd .//x:artifactId[text()="gax-bom"]
 cd ../x:version
