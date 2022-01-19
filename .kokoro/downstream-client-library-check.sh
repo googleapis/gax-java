@@ -29,10 +29,7 @@ gradle publishToMavenLocal
 
 # Round 1
 # Run gax against shared-dependencies
-pushd gax
-GAX_VERSION=`gradle -q pVG`
-echo $GAX_VERSION
-popd
+GAX_VERSION=$( ./gradlew -q :gax:properties | grep '^version: ' | cut -d' ' -f2 )
 
 # Round 2
 # Check this gax-java against HEAD of java-shared dependencies
