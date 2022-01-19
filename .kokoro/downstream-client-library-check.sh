@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ cd ${scriptDir}/..
 # Publish gax to local maven to make it available for downstream libraries
 ./gradlew publishToMavenLocal
 
-# Run gax against shared-dependencies
+# Read current gax version
 GAX_VERSION=$( ./gradlew -q :gax:properties | grep '^version: ' | cut -d' ' -f2 )
 
 # Round 2
