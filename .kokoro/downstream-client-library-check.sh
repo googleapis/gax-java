@@ -17,7 +17,7 @@ set -eo pipefail
 # Display commands being run.
 set -x
 
-REPO=$1
+CLIENT_LIBRARY=$1
 ## Get the directory of the build script
 scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 ## cd to the parent directory, i.e. the root of the git repo
@@ -26,13 +26,14 @@ cd ${scriptDir}/..
 # Publish gax to local maven to make it available for downstream libraries
 gradle publishToMavenLocal
 
-# Round 1: Run gax against shared-dependencies
+# Round 1
+# Run gax against shared-dependencies
 pushd gax
 GAX_VERSION=`gradle -q pVG`
 echo $GAX_VERSION
 popd
 
-# Round 1
+# Round 2
 # Check this gax-java against HEAD of java-shared dependencies
 
 git clone "https://github.com/googleapis/java-shared-dependencies.git" --depth=1
@@ -64,13 +65,12 @@ if [ -z "${SHARED_DEPS_VERSION}" ]; then
   exit 1
 fi
 
-# Round 2
+# Round 3
+# Check this BOM against java client libraries
+git clone "https://github.com/googleapis/java-${CLIENT_LIBRARY}.git" --depth=1
+pushd java-${CLIENT_LIBRARY}
 
-# Check this BOM against a few java client libraries
-git clone "https://github.com/googleapis/java-${REPO}.git" --depth=1
-pushd java-${REPO}
-
-if [[ $REPO == "bigtable" ]]; then
+if [[ $CLIENT_LIBRARY == "bigtable" ]]; then
   pushd google-cloud-bigtable-deps-bom
 fi
 
@@ -83,7 +83,7 @@ set ${SHARED_DEPS_VERSION}
 save pom.xml
 EOF
 
-if [[ $REPO == "bigtable" ]]; then
+if [[ $CLIENT_LIBRARY == "bigtable" ]]; then
   popd
 fi
 
