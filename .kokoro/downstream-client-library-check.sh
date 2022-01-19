@@ -25,7 +25,7 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 cd ${scriptDir}/..
 
 # Publish gax to local maven to make it available for downstream libraries
-gradle publishToMavenLocal
+./gradlew publishToMavenLocal
 
 # Round 1
 # Run gax against shared-dependencies
