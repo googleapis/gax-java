@@ -138,9 +138,4 @@ jobs:
         java-version: ${{matrix.java}}
     - run: java -version
     - run: sudo apt-get install libxml2-utils
-    - uses: nick-invision/retry@v2
-      with:
-        timeout_minutes: 100
-        max_attempts: 3
-        retry_on: error
-        command: .kokoro/downstream-client-library-check.sh ${{matrix.repo}}
+    - run: .kokoro/downstream-client-library-check.sh ${{matrix.repo}}
