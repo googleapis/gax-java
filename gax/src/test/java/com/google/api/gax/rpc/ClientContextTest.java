@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -821,16 +822,14 @@ public class ClientContextTest {
     EnvironmentProvider environmentProvider =
         new FakeEnvironmentProvider("env-key", "/path/to/adc/json");
     Map<String, String> headers = new HashMap<>();
-    try {
-      ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
-      fail("should throw an exception");
-    } catch (IOException e) {
-      assertTrue(
-          "expected retrieveApiKey to throw an exception",
-          e.getMessage()
-              .contains(
-                  "Environment variables GOOGLE_API_KEY and GOOGLE_APPLICATION_CREDENTIALS are mutually exclusive"));
-    }
+    Exception ex =
+        assertThrows(
+            IOException.class,
+            () -> ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers));
+    assertThat(ex)
+        .hasMessageThat()
+        .contains(
+            "Environment variables GOOGLE_API_KEY and GOOGLE_APPLICATION_CREDENTIALS are mutually exclusive");
   }
 
   @Test
