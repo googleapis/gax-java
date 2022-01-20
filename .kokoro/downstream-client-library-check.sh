@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
-set -o pipefail
+set -eo pipefail
 # Display commands being run.
-set -o xtrace
+set -x
 
 CLIENT_LIBRARY=$1
 ## Get the directory of the build script
