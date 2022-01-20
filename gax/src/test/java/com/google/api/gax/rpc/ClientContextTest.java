@@ -778,7 +778,6 @@ public class ClientContextTest {
     StubSettings settings = new FakeStubSettings.Builder().setApiKey("stub-setting-key").build();
     EnvironmentProvider environmentProvider =
         name -> name.equals("GOOGLE_API_KEY") ? "env-key" : null;
-    ;
     Map<String, String> headers = new HashMap<>();
     ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
     assertThat(headers).containsEntry("x-goog-api-key", "stub-setting-key");
