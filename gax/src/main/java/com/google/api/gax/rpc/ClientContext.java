@@ -35,12 +35,14 @@ import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.rpc.internal.EnvironmentProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.BaseApiTracerFactory;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -65,6 +67,7 @@ import org.threeten.bp.Duration;
 @AutoValue
 public abstract class ClientContext {
   private static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
+  private static final String API_KEY_HEADER_KEY = "x-goog-api-key";
 
   /**
    * The objects that need to be closed in order to clean up the resources created in the process of
@@ -160,6 +163,32 @@ public abstract class ClientContext {
   }
 
   /**
+   * Retrieves the API key value and add it to the headers if API key exists. It first tries to
+   * retrieve the value from the stub settings. If not found, it then tries the load the
+   * GOOGLE_API_KEY environment variable. An IOException will be thrown if both GOOGLE_API_KEY and
+   * GOOGLE_APPLICATION_CREDENTIALS environment variables are set.
+   */
+  @VisibleForTesting
+  static void addApiKeyToHeaders(
+      StubSettings settings, EnvironmentProvider environmentProvider, Map<String, String> headers)
+      throws IOException {
+    if (settings.getApiKey() != null) {
+      headers.put(API_KEY_HEADER_KEY, settings.getApiKey());
+      return;
+    }
+
+    String apiKey = environmentProvider.getenv("GOOGLE_API_KEY");
+    String applicationCredentials = environmentProvider.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+    if (apiKey != null && applicationCredentials != null) {
+      throw new IOException(
+          "Environment variables GOOGLE_API_KEY and GOOGLE_APPLICATION_CREDENTIALS are mutually exclusive");
+    }
+    if (apiKey != null) {
+      headers.put(API_KEY_HEADER_KEY, apiKey);
+    }
+  }
+
+  /**
    * Instantiates the executor, credentials, and transport context based on the given client
    * settings.
    */
@@ -169,14 +198,21 @@ public abstract class ClientContext {
     ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
     final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
-    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    Credentials credentials = null;
+    Map<String, String> headers = getHeadersFromSettingsAndEnvironment(settings, System::getenv);
 
-    if (settings.getQuotaProjectId() != null) {
-      // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
-      // QuotaProjectIdHidingCredentials.
-      // Ensure that a custom set quota project id takes priority over one detected by credentials.
-      // Avoid the backend receiving possibly conflict values of quotaProjectId
-      credentials = new QuotaProjectIdHidingCredentials(credentials);
+    boolean hasApiKey = headers.containsKey(API_KEY_HEADER_KEY);
+    if (!hasApiKey) {
+      credentials = settings.getCredentialsProvider().getCredentials();
+
+      if (settings.getQuotaProjectId() != null) {
+        // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
+        // QuotaProjectIdHidingCredentials.
+        // Ensure that a custom set quota project id takes priority over one detected by
+        // credentials.
+        // Avoid the backend receiving possibly conflict values of quotaProjectId
+        credentials = new QuotaProjectIdHidingCredentials(credentials);
+      }
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
@@ -186,11 +222,11 @@ public abstract class ClientContext {
     if (transportChannelProvider.needsExecutor() && settings.getExecutorProvider() != null) {
       transportChannelProvider = transportChannelProvider.withExecutor(backgroundExecutor);
     }
-    Map<String, String> headers = getHeadersFromSettings(settings);
+
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
-    if (transportChannelProvider.needsCredentials() && credentials != null) {
+    if (!hasApiKey && transportChannelProvider.needsCredentials()) {
       transportChannelProvider = transportChannelProvider.withCredentials(credentials);
     }
     String endpoint =
@@ -260,7 +296,8 @@ public abstract class ClientContext {
    * Getting a header map from HeaderProvider and InternalHeaderProvider from settings with Quota
    * Project Id.
    */
-  private static Map<String, String> getHeadersFromSettings(StubSettings settings) {
+  private static Map<String, String> getHeadersFromSettingsAndEnvironment(
+      StubSettings settings, EnvironmentProvider environmentProvider) throws IOException {
     // Resolve conflicts when merging headers from multiple sources
     Map<String, String> userHeaders = settings.getHeaderProvider().getHeaders();
     Map<String, String> internalHeaders = settings.getInternalHeaderProvider().getHeaders();
@@ -286,6 +323,7 @@ public abstract class ClientContext {
     effectiveHeaders.putAll(internalHeaders);
     effectiveHeaders.putAll(userHeaders);
     effectiveHeaders.putAll(conflictResolution);
+    addApiKeyToHeaders(settings, environmentProvider, effectiveHeaders);
 
     return ImmutableMap.copyOf(effectiveHeaders);
   }

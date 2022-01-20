@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -41,6 +42,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.rpc.internal.EnvironmentProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider.MtlsEndpointUsagePolicy;
 import com.google.api.gax.rpc.testing.FakeChannel;
@@ -54,6 +56,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -176,7 +179,7 @@ public class ClientContextTest {
 
     @Override
     public TransportChannel getTransportChannel() throws IOException {
-      if (needsCredentials()) {
+      if (needsCredentials() && !headers.containsKey("x-goog-api-key")) {
         throw new IllegalStateException("Needs Credentials");
       }
       transport.setExecutor(executor);
@@ -768,5 +771,74 @@ public class ClientContextTest {
     context = ClientContext.create(builder.build());
     transportChannel = (FakeTransportChannel) context.getTransportChannel();
     assertThat(transportChannel.getExecutor()).isSameInstanceAs(executorProvider.getExecutor());
+  }
+
+  @Test
+  public void testAddApiKeyToHeadersFromStubSettings() throws IOException {
+    StubSettings settings = new FakeStubSettings.Builder().setApiKey("stub-setting-key").build();
+    EnvironmentProvider environmentProvider =
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : null;
+    Map<String, String> headers = new HashMap<>();
+    ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
+    assertThat(headers).containsEntry("x-goog-api-key", "stub-setting-key");
+  }
+
+  @Test
+  public void testAddApiKeyToHeadersFromEnvironmentProvider() throws IOException {
+    StubSettings settings = new FakeStubSettings.Builder().build();
+    EnvironmentProvider environmentProvider =
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : null;
+    Map<String, String> headers = new HashMap<>();
+    ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
+    assertThat(headers).containsEntry("x-goog-api-key", "env-key");
+  }
+
+  @Test
+  public void testAddApiKeyToHeadersNoApiKey() throws IOException {
+    StubSettings settings = new FakeStubSettings.Builder().build();
+    EnvironmentProvider environmentProvider = name -> null;
+    Map<String, String> headers = new HashMap<>();
+    ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
+    assertThat(headers).doesNotContainKey("x-goog-api-key");
+  }
+
+  @Test
+  public void testAddApiKeyToHeadersThrows() throws IOException {
+    StubSettings settings = new FakeStubSettings.Builder().build();
+    EnvironmentProvider environmentProvider =
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : "/path/to/adc/json";
+    Map<String, String> headers = new HashMap<>();
+    Exception ex =
+        assertThrows(
+            IOException.class,
+            () -> ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers));
+    assertThat(ex)
+        .hasMessageThat()
+        .contains(
+            "Environment variables GOOGLE_API_KEY and GOOGLE_APPLICATION_CREDENTIALS are mutually exclusive");
+  }
+
+  @Test
+  public void testApiKey() throws IOException {
+    FakeStubSettings.Builder builder = new FakeStubSettings.Builder();
+
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, null, true, null, null);
+    builder.setTransportChannelProvider(transportProvider);
+
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of());
+    builder.setHeaderProvider(headerProvider);
+
+    // Set API key.
+    builder.setApiKey("key");
+
+    ClientContext context = ClientContext.create(builder.build());
+
+    // Check API key is in the transport channel's header.
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
+    assertThat(fakeTransportChannel.getHeaders()).containsEntry("x-goog-api-key", "key");
   }
 }
