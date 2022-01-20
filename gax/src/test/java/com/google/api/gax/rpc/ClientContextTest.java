@@ -793,8 +793,7 @@ public class ClientContextTest {
     EnvironmentProvider environmentProvider = new FakeEnvironmentProvider("env-key", null);
     Map<String, String> headers = new HashMap<>();
     ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
-    assertTrue(headers.containsKey("x-goog-api-key"));
-    assertEquals("stub-setting-key", headers.get("x-goog-api-key"));
+    assertThat(headers).containsEntry("x-goog-api-key", "stub-setting-key");
   }
 
   @Test
