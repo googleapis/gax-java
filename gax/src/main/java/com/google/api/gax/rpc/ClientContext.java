@@ -37,7 +37,6 @@ import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.internal.EnvironmentProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
-import com.google.api.gax.rpc.internal.SystemEnvironmentProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.BaseApiTracerFactory;
@@ -200,8 +199,7 @@ public abstract class ClientContext {
     final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
     Credentials credentials = null;
-    Map<String, String> headers =
-        getHeadersFromSettingsAndEnvironment(settings, new SystemEnvironmentProvider());
+    Map<String, String> headers = getHeadersFromSettingsAndEnvironment(settings, System::getenv);
 
     boolean hasApiKey = headers.containsKey(API_KEY_HEADER_KEY);
     if (!hasApiKey) {

@@ -203,21 +203,6 @@ public class ClientContextTest {
     }
   }
 
-  private static class FakeEnvironmentProvider implements EnvironmentProvider {
-    final String apiKey;
-    final String applicationCredentials;
-
-    @Override
-    public String getenv(String name) {
-      return name.equals("GOOGLE_API_KEY") ? apiKey : applicationCredentials;
-    }
-
-    FakeEnvironmentProvider(String apiKey, String applicationCredentials) {
-      this.apiKey = apiKey;
-      this.applicationCredentials = applicationCredentials;
-    }
-  }
-
   @Test
   public void testNoAutoCloseContextNeedsNoExecutor() throws Exception {
     runTest(false, false, false, false);
@@ -791,7 +776,9 @@ public class ClientContextTest {
   @Test
   public void testAddApiKeyToHeadersFromStubSettings() throws IOException {
     StubSettings settings = new FakeStubSettings.Builder().setApiKey("stub-setting-key").build();
-    EnvironmentProvider environmentProvider = new FakeEnvironmentProvider("env-key", null);
+    EnvironmentProvider environmentProvider =
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : null;
+    ;
     Map<String, String> headers = new HashMap<>();
     ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
     assertThat(headers).containsEntry("x-goog-api-key", "stub-setting-key");
@@ -800,27 +787,28 @@ public class ClientContextTest {
   @Test
   public void testAddApiKeyToHeadersFromEnvironmentProvider() throws IOException {
     StubSettings settings = new FakeStubSettings.Builder().build();
-    EnvironmentProvider environmentProvider = new FakeEnvironmentProvider("env-key", null);
+    EnvironmentProvider environmentProvider =
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : null;
+    ;
     Map<String, String> headers = new HashMap<>();
     ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
-    assertTrue(headers.containsKey("x-goog-api-key"));
-    assertEquals("env-key", headers.get("x-goog-api-key"));
+    assertThat(headers).containsEntry("x-goog-api-key", "env-key");
   }
 
   @Test
   public void testAddApiKeyToHeadersNoApiKey() throws IOException {
     StubSettings settings = new FakeStubSettings.Builder().build();
-    EnvironmentProvider environmentProvider = new FakeEnvironmentProvider(null, null);
+    EnvironmentProvider environmentProvider = name -> null;
     Map<String, String> headers = new HashMap<>();
     ClientContext.addApiKeyToHeaders(settings, environmentProvider, headers);
-    assertFalse(headers.containsKey("x-goog-api-key"));
+    assertThat(headers).doesNotContainKey("x-goog-api-key");
   }
 
   @Test
   public void testAddApiKeyToHeadersThrows() throws IOException {
     StubSettings settings = new FakeStubSettings.Builder().build();
     EnvironmentProvider environmentProvider =
-        new FakeEnvironmentProvider("env-key", "/path/to/adc/json");
+        name -> name.equals("GOOGLE_API_KEY") ? "env-key" : "/path/to/adc/json";
     Map<String, String> headers = new HashMap<>();
     Exception ex =
         assertThrows(
@@ -853,7 +841,6 @@ public class ClientContextTest {
     // Check API key is in the transport channel's header.
     List<BackgroundResource> resources = context.getBackgroundResources();
     FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
-    assertTrue(fakeTransportChannel.getHeaders().containsKey("x-goog-api-key"));
-    assertEquals("key", fakeTransportChannel.getHeaders().get("x-goog-api-key"));
+    assertThat(fakeTransportChannel.getHeaders()).containsEntry("x-goog-api-key", "key");
   }
 }
