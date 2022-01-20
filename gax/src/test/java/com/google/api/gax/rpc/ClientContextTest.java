@@ -843,7 +843,7 @@ public class ClientContextTest {
     builder.setTransportChannelProvider(transportProvider);
 
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
-    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.<String, String>of());
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of());
     builder.setHeaderProvider(headerProvider);
 
     // Set API key.
