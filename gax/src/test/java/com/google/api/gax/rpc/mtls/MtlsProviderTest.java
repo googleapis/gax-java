@@ -47,25 +47,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class MtlsProviderTest {
-  static class TestEnvironmentProvider implements MtlsProvider.EnvironmentProvider {
-    private final String useClientCertificate;
-    private final String useMtlsEndpoint;
-
-    TestEnvironmentProvider(String useClientCertificate, String useMtlsEndpoint) {
-      this.useClientCertificate = useClientCertificate;
-      this.useMtlsEndpoint = useMtlsEndpoint;
-    }
-
-    @Override
-    public String getenv(String name) {
-      if (name.equals("GOOGLE_API_USE_MTLS_ENDPOINT")) {
-        return useMtlsEndpoint;
-      }
-      return useClientCertificate;
-    }
-  }
-
-  static class TestCertProviderCommandProcess extends Process {
+  private static class TestCertProviderCommandProcess extends Process {
     private boolean runForever;
     private int exitValue;
 
@@ -123,7 +105,7 @@ public class MtlsProviderTest {
   public void testUseMtlsEndpointAlways() {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("false", "always"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "always" : "false",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertEquals(
@@ -134,7 +116,7 @@ public class MtlsProviderTest {
   public void testUseMtlsEndpointAuto() {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("false", "auto"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "auto" : "false",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertEquals(
@@ -145,7 +127,7 @@ public class MtlsProviderTest {
   public void testUseMtlsEndpointNever() {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("false", "never"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "never" : "false",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertEquals(
@@ -156,7 +138,7 @@ public class MtlsProviderTest {
   public void testUseMtlsClientCertificateTrue() {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("true", "auto"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "auto" : "true",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertTrue(mtlsProvider.useMtlsClientCertificate());
@@ -166,7 +148,7 @@ public class MtlsProviderTest {
   public void testUseMtlsClientCertificateFalse() {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("false", "auto"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "auto" : "false",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertFalse(mtlsProvider.useMtlsClientCertificate());
@@ -176,7 +158,7 @@ public class MtlsProviderTest {
   public void testGetKeyStore() throws IOException {
     MtlsProvider mtlsProvider =
         new MtlsProvider(
-            new TestEnvironmentProvider("false", "always"),
+            name -> name.equals("GOOGLE_API_USE_MTLS_ENDPOINT") ? "always" : "false",
             new TestProcessProvider(0),
             "/path/to/missing/file");
     assertNull(mtlsProvider.getKeyStore());
