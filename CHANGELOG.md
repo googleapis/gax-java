@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.0](https://github.com/googleapis/gax-java/compare/v2.9.0...v2.10.0) (2022-01-21)
+
+
+### Features
+
+* add api key support ([#1436](https://github.com/googleapis/gax-java/issues/1436)) ([5081ec6](https://github.com/googleapis/gax-java/commit/5081ec6541da8ca3f5a4c0d20aa75bd20010a642))
+* introduce HttpJsonClientCall, Listeners infrastructure and ServerStreaming support in REST transport ([#1599](https://github.com/googleapis/gax-java/issues/1599)) ([3c97529](https://github.com/googleapis/gax-java/commit/3c97529b8bd0e8141c5d722f887cb7ae1ed30b69))
+
 ## [2.9.0](https://github.com/googleapis/gax-java/compare/v2.8.1...v2.9.0) (2022-01-14)
 
 
