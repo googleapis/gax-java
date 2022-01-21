@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
+/**
+ * HTTP status code in RuntimeException form, for propagating status code information via
+ * exceptions.
+ */
+public class HttpJsonStatusRuntimeException extends RuntimeException {
+  private static final long serialVersionUID = -5390915748330242256L;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+  private final int statusCode;
 
-  @Deprecated
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+  public HttpJsonStatusRuntimeException(int statusCode, String message, Throwable cause) {
+    super(message, cause);
+    this.statusCode = statusCode;
+  }
+
+  public int getStatusCode() {
+    return statusCode;
+  }
 }
