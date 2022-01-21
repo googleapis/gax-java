@@ -34,6 +34,7 @@ import com.google.api.client.json.JsonParser;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.SecurityUtils;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.internal.EnvironmentProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
@@ -50,17 +51,6 @@ import java.util.List;
  */
 @BetaApi
 public class MtlsProvider {
-  interface EnvironmentProvider {
-    String getenv(String name);
-  }
-
-  static class SystemEnvironmentProvider implements EnvironmentProvider {
-    @Override
-    public String getenv(String name) {
-      return System.getenv(name);
-    }
-  }
-
   interface ProcessProvider {
     public Process createProcess(InputStream metadata) throws IOException;
   }
@@ -103,10 +93,7 @@ public class MtlsProvider {
   }
 
   public MtlsProvider() {
-    this(
-        new SystemEnvironmentProvider(),
-        new DefaultProcessProvider(),
-        DEFAULT_CONTEXT_AWARE_METADATA_PATH);
+    this(System::getenv, new DefaultProcessProvider(), DEFAULT_CONTEXT_AWARE_METADATA_PATH);
   }
 
   /**
