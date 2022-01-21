@@ -146,7 +146,7 @@ public abstract class HttpJsonClientCall<RequestT, ResponseT> {
    * Close the call for request message sending. Incoming response messages are unaffected. This
    * should be called when no more messages will be sent from the client.
    */
-  public void halfClose() {}
+  public abstract void halfClose();
 
   /**
    * Send a request message to the server. May be called zero or more times but for unary and server

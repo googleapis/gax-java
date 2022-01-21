@@ -49,9 +49,9 @@ import javax.annotation.concurrent.GuardedBy;
 
 /**
  * This class servers as main implementation of {@link HttpJsonClientCall} for rest transport and is
- * expected to be used for every rest call. It currently supports unary and server-streaming
+ * expected to be used for every REST call. It currently supports unary and server-streaming
  * workflows. The overall behavior and surface of the class mimics as close as possible behavior of
- * a corresponding ClientCall implementations in gRPC transport.
+ * the corresponding ClientCall implementation in gRPC transport.
  *
  * <p>This class is thread-safe.
  *
