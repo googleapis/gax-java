@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0](https://github.com/googleapis/gax-java/compare/v2.8.1...v2.9.0) (2022-01-14)
+
+
+### Features
+
+* pass a CallCredentials to grpc-java for DirectPath ([#1488](https://github.com/googleapis/gax-java/issues/1488)) ([4a7713a](https://github.com/googleapis/gax-java/commit/4a7713ad683e70380087437d6b52cbe3e115d1fb))
+
 ### [2.8.1](https://www.github.com/googleapis/gax-java/compare/v2.8.0...v2.8.1) (2022-01-06)
 
 

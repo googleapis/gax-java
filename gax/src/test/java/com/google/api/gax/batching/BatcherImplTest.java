@@ -868,6 +868,8 @@ public class BatcherImplTest {
                   batcher.add(1);
                 }
               });
+      // Add a little delay ensuring that the next step starts after batcher.add(1)
+      Thread.sleep(10);
       executor.submit(
           () -> {
             try {
