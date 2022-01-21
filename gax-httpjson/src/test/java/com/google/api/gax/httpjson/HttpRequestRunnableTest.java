@@ -31,19 +31,14 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.pathtemplate.PathTemplate;
-import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
-import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -51,39 +46,20 @@ import java.util.Set;
 import java.util.TreeMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threeten.bp.Instant;
+import org.mockito.Mockito;
 
 public class HttpRequestRunnableTest {
-  private static HttpJsonCallOptions fakeCallOptions;
   private static CatMessage catMessage;
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
   private static HttpRequestFormatter<CatMessage> catFormatter;
   private static HttpResponseParser<EmptyMessage> catParser;
-  private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
-  private static Set<String> queryParams =
+  private static final PathTemplate nameTemplate = PathTemplate.create("name/{name}");
+  private static final Set<String> queryParams =
       Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
 
   @SuppressWarnings("unchecked")
   @BeforeClass
   public static void setUp() {
-    fakeCallOptions =
-        new HttpJsonCallOptions() {
-          @Override
-          public Instant getDeadline() {
-            return null;
-          }
-
-          @Override
-          public Credentials getCredentials() {
-            return null;
-          }
-
-          @Override
-          public TypeRegistry getTypeRegistry() {
-            return null;
-          }
-        };
-
     catMessage =
         new CatMessage(
             ImmutableMap.of(
@@ -131,23 +107,7 @@ public class HttpRequestRunnableTest {
           }
         };
 
-    catParser =
-        new HttpResponseParser<EmptyMessage>() {
-          @Override
-          public EmptyMessage parse(InputStream httpContent) {
-            return null;
-          }
-
-          @Override
-          public EmptyMessage parse(InputStream httpContent, TypeRegistry registry) {
-            return null;
-          }
-
-          @Override
-          public String serialize(EmptyMessage response) {
-            return null;
-          }
-        };
+    catParser = Mockito.mock(HttpResponseParser.class);
   }
 
   @Test
@@ -161,15 +121,14 @@ public class HttpRequestRunnableTest {
             .build();
 
     HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
-        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
-            .setHttpJsonCallOptions(fakeCallOptions)
-            .setEndpoint(ENDPOINT)
-            .setRequest(catMessage)
-            .setApiMethodDescriptor(methodDescriptor)
-            .setHttpTransport(new MockHttpTransport())
-            .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.create())
-            .build();
+        new HttpRequestRunnable<>(
+            catMessage,
+            methodDescriptor,
+            ENDPOINT,
+            HttpJsonCallOptions.newBuilder().build(),
+            new MockHttpTransport(),
+            HttpJsonMetadata.newBuilder().build(),
+            (result) -> {});
 
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
@@ -188,15 +147,15 @@ public class HttpRequestRunnableTest {
             .build();
 
     HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
-        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
-            .setHttpJsonCallOptions(fakeCallOptions)
-            .setEndpoint("www.googleapis.com/animals/v1/projects")
-            .setRequest(catMessage)
-            .setApiMethodDescriptor(methodDescriptor)
-            .setHttpTransport(new MockHttpTransport())
-            .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.create())
-            .build();
+        new HttpRequestRunnable<>(
+            catMessage,
+            methodDescriptor,
+            "www.googleapis.com/animals/v1/projects",
+            HttpJsonCallOptions.newBuilder().build(),
+            new MockHttpTransport(),
+            HttpJsonMetadata.newBuilder().build(),
+            (result) -> {});
+
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl =
@@ -217,15 +176,15 @@ public class HttpRequestRunnableTest {
             .build();
 
     HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
-        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
-            .setHttpJsonCallOptions(fakeCallOptions)
-            .setEndpoint("www.googleapis.com/animals/v1/projects")
-            .setRequest(catMessage)
-            .setApiMethodDescriptor(methodDescriptor)
-            .setHttpTransport(new MockHttpTransport())
-            .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.create())
-            .build();
+        new HttpRequestRunnable<>(
+            catMessage,
+            methodDescriptor,
+            "www.googleapis.com/animals/v1/projects",
+            HttpJsonCallOptions.newBuilder().build(),
+            new MockHttpTransport(),
+            HttpJsonMetadata.newBuilder().build(),
+            (result) -> {});
+
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl =

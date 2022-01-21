@@ -40,6 +40,8 @@ import org.threeten.bp.Instant;
 @BetaApi
 @AutoValue
 public abstract class HttpJsonCallOptions {
+  public static final HttpJsonCallOptions DEFAULT = newBuilder().build();
+
   @Nullable
   public abstract Instant getDeadline();
 
@@ -49,8 +51,35 @@ public abstract class HttpJsonCallOptions {
   @Nullable
   public abstract TypeRegistry getTypeRegistry();
 
+  public abstract Builder toBuilder();
+
   public static Builder newBuilder() {
     return new AutoValue_HttpJsonCallOptions.Builder();
+  }
+
+  public HttpJsonCallOptions merge(HttpJsonCallOptions inputOptions) {
+    if (inputOptions == null) {
+      return this;
+    }
+
+    Builder builder = this.toBuilder();
+
+    Instant newDeadline = inputOptions.getDeadline();
+    if (newDeadline != null) {
+      builder.setDeadline(newDeadline);
+    }
+
+    Credentials newCredentials = inputOptions.getCredentials();
+    if (newCredentials != null) {
+      builder.setCredentials(newCredentials);
+    }
+
+    TypeRegistry newTypeRegistry = inputOptions.getTypeRegistry();
+    if (newTypeRegistry != null) {
+      builder.setTypeRegistry(newTypeRegistry);
+    }
+
+    return builder.build();
   }
 
   @AutoValue.Builder
