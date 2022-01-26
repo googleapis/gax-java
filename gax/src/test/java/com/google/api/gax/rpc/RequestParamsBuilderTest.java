@@ -79,8 +79,7 @@ public class RequestParamsBuilderTest {
 
   @Test
   public void add_nullFieldValue() {
-    Map<String, String> actual =
-        getRoutingHeaders("table_location", "projects/**", null);
+    Map<String, String> actual = getRoutingHeaders("table_location", "projects/**", null);
     assertThat(actual).isEmpty();
   }
 
