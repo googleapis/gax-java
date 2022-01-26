@@ -263,20 +263,9 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
-    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        channelBuilder -> {
-          if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
-            assertThat(channelBuilder).isInstanceOf(ComputeEngineChannelBuilder.class);
-          } else {
-            assertThat(channelBuilder).isNotInstanceOf(ComputeEngineChannelBuilder.class);
-          }
-          return channelBuilder;
-        };
-
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .setAttemptDirectPath(true)
-            .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())

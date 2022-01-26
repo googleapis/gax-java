@@ -36,10 +36,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -86,15 +83,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
   /**
    * Deserializes a {@code message} from an input stream to a protobuf message.
    *
-   * @param message the input stream with a JSON-encoded message in it
-   * @param messageCharset the message charset
+   * @param json the input reader with a JSON-encoded message in it
    * @param builder an empty builder for the specific {@code RequestT} message to serialize
    * @throws RestSerializationException if failed to deserialize a protobuf message from the JSON
    *     stream
    */
   @SuppressWarnings("unchecked")
-  RequestT fromJson(InputStream message, Charset messageCharset, Message.Builder builder) {
-    try (Reader json = new InputStreamReader(message, messageCharset)) {
+  RequestT fromJson(Reader json, Message.Builder builder) {
+    try {
       JsonFormat.parser().usingTypeRegistry(registry).ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {

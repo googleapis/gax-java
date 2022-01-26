@@ -36,6 +36,9 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
@@ -48,9 +51,9 @@ public interface HttpJsonStubCallableFactory<
    * code.
    *
    * @param httpJsonCallSettings the http/json call settings
-   * @param callSettings {@link UnaryCallSettings} to configure the method-level settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
+   * @param callSettings {@link UnaryCallSettings} to configure the method-level settings with
+   * @param clientContext {@link ClientContext} to use to connect to the service
+   * @return {@link UnaryCallable} callable object
    */
   <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
@@ -62,9 +65,9 @@ public interface HttpJsonStubCallableFactory<
    * generated code.
    *
    * @param httpJsonCallSettings the http/json call settings
-   * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
+   * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with
+   * @param clientContext {@link ClientContext} to use to connect to the service
+   * @return {@link UnaryCallable} callable object
    */
   <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
@@ -78,19 +81,46 @@ public interface HttpJsonStubCallableFactory<
    *
    * @param httpJsonCallSettings the http/json call settings
    * @param batchingCallSettings {@link BatchingCallSettings} to configure the batching related
-   *     settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
+   *     settings with
+   * @param clientContext {@link ClientContext} to use to connect to the service
+   * @return {@link UnaryCallable} callable object
    */
   <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext);
 
+  /**
+   * Creates a callable object that represents a long-running operation. Designed for use by
+   * generated code.
+   *
+   * @param httpJsonCallSettings the http/json call settings
+   * @param operationCallSettings {@link OperationCallSettings} to configure the method-level
+   *     settings with
+   * @param clientContext {@link ClientContext} to use to connect to the service
+   * @param operationsStub opertation stub to use to poll for updates on the Operation
+   * @return {@link OperationCallable} callable object
+   */
   <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           HttpJsonCallSettings<RequestT, OperationT> httpJsonCallSettings,
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,
           OperationsStub operationsStub);
+
+  /**
+   * Create a server-streaming callable with. Designed for use by generated code.
+   *
+   * @param httpJsonCallSettings the gRPC call settings
+   * @param callSettings {@link StreamingCallSettings} to configure the method-level settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   */
+  default <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+          ClientContext clientContext) {
+    return HttpJsonCallableFactory.createServerStreamingCallable(
+        httpJsonCallSettings, callSettings, clientContext);
+  }
 }

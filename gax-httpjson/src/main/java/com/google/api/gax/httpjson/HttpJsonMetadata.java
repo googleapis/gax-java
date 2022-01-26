@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,18 +29,39 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
+import com.google.auto.value.AutoValue;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.Nullable;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
+@AutoValue
 @BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+@InternalExtensionOnly
+public abstract class HttpJsonMetadata {
+  public abstract Map<String, Object> getHeaders();
 
-  @Deprecated
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+  @Nullable
+  public abstract String getStatusMessage();
+
+  @Nullable
+  public abstract Throwable getException();
+
+  public abstract Builder toBuilder();
+
+  public static HttpJsonMetadata.Builder newBuilder() {
+    return new AutoValue_HttpJsonMetadata.Builder().setHeaders(Collections.emptyMap());
+  }
+
+  @AutoValue.Builder
+  abstract static class Builder {
+    abstract Builder setHeaders(Map<String, Object> headers);
+
+    public abstract Builder setStatusMessage(String value);
+
+    public abstract Builder setException(Throwable value);
+
+    abstract HttpJsonMetadata build();
+  }
 }

@@ -67,7 +67,7 @@ public class HttpJsonOperationSnapshotTest {
             .build();
 
     assertEquals(testOperationSnapshot.getErrorMessage(), "Forbidden");
-    assertEquals(testOperationSnapshot.getErrorCode(), HttpJsonStatusCode.of(403, "Forbidden"));
+    assertEquals(testOperationSnapshot.getErrorCode(), HttpJsonStatusCode.of(403));
     assertTrue(testOperationSnapshot.isDone());
   }
 

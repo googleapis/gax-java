@@ -138,10 +138,9 @@ public class HttpJsonOperationSnapshot implements OperationSnapshot {
       return this;
     }
 
-    public Builder setError(int errorCode, String errorMessage) {
+    public Builder setError(int httpStatus, String errorMessage) {
       this.errorCode =
-          HttpJsonStatusCode.of(
-              errorCode == 0 ? Code.OK.getHttpStatusCode() : errorCode, errorMessage);
+          httpStatus == 0 ? HttpJsonStatusCode.of(Code.OK) : HttpJsonStatusCode.of(httpStatus);
       this.errorMessage = errorMessage;
       return this;
     }

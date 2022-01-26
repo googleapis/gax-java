@@ -297,8 +297,8 @@ public class HttpJsonOperationsStub extends OperationsStub {
   }
 
   @InternalApi
-  public static List<ApiMethodDescriptor<?, ?>> getMethodDescriptors() {
-    List<ApiMethodDescriptor<?, ?>> methodDescriptors = new ArrayList<>();
+  public static List<ApiMethodDescriptor> getMethodDescriptors() {
+    List<ApiMethodDescriptor> methodDescriptors = new ArrayList<>();
     methodDescriptors.add(listOperationsMethodDescriptor);
     methodDescriptors.add(getOperationMethodDescriptor);
     methodDescriptors.add(deleteOperationMethodDescriptor);

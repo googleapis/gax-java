@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
+package com.google.api.gax.rpc.internal;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
-
-  @Deprecated
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+/** Provides an interface to provide the environment variable values. */
+@InternalExtensionOnly
+public interface EnvironmentProvider {
+  /** Returns the environment variable value. */
+  String getenv(String name);
 }

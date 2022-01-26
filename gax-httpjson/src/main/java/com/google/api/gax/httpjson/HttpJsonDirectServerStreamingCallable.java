@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,47 +29,41 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
-import com.google.protobuf.TypeRegistry;
 
 /**
- * {@code HttpJsonDirectCallable} creates HTTP calls.
+ * {@code HttpJsonDirectServerStreamingCallable} creates server-streaming REST calls.
+ *
+ * <p>In a chain of {@link ServerStreamingCallable}s this is the innermost callable. It wraps a
+ * {@link HttpJsonClientCall} in a {@link StreamController} and the downstream {@link
+ * ResponseObserver} in a {@link HttpJsonClientCall.Listener}. This class is implemented to look and
+ * behave as similarly as possible to gRPC variant of it.
  *
  * <p>Package-private for internal use.
  */
-class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+class HttpJsonDirectServerStreamingCallable<RequestT, ResponseT>
+    extends ServerStreamingCallable<RequestT, ResponseT> {
+
   private final ApiMethodDescriptor<RequestT, ResponseT> descriptor;
-  private final TypeRegistry typeRegistry;
 
-  HttpJsonDirectCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
-    this(descriptor, null);
-  }
-
-  HttpJsonDirectCallable(
-      ApiMethodDescriptor<RequestT, ResponseT> descriptor, TypeRegistry typeRegistry) {
+  HttpJsonDirectServerStreamingCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
     this.descriptor = descriptor;
-    this.typeRegistry = typeRegistry;
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+
     Preconditions.checkNotNull(request);
-    HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
+    Preconditions.checkNotNull(responseObserver);
 
-    context =
-        context.withCallOptions(
-            context.getCallOptions().toBuilder().setTypeRegistry(typeRegistry).build());
-
-    HttpJsonClientCall<RequestT, ResponseT> clientCall =
-        HttpJsonClientCalls.newCall(descriptor, context);
-    return HttpJsonClientCalls.eagerFutureUnaryCall(clientCall, request);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("direct(%s)", descriptor);
+    HttpJsonClientCall<RequestT, ResponseT> call = HttpJsonClientCalls.newCall(descriptor, context);
+    HttpJsonDirectStreamController<RequestT, ResponseT> controller =
+        new HttpJsonDirectStreamController<>(call, responseObserver);
+    controller.start(request);
   }
 }

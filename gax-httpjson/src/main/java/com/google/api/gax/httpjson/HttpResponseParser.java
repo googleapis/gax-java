@@ -33,6 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
+import java.io.Reader;
 
 /** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
 @InternalExtensionOnly
@@ -50,12 +51,22 @@ public interface HttpResponseParser<MessageFormatT> {
   /**
    * Parse the http body content JSON stream into the MessageFormatT.
    *
-   * @param httpContent the body of an HTTP response
+   * @param httpContent the body of an HTTP response, represented as an {@link InputStream}
    * @param registry type registry with Any fields descriptors
    * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
    *     MessageFormatT}
    */
   MessageFormatT parse(InputStream httpContent, TypeRegistry registry);
+
+  /**
+   * Parse the http body content JSON reader into the MessageFormatT.
+   *
+   * @param httpContent the body of an HTTP response, represented as a {@link Reader}
+   * @param registry type registry with Any fields descriptors
+   * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
+   *     MessageFormatT}
+   */
+  MessageFormatT parse(Reader httpContent, TypeRegistry registry);
 
   /**
    * Serialize an object into an HTTP body, which is written out to output.

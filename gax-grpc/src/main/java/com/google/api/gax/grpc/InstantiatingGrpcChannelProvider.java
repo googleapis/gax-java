@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.internal.EnvironmentProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
@@ -47,12 +48,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import io.grpc.CallCredentials;
 import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.TlsChannelCredentials;
-import io.grpc.alts.ComputeEngineChannelBuilder;
+import io.grpc.alts.GoogleDefaultChannelCredentials;
+import io.grpc.auth.MoreCallCredentials;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -95,6 +98,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final Executor executor;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  // TODO: remove. envProvider currently provides DirectPath environment variable, and is only used
+  // during initial rollout for DirectPath. This provider will be removed once the DirectPath
+  // environment is not used.
   private final EnvironmentProvider envProvider;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
@@ -336,12 +342,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (isDirectPathEnabled(serviceAddress)
         && isNonDefaultServiceAccountAllowed()
         && isOnComputeEngine()) {
+      CallCredentials callCreds = MoreCallCredentials.from(credentials);
+      ChannelCredentials channelCreds =
+          GoogleDefaultChannelCredentials.newBuilder().callCredentials(callCreds).build();
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
         // google-c2p resolver target must not have a port number
-        builder = ComputeEngineChannelBuilder.forTarget("google-c2p:///" + serviceAddress);
+        builder =
+            Grpc.newChannelBuilder("google-c2p-experimental:///" + serviceAddress, channelCreds);
       } else {
-        builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+        builder = Grpc.newChannelBuilderForAddress(serviceAddress, port, channelCreds);
         builder.defaultServiceConfig(directPathServiceConfig);
       }
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
@@ -460,7 +470,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
-      envProvider = DirectPathEnvironmentProvider.getInstance();
+      envProvider = System::getenv;
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -748,33 +758,5 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           String.format("invalid endpoint, expecting \"<host>:<port>\""));
     }
     Integer.parseInt(endpoint.substring(colon + 1));
-  }
-
-  /**
-   * EnvironmentProvider currently provides DirectPath environment variable, and is only used during
-   * initial rollout for DirectPath. This interface will be removed once the DirectPath environment
-   * is not used.
-   */
-  interface EnvironmentProvider {
-    @Nullable
-    String getenv(String env);
-  }
-
-  static class DirectPathEnvironmentProvider implements EnvironmentProvider {
-    private static DirectPathEnvironmentProvider provider;
-
-    private DirectPathEnvironmentProvider() {}
-
-    public static DirectPathEnvironmentProvider getInstance() {
-      if (provider == null) {
-        provider = new DirectPathEnvironmentProvider();
-      }
-      return provider;
-    }
-
-    @Override
-    public String getenv(String env) {
-      return System.getenv(env);
-    }
   }
 }

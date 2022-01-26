@@ -55,6 +55,7 @@ import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -105,6 +106,11 @@ public class MockHttpServiceTest {
         }
 
         @Override
+        public PetMessage parse(Reader httpContent, TypeRegistry registry) {
+          return null;
+        }
+
+        @Override
         public String serialize(PetMessage response) {
           return ((List<String>) response.getFieldValue("type")).get(0);
         }
@@ -143,7 +149,7 @@ public class MockHttpServiceTest {
           .setResponseParser(PET_RESPONSE_PARSER)
           .build();
 
-  private static final List<ApiMethodDescriptor<?, ?>> SERVER_METHOD_DESCRIPTORS =
+  private static final List<ApiMethodDescriptor> SERVER_METHOD_DESCRIPTORS =
       Lists.newArrayList(methodDescriptor);
 
   private static MockHttpService testService =

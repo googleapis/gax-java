@@ -1,5 +1,59 @@
 # Changelog
 
+## [2.10.0](https://github.com/googleapis/gax-java/compare/v2.9.0...v2.10.0) (2022-01-21)
+
+
+### Features
+
+* add api key support ([#1436](https://github.com/googleapis/gax-java/issues/1436)) ([5081ec6](https://github.com/googleapis/gax-java/commit/5081ec6541da8ca3f5a4c0d20aa75bd20010a642))
+* introduce HttpJsonClientCall, Listeners infrastructure and ServerStreaming support in REST transport ([#1599](https://github.com/googleapis/gax-java/issues/1599)) ([3c97529](https://github.com/googleapis/gax-java/commit/3c97529b8bd0e8141c5d722f887cb7ae1ed30b69))
+
+## [2.9.0](https://github.com/googleapis/gax-java/compare/v2.8.1...v2.9.0) (2022-01-14)
+
+
+### Features
+
+* pass a CallCredentials to grpc-java for DirectPath ([#1488](https://github.com/googleapis/gax-java/issues/1488)) ([4a7713a](https://github.com/googleapis/gax-java/commit/4a7713ad683e70380087437d6b52cbe3e115d1fb))
+
+### [2.8.1](https://www.github.com/googleapis/gax-java/compare/v2.8.0...v2.8.1) (2022-01-06)
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to 2.1.2 ([#1590](https://www.github.com/googleapis/gax-java/issues/1590)) ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+* update dependency com.google.auto.value:auto-value to v1.9 ([1b34870](https://www.github.com/googleapis/gax-java/commit/1b34870358a26bd4542594b6c746dca190f65d24))
+
+## [2.8.0](https://www.github.com/googleapis/gax-java/compare/v2.7.1...v2.8.0) (2022-01-06)
+
+
+### Features
+
+* update DirectPath xds scheme ([#1585](https://www.github.com/googleapis/gax-java/issues/1585)) ([7915f85](https://www.github.com/googleapis/gax-java/commit/7915f850313ddfdf35332d976d2567f31c2aa8a7))
+
+
+### Dependencies
+
+* update dependency com.google.api.grpc:proto-google-common-protos to v2.7.1 ([#1587](https://www.github.com/googleapis/gax-java/issues/1587)) ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.http-client:google-http-client-bom to v1.41.0 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* update dependency com.google.protobuf:protobuf-bom to v3.19.2 ([eb0e9d1](https://www.github.com/googleapis/gax-java/commit/eb0e9d106a64af5f583d75d7291cdc17652fd5e7))
+* upgrade common-protos to 2.7.0 ([#1579](https://www.github.com/googleapis/gax-java/issues/1579)) ([0a10f5f](https://www.github.com/googleapis/gax-java/commit/0a10f5fe77ab26b3ac7d4c590360945ead72eca1))
+
+### [2.7.1](https://www.github.com/googleapis/gax-java/compare/v2.7.0...v2.7.1) (2021-12-02)
+
+
+### Bug Fixes
+
+* fix gRPC code conversion ([#1555](https://www.github.com/googleapis/gax-java/issues/1555)) ([09b99d5](https://www.github.com/googleapis/gax-java/commit/09b99d591497b44c3c25b1a54abb0f1cb69d7376))
+* pass error message when creating ApiException ([#1556](https://www.github.com/googleapis/gax-java/issues/1556)) ([918ae41](https://www.github.com/googleapis/gax-java/commit/918ae419f84ad5721638ca10eca992333e9f7c3d))
+* revert generics syntax change in MockHttpService test utility ([#1574](https://www.github.com/googleapis/gax-java/issues/1574)) ([b629488](https://www.github.com/googleapis/gax-java/commit/b629488ffc7d68158158d9197695158f97229c7b))
+* update exception mapping on HTTP error responses ([#1570](https://www.github.com/googleapis/gax-java/issues/1570)) ([8a170d1](https://www.github.com/googleapis/gax-java/commit/8a170d19b42e9b13d4c69dcfbe531d4d4ca69c90))
+
+
+### Dependencies
+
+* update grpc to 1.42.1 ([#1559](https://www.github.com/googleapis/gax-java/issues/1559)) ([92b7632](https://www.github.com/googleapis/gax-java/commit/92b76325d54604c98c798c489b3a963fdf21a75c))
+* upgrade protobuf to 3.19.1 ([#1571](https://www.github.com/googleapis/gax-java/issues/1571)) ([7b354e7](https://www.github.com/googleapis/gax-java/commit/7b354e73b8ce49008bed51076afb255ca5dc68e4))
+
 ## [2.7.0](https://www.github.com/googleapis/gax-java/compare/v2.6.0...v2.7.0) (2021-11-03)
 
 
