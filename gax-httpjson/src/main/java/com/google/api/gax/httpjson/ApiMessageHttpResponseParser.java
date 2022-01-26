@@ -40,6 +40,7 @@ import com.google.gson.stream.JsonWriter;
 import com.google.protobuf.TypeRegistry;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
@@ -91,23 +92,26 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
 
   @Override
   public ResponseT parse(InputStream httpResponseBody) {
+    return parse(httpResponseBody, null);
+  }
+
+  @Override
+  public ResponseT parse(InputStream httpResponseBody, TypeRegistry registry) {
+    return parse(new InputStreamReader(httpResponseBody, StandardCharsets.UTF_8), registry);
+  }
+
+  @Override
+  public ResponseT parse(Reader httpResponseBody, TypeRegistry registry) {
     if (getResponseInstance() == null) {
       return null;
     } else {
       Type responseType = getResponseInstance().getClass();
       try {
-        return getResponseMarshaller()
-            .fromJson(
-                new InputStreamReader(httpResponseBody, StandardCharsets.UTF_8), responseType);
+        return getResponseMarshaller().fromJson(httpResponseBody, responseType);
       } catch (JsonIOException | JsonSyntaxException e) {
         throw new RestSerializationException(e);
       }
     }
-  }
-
-  @Override
-  public ResponseT parse(InputStream httpResponseBody, TypeRegistry registry) {
-    return parse(httpResponseBody);
   }
 
   @Override

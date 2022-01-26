@@ -98,6 +98,10 @@ public abstract class HttpJsonTransportChannel implements TransportChannel {
     return new AutoValue_HttpJsonTransportChannel.Builder();
   }
 
+  public static HttpJsonTransportChannel create(ManagedHttpJsonChannel channel) {
+    return newBuilder().setManagedChannel(channel).build();
+  }
+
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setManagedChannel(ManagedHttpJsonChannel value);

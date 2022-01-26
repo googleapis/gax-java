@@ -41,11 +41,10 @@ import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -187,12 +186,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   private TransportChannel createChannel() throws IOException, GeneralSecurityException {
-    Map<String, String> headers = headerProvider.getHeaders();
-
-    List<HttpJsonHeaderEnhancer> headerEnhancers = Lists.newArrayList();
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      headerEnhancers.add(HttpJsonHeaderEnhancers.create(header.getKey(), header.getValue()));
-    }
+    Map<String, Object> headers = new HashMap<>(headerProvider.getHeaders());
 
     HttpTransport httpTransportToUse = httpTransport;
     if (httpTransportToUse == null) {
@@ -202,7 +196,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     ManagedHttpJsonChannel channel =
         ManagedHttpJsonChannel.newBuilder()
             .setEndpoint(endpoint)
-            .setHeaderEnhancers(headerEnhancers)
+            .setDefaultHeaders(HttpJsonMetadata.newBuilder().setHeaders(headers).build())
             .setExecutor(executor)
             .setHttpTransport(httpTransportToUse)
             .build();

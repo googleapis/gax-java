@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode.Code;
+import java.util.Set;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+/**
+ * Transforms all {@code Throwable}s thrown during a rest call into an instance of {@link
+ * ApiException}.
+ *
+ * <p>Package-private for internal use.
+ */
+class HttpJsonExceptionServerStreamingCallable<RequestT, ResponseT>
+    extends ServerStreamingCallable<RequestT, ResponseT> {
+  private final ServerStreamingCallable<RequestT, ResponseT> inner;
+  private final HttpJsonApiExceptionFactory exceptionFactory;
 
-  @Deprecated
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+  public HttpJsonExceptionServerStreamingCallable(
+      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
+    this.inner = inner;
+    this.exceptionFactory = new HttpJsonApiExceptionFactory(retryableCodes);
+  }
+
+  @Override
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+    inner.call(
+        request,
+        new HttpJsonExceptionResponseObserver<>(responseObserver, exceptionFactory),
+        context);
+  }
 }

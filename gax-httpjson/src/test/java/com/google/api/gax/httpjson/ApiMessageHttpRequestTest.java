@@ -30,17 +30,13 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceName;
 import com.google.api.resourcenames.ResourceNameFactory;
-import com.google.auth.Credentials;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
-import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -48,29 +44,15 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.Test;
-import org.threeten.bp.Instant;
+import org.mockito.Mockito;
 
 public class ApiMessageHttpRequestTest {
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
-  private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
+  private static final PathTemplate nameTemplate = PathTemplate.create("name/{name}");
 
-  private static HttpJsonCallOptions fakeCallOptions =
-      new HttpJsonCallOptions() {
-        @Override
-        public Instant getDeadline() {
-          return null;
-        }
-
-        @Override
-        public Credentials getCredentials() {
-          return null;
-        }
-
-        @Override
-        public TypeRegistry getTypeRegistry() {
-          return null;
-        }
-      };
+  @SuppressWarnings("unchecked")
+  private static final HttpResponseParser<EmptyMessage> responseParser =
+      Mockito.mock(HttpResponseParser.class);
 
   @Test
   public void testFieldMask() throws IOException {
@@ -149,18 +131,18 @@ public class ApiMessageHttpRequestTest {
             .setFullMethodName("house.details.get")
             .setHttpMethod(null)
             .setRequestFormatter(frogFormatter)
+            .setResponseParser(responseParser)
             .build();
 
-    HttpRequestRunnable httpRequestRunnable =
-        HttpRequestRunnable.<InsertFrogRequest, EmptyMessage>newBuilder()
-            .setHttpJsonCallOptions(fakeCallOptions)
-            .setEndpoint(ENDPOINT)
-            .setRequest(insertFrogRequest)
-            .setApiMethodDescriptor(apiMethodDescriptor)
-            .setHttpTransport(new MockHttpTransport())
-            .setJsonFactory(new GsonFactory())
-            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
-            .build();
+    HttpRequestRunnable<InsertFrogRequest, EmptyMessage> httpRequestRunnable =
+        new HttpRequestRunnable<>(
+            insertFrogRequest,
+            apiMethodDescriptor,
+            ENDPOINT,
+            HttpJsonCallOptions.newBuilder().build(),
+            new MockHttpTransport(),
+            HttpJsonMetadata.newBuilder().build(),
+            (result) -> {});
 
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     String expectedUrl = ENDPOINT + "name/tree_frog" + "?requestId=request57";

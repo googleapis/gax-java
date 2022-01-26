@@ -37,12 +37,18 @@ import javax.annotation.Nullable;
 @AutoValue
 /* Method descriptor for messages to be transmitted over HTTP. */
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
+  public enum MethodType {
+    UNARY,
+    CLIENT_STREAMING,
+    SERVER_STREAMING,
+    BIDI_STREAMING,
+    UNKNOWN;
+  }
 
   public abstract String getFullMethodName();
 
   public abstract HttpRequestFormatter<RequestT> getRequestFormatter();
 
-  @Nullable
   public abstract HttpResponseParser<ResponseT> getResponseParser();
 
   /** Return the HTTP method for this request message type. */
@@ -55,8 +61,11 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   @Nullable
   public abstract PollingRequestFactory<RequestT> getPollingRequestFactory();
 
+  public abstract MethodType getType();
+
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new AutoValue_ApiMethodDescriptor.Builder<RequestT, ResponseT>();
+    return new AutoValue_ApiMethodDescriptor.Builder<RequestT, ResponseT>()
+        .setType(MethodType.UNARY);
   }
 
   @AutoValue.Builder
@@ -77,6 +86,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
     public abstract Builder<RequestT, ResponseT> setPollingRequestFactory(
         PollingRequestFactory<RequestT> pollingRequestFactory);
+
+    public abstract Builder<RequestT, ResponseT> setType(MethodType type);
 
     public abstract ApiMethodDescriptor<RequestT, ResponseT> build();
   }

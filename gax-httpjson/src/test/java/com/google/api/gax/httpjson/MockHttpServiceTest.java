@@ -55,6 +55,7 @@ import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -102,6 +103,11 @@ public class MockHttpServiceTest {
         @Override
         public PetMessage parse(InputStream httpContent, TypeRegistry registry) {
           return parse(httpContent);
+        }
+
+        @Override
+        public PetMessage parse(Reader httpContent, TypeRegistry registry) {
+          return null;
         }
 
         @Override
