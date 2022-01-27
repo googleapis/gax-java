@@ -11,7 +11,7 @@ plugins {
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.10.1-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "2.11.0" // {x-version-update:gax:current}
 
 allprojects {
   group = 'com.google.api'

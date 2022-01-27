@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.11.0](https://github.com/googleapis/gax-java/compare/v2.10.0...v2.11.0) (2022-01-27)
+
+
+### Features
+
+* Add a builder to handle the common logic of extracting routing header values from request ([#1598](https://github.com/googleapis/gax-java/issues/1598)) ([2836baa](https://github.com/googleapis/gax-java/commit/2836baafa1114761cffbfdd4aee2322a4a931f8f))
+
+
+### Dependencies
+
+* update dependency com_google_protobuf to 3.19.3 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api:api-common to 2.1.3 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api.grpc:grpc-google-common-protos to 2.7.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api.grpc:proto-google-common-protos to 2.7.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.errorprone:error_prone_annotations to v2.11.0 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.http-client:google-http-client to 1.41.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.http-client:google-http-client-gson to 1.41.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency io_grpc to 1.44.0 ([#1610](https://github.com/googleapis/gax-java/issues/1610)) ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+
 ## [2.10.0](https://github.com/googleapis/gax-java/compare/v2.9.0...v2.10.0) (2022-01-21)
 
 
