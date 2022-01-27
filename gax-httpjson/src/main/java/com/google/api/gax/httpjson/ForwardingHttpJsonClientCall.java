@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,10 +30,59 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import javax.annotation.Nullable;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
+/**
+ * A {@link HttpJsonClientCall} which forwards all of its methods to another {@link
+ * HttpJsonClientCall}.
+ */
 @BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+public abstract class ForwardingHttpJsonClientCall<RequestT, ResponseT>
+    extends HttpJsonClientCall<RequestT, ResponseT> {
+
+  protected abstract HttpJsonClientCall<RequestT, ResponseT> delegate();
+
+  @Override
+  public void start(Listener<ResponseT> responseListener, HttpJsonMetadata requestHeaders) {
+    delegate().start(responseListener, requestHeaders);
+  }
+
+  @Override
+  public void request(int numMessages) {
+    delegate().request(numMessages);
+  }
+
+  @Override
+  public void cancel(@Nullable String message, @Nullable Throwable cause) {
+    delegate().cancel(message, cause);
+  }
+
+  @Override
+  public void halfClose() {
+    delegate().halfClose();
+  }
+
+  @Override
+  public void sendMessage(RequestT message) {
+    delegate().sendMessage(message);
+  }
+
+  /**
+   * A simplified version of {@link ForwardingHttpJsonClientCall} where subclasses can pass in a
+   * {@link HttpJsonClientCall} as the delegate.
+   */
+  public abstract static class SimpleForwardingHttpJsonClientCall<RequestT, ResponseT>
+      extends ForwardingHttpJsonClientCall<RequestT, ResponseT> {
+
+    private final HttpJsonClientCall<RequestT, ResponseT> delegate;
+
+    protected SimpleForwardingHttpJsonClientCall(HttpJsonClientCall<RequestT, ResponseT> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    protected HttpJsonClientCall<RequestT, ResponseT> delegate() {
+      return delegate;
+    }
+  }
 }

@@ -34,13 +34,11 @@ import com.google.api.gax.httpjson.ApiMethodDescriptor.MethodType;
 import com.google.api.gax.httpjson.HttpRequestRunnable.ResultListener;
 import com.google.api.gax.httpjson.HttpRequestRunnable.RunnableResult;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
@@ -48,7 +46,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * This class servers as main implementation of {@link HttpJsonClientCall} for rest transport and is
+ * This class serves as main implementation of {@link HttpJsonClientCall} for REST transport and is
  * expected to be used for every REST call. It currently supports unary and server-streaming
  * workflows. The overall behavior and surface of the class mimics as close as possible behavior of
  * the corresponding ClientCall implementation in gRPC transport.
@@ -90,7 +88,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
   private final HttpTransport httpTransport;
   private final Executor executor;
-  private final HttpJsonMetadata defaultHeaders;
 
   //
   // Request-specific data (provided by client code) before we get a response.
@@ -124,15 +121,13 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
       String endpoint,
       HttpJsonCallOptions callOptions,
       HttpTransport httpTransport,
-      Executor executor,
-      HttpJsonMetadata defaultHeaders) {
+      Executor executor) {
     this.methodDescriptor = methodDescriptor;
     this.endpoint = endpoint;
     this.callOptions = callOptions;
     this.httpTransport = httpTransport;
     this.executor = executor;
     this.closed = false;
-    this.defaultHeaders = defaultHeaders;
   }
 
   @Override
@@ -164,12 +159,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
       }
       Preconditions.checkState(this.listener == null, "The call is already started");
       this.listener = responseListener;
-      Map<String, Object> mergedHeaders =
-          ImmutableMap.<String, Object>builder()
-              .putAll(defaultHeaders.getHeaders())
-              .putAll(requestHeaders.getHeaders())
-              .build();
-      this.requestHeaders = requestHeaders.toBuilder().setHeaders(mergedHeaders).build();
+      this.requestHeaders = requestHeaders;
     }
   }
 

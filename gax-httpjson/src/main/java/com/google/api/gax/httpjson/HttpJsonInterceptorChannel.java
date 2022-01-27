@@ -29,11 +29,29 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.ApiFuture;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+class HttpJsonInterceptorChannel implements HttpJsonChannel {
+  private final HttpJsonChannel channel;
+  private final HttpJsonClientInterceptor interceptor;
+
+  public HttpJsonInterceptorChannel(
+      HttpJsonChannel channel, HttpJsonClientInterceptor interceptor) {
+    this.channel = channel;
+    this.interceptor = interceptor;
+  }
+
+  @Override
+  public <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions) {
+    return interceptor.interceptCall(methodDescriptor, callOptions, channel);
+  }
+
+  @Deprecated
+  public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
+      HttpJsonCallOptions callOptions,
+      RequestT request,
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    throw new UnsupportedOperationException();
+  }
 }

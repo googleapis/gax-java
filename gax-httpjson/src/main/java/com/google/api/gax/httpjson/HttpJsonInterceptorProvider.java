@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,10 +30,17 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import java.util.List;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+/** Provider of custom REST ClientInterceptors. */
+@BetaApi(
+    "The surface for adding custom interceptors is not stable yet and may change in the future.")
+public interface HttpJsonInterceptorProvider {
+
+  /**
+   * Get the list of client interceptors.
+   *
+   * @return interceptors
+   */
+  List<HttpJsonClientInterceptor> getInterceptors();
 }
