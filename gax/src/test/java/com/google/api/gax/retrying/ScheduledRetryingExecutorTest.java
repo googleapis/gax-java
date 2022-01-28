@@ -186,7 +186,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
     }
   }
 
-  @Test // TODO: flaky???
+  @Test
   public void testCancelGetAttempt() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
