@@ -14,6 +14,11 @@
     <version>2.11.1-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
   </parent>
 
+  <properties>
+    <!-- Skip breaking changes checking against previous version while gax-httpjson is not GA -->
+    <clirr.skip>true</clirr.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.google.api</groupId>
