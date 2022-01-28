@@ -56,7 +56,7 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class HttpJsonClientInterceptorTest {
   private static class CapturingClientInterceptor implements HttpJsonClientInterceptor {
-    // Manually capturing arguments instaead of using Mockito. This is intentional, as this
+    // Manually capturing arguments instead of using Mockito. This is intentional, as this
     // specific test interceptor class represents a typical interceptor implementation. Doing the
     // same with mocks will simply make this whole test less readable.
     private volatile HttpJsonMetadata capturedResponseHeaders;
