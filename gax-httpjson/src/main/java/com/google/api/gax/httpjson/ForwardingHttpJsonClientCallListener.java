@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,13 +27,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
+/**
+ * A {@link HttpJsonClientCall.Listener} which forwards all of its methods to another {@link
+ * HttpJsonClientCall.Listener}.
+ */
 @BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+public abstract class ForwardingHttpJsonClientCallListener<ResponseT>
+    extends HttpJsonClientCall.Listener<ResponseT> {
+
+  protected abstract HttpJsonClientCall.Listener<ResponseT> delegate();
+
+  @Override
+  public void onHeaders(HttpJsonMetadata responseHeaders) {
+    delegate().onHeaders(responseHeaders);
+  }
+
+  @Override
+  public void onMessage(ResponseT message) {
+    delegate().onMessage(message);
+  }
+
+  @Override
+  public void onClose(int statusCode, HttpJsonMetadata trailers) {
+    delegate().onClose(statusCode, trailers);
+  }
+
+  /**
+   * A simplified version of {@link ForwardingHttpJsonClientCallListener} where subclasses can pass
+   * in a {@link HttpJsonClientCall.Listener} as the delegate.
+   */
+  public abstract static class SimpleForwardingHttpJsonClientCallListener<ResponseT>
+      extends ForwardingHttpJsonClientCallListener<ResponseT> {
+
+    private final HttpJsonClientCall.Listener<ResponseT> delegate;
+
+    protected SimpleForwardingHttpJsonClientCallListener(
+        HttpJsonClientCall.Listener<ResponseT> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    protected HttpJsonClientCall.Listener<ResponseT> delegate() {
+      return delegate;
+    }
+  }
 }

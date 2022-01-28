@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,11 +29,41 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.httpjson.ForwardingHttpJsonClientCall.SimpleForwardingHttpJsonClientCall;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+/**
+ * An interceptor to handle custom headers.
+ *
+ * <p>Package-private for internal usage.
+ */
+class HttpJsonHeaderInterceptor implements HttpJsonClientInterceptor {
+
+  private final Map<String, String> staticHeaders;
+
+  public HttpJsonHeaderInterceptor(Map<String, String> staticHeaders) {
+    this.staticHeaders = staticHeaders;
+  }
+
+  @Override
+  public <ReqT, RespT> HttpJsonClientCall<ReqT, RespT> interceptCall(
+      ApiMethodDescriptor<ReqT, RespT> method,
+      final HttpJsonCallOptions callOptions,
+      HttpJsonChannel next) {
+    HttpJsonClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
+    return new SimpleForwardingHttpJsonClientCall<ReqT, RespT>(call) {
+      @Override
+      public void start(
+          HttpJsonClientCall.Listener<RespT> responseListener, HttpJsonMetadata headers) {
+        Map<String, Object> mergedHeaders =
+            ImmutableMap.<String, Object>builder()
+                .putAll(headers.getHeaders())
+                .putAll(staticHeaders)
+                .build();
+
+        super.start(responseListener, headers.toBuilder().setHeaders(mergedHeaders).build());
+      }
+    };
+  }
 }

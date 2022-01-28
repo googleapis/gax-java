@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,9 +31,25 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
+/**
+ * Interface for intercepting outgoing calls before they are dispatched by a {@link
+ * HttpJsonChannel}.
+ *
+ * <p>The interceptor may be called for multiple {@link HttpJsonClientCall calls} by one or more
+ * threads without completing the previous ones first. The implementations must be thread-safe.
+ */
 @BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+public interface HttpJsonClientInterceptor {
+  /**
+   * Intercept {@link HttpJsonClientCall} creation by the {@code next} {@link HttpJsonChannel}.
+   *
+   * @param method the remote method to be called
+   * @param callOptions the runtime options to be applied to this call
+   * @param next the channel which is being intercepted
+   * @return the call object for the remote operation, never {@code null}
+   */
+  <ReqT, RespT> HttpJsonClientCall<ReqT, RespT> interceptCall(
+      ApiMethodDescriptor<ReqT, RespT> method,
+      HttpJsonCallOptions callOptions,
+      HttpJsonChannel next);
 }
