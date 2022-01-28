@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.0](https://github.com/googleapis/gax-java/compare/v2.11.0...v2.12.0) (2022-01-28)
+
+
+### Features
+
+* add REST interceptors infrastructure ([#1607](https://github.com/googleapis/gax-java/issues/1607)) ([0572eed](https://github.com/googleapis/gax-java/commit/0572eed8aa29879c74794b22e8ae79e414dd5821))
+
 ## [2.11.0](https://github.com/googleapis/gax-java/compare/v2.10.0...v2.11.0) (2022-01-27)
 
 
