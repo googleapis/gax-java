@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,10 +30,54 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import java.util.concurrent.TimeUnit;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
 @BetaApi
-public interface HttpJsonChannel {
-  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
+class ManagedHttpJsonInterceptorChannel extends ManagedHttpJsonChannel {
+
+  private final ManagedHttpJsonChannel channel;
+  private final HttpJsonClientInterceptor interceptor;
+
+  ManagedHttpJsonInterceptorChannel(
+      ManagedHttpJsonChannel channel, HttpJsonClientInterceptor interceptor) {
+    super();
+    this.channel = channel;
+    this.interceptor = interceptor;
+  }
+
+  @Override
+  public <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions) {
+    return interceptor.interceptCall(methodDescriptor, callOptions, channel);
+  }
+
+  @Override
+  public synchronized void shutdown() {
+    channel.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return channel.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return channel.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    channel.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return channel.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() {
+    channel.close();
+  }
 }

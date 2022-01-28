@@ -48,7 +48,6 @@ import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.type.Color;
 import com.google.type.Money;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -131,17 +130,15 @@ public class HttpJsonDirectServerStreamingCallableTest {
   }
 
   @Before
-  public void setUp() throws InstantiationException, IllegalAccessException, IOException {
+  public void setUp() {
     ManagedHttpJsonChannel channel =
-        ManagedHttpJsonChannel.newBuilder()
-            .setEndpoint("google.com:443")
-            .setDefaultHeaders(
-                HttpJsonMetadata.newBuilder()
-                    .setHeaders(Collections.singletonMap("header-key", "headerValue"))
-                    .build())
-            .setExecutor(executorService)
-            .setHttpTransport(MOCK_SERVICE)
-            .build();
+        new ManagedHttpJsonInterceptorChannel(
+            ManagedHttpJsonChannel.newBuilder()
+                .setEndpoint("google.com:443")
+                .setExecutor(executorService)
+                .setHttpTransport(MOCK_SERVICE)
+                .build(),
+            new HttpJsonHeaderInterceptor(Collections.singletonMap("header-key", "headerValue")));
 
     clientContext =
         ClientContext.newBuilder()

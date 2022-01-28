@@ -31,7 +31,6 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -45,25 +44,25 @@ import javax.annotation.Nullable;
 /** Implementation of HttpJsonChannel which can issue http-json calls. */
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
+
   private static final ExecutorService DEFAULT_EXECUTOR =
       InstantiatingExecutorProvider.newBuilder().build().getExecutor();
 
   private final Executor executor;
   private final String endpoint;
-  private final HttpJsonMetadata defaultHeaders;
   private final HttpTransport httpTransport;
 
   private boolean isTransportShutdown;
 
+  protected ManagedHttpJsonChannel() {
+    this(null, null, null);
+  }
+
   private ManagedHttpJsonChannel(
-      Executor executor,
-      String endpoint,
-      @Nullable HttpTransport httpTransport,
-      HttpJsonMetadata defaultHeaders) {
+      Executor executor, String endpoint, @Nullable HttpTransport httpTransport) {
     this.executor = executor;
     this.endpoint = endpoint;
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
-    this.defaultHeaders = defaultHeaders;
   }
 
   @Override
@@ -71,18 +70,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions) {
 
     return new HttpJsonClientCallImpl<>(
-        methodDescriptor, endpoint, callOptions, httpTransport, executor, defaultHeaders);
-  }
-
-  @Override
-  @Deprecated
-  public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-
-    return HttpJsonClientCalls.eagerFutureUnaryCall(
-        newCall(methodDescriptor, callOptions), request);
+        methodDescriptor, endpoint, callOptions, httpTransport, executor);
   }
 
   @Override
@@ -123,15 +111,13 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public void close() {}
 
   public static Builder newBuilder() {
-    return new Builder()
-        .setDefaultHeaders(HttpJsonMetadata.newBuilder().build())
-        .setExecutor(DEFAULT_EXECUTOR);
+    return new Builder().setExecutor(DEFAULT_EXECUTOR);
   }
 
   public static class Builder {
+
     private Executor executor;
     private String endpoint;
-    private HttpJsonMetadata defaultHeaders;
     private HttpTransport httpTransport;
 
     private Builder() {}
@@ -146,11 +132,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       return this;
     }
 
-    public Builder setDefaultHeaders(HttpJsonMetadata defaultHeaders) {
-      this.defaultHeaders = defaultHeaders;
-      return this;
-    }
-
     public Builder setHttpTransport(HttpTransport httpTransport) {
       this.httpTransport = httpTransport;
       return this;
@@ -158,7 +139,9 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
     public ManagedHttpJsonChannel build() {
       Preconditions.checkNotNull(endpoint);
-      return new ManagedHttpJsonChannel(executor, endpoint, httpTransport, defaultHeaders);
+
+      return new ManagedHttpJsonChannel(
+          executor, endpoint, httpTransport == null ? new NetHttpTransport() : httpTransport);
     }
   }
 }
