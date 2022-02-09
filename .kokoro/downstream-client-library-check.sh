@@ -53,7 +53,8 @@ cd ..
 mvn verify install -B -V -ntp -fae \
 -DskipTests=true \
 -Dmaven.javadoc.skip=true \
--Dgcloud.download.skip=true
+-Dgcloud.download.skip=true \
+-Denforcer.skip=true
 
 # Namespace (xmlns) prevents xmllint from specifying tag names in XPath
 SHARED_DEPS_VERSION=$( sed -e 's/xmlns=".*"//' pom.xml | xmllint --xpath '/project/version/text()' - )
@@ -87,4 +88,5 @@ fi
 
 mvn verify install -B -V -ntp -fae \
 -Dmaven.javadoc.skip=true \
--Dgcloud.download.skip=true
+-Dgcloud.download.skip=true \
+-Denforcer.skip=true
