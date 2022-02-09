@@ -31,14 +31,12 @@ package com.google.api.gax.httpjson;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.client.http.HttpResponseException;
+import com.google.api.gax.httpjson.ForwardingHttpJsonClientCall.SimpleForwardingHttpJsonClientCall;
+import com.google.api.gax.httpjson.ForwardingHttpJsonClientCallListener.SimpleForwardingHttpJsonClientCallListener;
 import com.google.api.gax.httpjson.testing.MockHttpService;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
-import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +54,50 @@ import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class HttpJsonDirectCallableTest {
+public class HttpJsonClientInterceptorTest {
+  private static class CapturingClientInterceptor implements HttpJsonClientInterceptor {
+    // Manually capturing arguments instead of using Mockito. This is intentional, as this
+    // specific test interceptor class represents a typical interceptor implementation. Doing the
+    // same with mocks will simply make this whole test less readable.
+    private volatile HttpJsonMetadata capturedResponseHeaders;
+    private volatile Object capturedMessage;
+    private volatile int capturedStatusCode;
+
+    @Override
+    public <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> interceptCall(
+        ApiMethodDescriptor<RequestT, ResponseT> method,
+        HttpJsonCallOptions callOptions,
+        HttpJsonChannel next) {
+      HttpJsonClientCall<RequestT, ResponseT> call = next.newCall(method, callOptions);
+      return new SimpleForwardingHttpJsonClientCall<RequestT, ResponseT>(call) {
+        @Override
+        public void start(Listener<ResponseT> responseListener, HttpJsonMetadata requestHeaders) {
+          Listener<ResponseT> forwardingResponseListener =
+              new SimpleForwardingHttpJsonClientCallListener<ResponseT>(responseListener) {
+                @Override
+                public void onHeaders(HttpJsonMetadata responseHeaders) {
+                  capturedResponseHeaders = responseHeaders;
+                  super.onHeaders(responseHeaders);
+                }
+
+                @Override
+                public void onMessage(ResponseT message) {
+                  capturedMessage = message;
+                  super.onMessage(message);
+                }
+
+                @Override
+                public void onClose(int statusCode, HttpJsonMetadata trailers) {
+                  capturedStatusCode = statusCode;
+                  super.onClose(statusCode, trailers);
+                }
+              };
+
+          super.start(forwardingResponseListener, requestHeaders);
+        }
+      };
+    }
+  }
 
   private static final ApiMethodDescriptor<Field, Field> FAKE_METHOD_DESCRIPTOR =
       ApiMethodDescriptor.<Field, Field>newBuilder()
@@ -93,16 +134,10 @@ public class HttpJsonDirectCallableTest {
   private static final MockHttpService MOCK_SERVICE =
       new MockHttpService(Collections.singletonList(FAKE_METHOD_DESCRIPTOR), "google.com:443");
 
-  private final ManagedHttpJsonChannel channel =
-      new ManagedHttpJsonInterceptorChannel(
-          ManagedHttpJsonChannel.newBuilder()
-              .setEndpoint("google.com:443")
-              .setExecutor(executorService)
-              .setHttpTransport(MOCK_SERVICE)
-              .build(),
-          new HttpJsonHeaderInterceptor(Collections.singletonMap("header-key", "headerValue")));
-
   private static ExecutorService executorService;
+
+  private CapturingClientInterceptor interceptor;
+  private ManagedHttpJsonChannel channel;
 
   @BeforeClass
   public static void initialize() {
@@ -121,13 +156,28 @@ public class HttpJsonDirectCallableTest {
     executorService.shutdownNow();
   }
 
+  @Before
+  public void setUp() throws IOException {
+    interceptor = new CapturingClientInterceptor();
+    channel =
+        InstantiatingHttpJsonChannelProvider.newBuilder()
+            .setEndpoint("google.com:443")
+            .setExecutor(executorService)
+            .setHttpTransport(MOCK_SERVICE)
+            .setHeaderProvider(() -> Collections.singletonMap("header-key", "headerValue"))
+            .setInterceptorProvider(() -> Collections.singletonList(interceptor))
+            .build()
+            .getTransportChannel()
+            .getManagedChannel();
+  }
+
   @After
   public void tearDown() {
     MOCK_SERVICE.reset();
   }
 
   @Test
-  public void testSuccessfulUnaryResponse() throws ExecutionException, InterruptedException {
+  public void testCustomInterceptor() throws ExecutionException, InterruptedException {
     HttpJsonDirectCallable<Field, Field> callable =
         new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
@@ -151,40 +201,17 @@ public class HttpJsonDirectCallableTest {
 
     Field actualResponse = callable.futureCall(request, callContext).get();
 
+    // Test that the interceptors did not affect normal execution
     assertThat(actualResponse).isEqualTo(expectedResponse);
     assertThat(MOCK_SERVICE.getRequestPaths().size()).isEqualTo(1);
     String headerValue = MOCK_SERVICE.getRequestHeaders().get("header-key").iterator().next();
+
+    // Test that internal interceptor worked (the one which inserts headers)
     assertThat(headerValue).isEqualTo("headerValue");
-  }
 
-  @Test
-  public void testErrorUnaryResponse() throws InterruptedException {
-    HttpJsonDirectCallable<Field, Field> callable =
-        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
-
-    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
-
-    Field request;
-    request =
-        Field.newBuilder() // "echo" service
-            .setName("imTheBestField")
-            .setNumber(2)
-            .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
-            .setDefaultValue("blah")
-            .build();
-
-    ApiException exception =
-        ApiExceptionFactory.createException(
-            new Exception(), FakeStatusCode.of(Code.NOT_FOUND), false);
-    MOCK_SERVICE.addException(exception);
-
-    try {
-      callable.futureCall(request, callContext).get();
-      Assert.fail("No exception raised");
-    } catch (ExecutionException e) {
-      HttpResponseException respExp = (HttpResponseException) e.getCause();
-      assertThat(respExp.getStatusCode()).isEqualTo(400);
-      assertThat(respExp.getContent()).isEqualTo(exception.toString());
-    }
+    // Test that the custom interceptor was called
+    assertThat(interceptor.capturedStatusCode).isEqualTo(200);
+    assertThat(interceptor.capturedResponseHeaders).isNotNull();
+    assertThat(interceptor.capturedMessage).isEqualTo(request);
   }
 }

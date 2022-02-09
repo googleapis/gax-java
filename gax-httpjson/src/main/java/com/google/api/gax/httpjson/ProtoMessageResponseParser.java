@@ -32,7 +32,10 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /** The implementation of {@link HttpResponseParser} which works with protobuf messages. */
@@ -48,23 +51,31 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
     this.defaultRegistry = defaultRegistry;
   }
 
-  public static <RequestT extends Message>
-      ProtoMessageResponseParser.Builder<RequestT> newBuilder() {
-    return new ProtoMessageResponseParser.Builder<RequestT>()
+  public static <ResponseT extends Message>
+      ProtoMessageResponseParser.Builder<ResponseT> newBuilder() {
+    return new ProtoMessageResponseParser.Builder<ResponseT>()
         .setDefaultTypeRegistry(TypeRegistry.getEmptyTypeRegistry());
   }
 
   /* {@inheritDoc} */
   @Override
   public ResponseT parse(InputStream httpContent) {
-    return ProtoRestSerializer.<ResponseT>create(defaultRegistry)
-        .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
+    return parse(httpContent, defaultRegistry);
   }
 
   @Override
   public ResponseT parse(InputStream httpContent, TypeRegistry registry) {
+    try (Reader json = new InputStreamReader(httpContent, StandardCharsets.UTF_8)) {
+      return parse(json, registry);
+    } catch (IOException e) {
+      throw new RestSerializationException("Failed to parse response message", e);
+    }
+  }
+
+  @Override
+  public ResponseT parse(Reader httpContent, TypeRegistry registry) {
     return ProtoRestSerializer.<ResponseT>create(registry)
-        .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
+        .fromJson(httpContent, defaultInstance.newBuilderForType());
   }
 
   /* {@inheritDoc} */

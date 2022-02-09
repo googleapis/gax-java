@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,82 +30,54 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
-import com.google.api.gax.rpc.TransportChannel;
-import com.google.auto.value.AutoValue;
 import java.util.concurrent.TimeUnit;
 
-/** Implementation of TransportChannel based on http/json. */
-@AutoValue
 @BetaApi
-@InternalExtensionOnly
-public abstract class HttpJsonTransportChannel implements TransportChannel {
+class ManagedHttpJsonInterceptorChannel extends ManagedHttpJsonChannel {
 
-  /** The name of the Http-JSON transport. */
-  public static String getHttpJsonTransportName() {
-    return "httpjson";
+  private final ManagedHttpJsonChannel channel;
+  private final HttpJsonClientInterceptor interceptor;
+
+  ManagedHttpJsonInterceptorChannel(
+      ManagedHttpJsonChannel channel, HttpJsonClientInterceptor interceptor) {
+    super();
+    this.channel = channel;
+    this.interceptor = interceptor;
   }
 
   @Override
-  public String getTransportName() {
-    return getHttpJsonTransportName();
+  public <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions) {
+    return interceptor.interceptCall(methodDescriptor, callOptions, channel);
   }
 
   @Override
-  public HttpJsonCallContext getEmptyCallContext() {
-    return HttpJsonCallContext.createDefault();
-  }
-
-  /** The channel in use. */
-  public abstract ManagedHttpJsonChannel getManagedChannel();
-
-  /** The channel in use. */
-  public HttpJsonChannel getChannel() {
-    return getManagedChannel();
-  }
-
-  @Override
-  public void shutdown() {
-    getManagedChannel().shutdown();
+  public synchronized void shutdown() {
+    channel.shutdown();
   }
 
   @Override
   public boolean isShutdown() {
-    return getManagedChannel().isShutdown();
+    return channel.isShutdown();
   }
 
   @Override
   public boolean isTerminated() {
-    return getManagedChannel().isTerminated();
+    return channel.isTerminated();
   }
 
   @Override
   public void shutdownNow() {
-    getManagedChannel().shutdownNow();
+    channel.shutdownNow();
   }
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
-    return getManagedChannel().awaitTermination(duration, unit);
+    return channel.awaitTermination(duration, unit);
   }
 
   @Override
   public void close() {
-    getManagedChannel().shutdown();
-  }
-
-  public static Builder newBuilder() {
-    return new AutoValue_HttpJsonTransportChannel.Builder();
-  }
-
-  public static HttpJsonTransportChannel create(ManagedHttpJsonChannel channel) {
-    return newBuilder().setManagedChannel(channel).build();
-  }
-
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder setManagedChannel(ManagedHttpJsonChannel value);
-
-    public abstract HttpJsonTransportChannel build();
+    channel.close();
   }
 }

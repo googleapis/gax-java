@@ -1,5 +1,46 @@
 # Changelog
 
+### [2.12.1](https://github.com/googleapis/gax-java/compare/v2.12.0...v2.12.1) (2022-02-09)
+
+
+### Bug Fixes
+
+* revert "feat: add api key support ([#1436](https://github.com/googleapis/gax-java/issues/1436))" ([#1617](https://github.com/googleapis/gax-java/issues/1617)) ([47f98b8](https://github.com/googleapis/gax-java/commit/47f98b872c6896ad2af37e30db440321c2adb492))
+
+## [2.12.0](https://github.com/googleapis/gax-java/compare/v2.11.0...v2.12.0) (2022-01-28)
+
+
+### Features
+
+* add REST interceptors infrastructure ([#1607](https://github.com/googleapis/gax-java/issues/1607)) ([0572eed](https://github.com/googleapis/gax-java/commit/0572eed8aa29879c74794b22e8ae79e414dd5821))
+
+## [2.11.0](https://github.com/googleapis/gax-java/compare/v2.10.0...v2.11.0) (2022-01-27)
+
+
+### Features
+
+* Add a builder to handle the common logic of extracting routing header values from request ([#1598](https://github.com/googleapis/gax-java/issues/1598)) ([2836baa](https://github.com/googleapis/gax-java/commit/2836baafa1114761cffbfdd4aee2322a4a931f8f))
+
+
+### Dependencies
+
+* update dependency com_google_protobuf to 3.19.3 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api:api-common to 2.1.3 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api.grpc:grpc-google-common-protos to 2.7.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.api.grpc:proto-google-common-protos to 2.7.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.errorprone:error_prone_annotations to v2.11.0 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.http-client:google-http-client to 1.41.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency com.google.http-client:google-http-client-gson to 1.41.2 ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+* update dependency io_grpc to 1.44.0 ([#1610](https://github.com/googleapis/gax-java/issues/1610)) ([734906e](https://github.com/googleapis/gax-java/commit/734906efd15064ea0d36b308f217508c9bf5ed42))
+
+## [2.10.0](https://github.com/googleapis/gax-java/compare/v2.9.0...v2.10.0) (2022-01-21)
+
+
+### Features
+
+* add api key support ([#1436](https://github.com/googleapis/gax-java/issues/1436)) ([5081ec6](https://github.com/googleapis/gax-java/commit/5081ec6541da8ca3f5a4c0d20aa75bd20010a642))
+* introduce HttpJsonClientCall, Listeners infrastructure and ServerStreaming support in REST transport ([#1599](https://github.com/googleapis/gax-java/issues/1599)) ([3c97529](https://github.com/googleapis/gax-java/commit/3c97529b8bd0e8141c5d722f887cb7ae1ed30b69))
+
 ## [2.9.0](https://github.com/googleapis/gax-java/compare/v2.8.1...v2.9.0) (2022-01-14)
 
 

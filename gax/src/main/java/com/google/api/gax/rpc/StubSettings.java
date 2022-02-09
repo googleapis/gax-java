@@ -73,7 +73,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final String endpoint;
   private final String mtlsEndpoint;
   private final String quotaProjectId;
-  private final String apiKey;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
   @Nonnull private final ApiTracerFactory tracerFactory;
@@ -100,7 +99,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.mtlsEndpoint = builder.mtlsEndpoint;
     this.switchToMtlsEndpointAllowed = builder.switchToMtlsEndpointAllowed;
     this.quotaProjectId = builder.quotaProjectId;
-    this.apiKey = builder.apiKey;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
     this.tracerFactory = builder.tracerFactory;
@@ -156,10 +154,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return quotaProjectId;
   }
 
-  public final String getApiKey() {
-    return apiKey;
-  }
-
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getStreamWatchdogProvider() {
@@ -195,7 +189,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("mtlsEndpoint", mtlsEndpoint)
         .add("switchToMtlsEndpointAllowed", switchToMtlsEndpointAllowed)
         .add("quotaProjectId", quotaProjectId)
-        .add("apiKey", apiKey)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
         .add("tracerFactory", tracerFactory)
@@ -216,7 +209,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private String endpoint;
     private String mtlsEndpoint;
     private String quotaProjectId;
-    private String apiKey;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
     @Nonnull private ApiTracerFactory tracerFactory;
@@ -242,7 +234,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.mtlsEndpoint = settings.mtlsEndpoint;
       this.switchToMtlsEndpointAllowed = settings.switchToMtlsEndpointAllowed;
       this.quotaProjectId = settings.quotaProjectId;
-      this.apiKey = settings.apiKey;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
       this.tracerFactory = settings.tracerFactory;
@@ -267,7 +258,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     protected Builder(ClientContext clientContext) {
-      this.apiKey = null;
       if (clientContext == null) {
         this.backgroundExecutorProvider = InstantiatingExecutorProvider.newBuilder().build();
         this.transportChannelProvider = null;
@@ -442,11 +432,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
-    public B setApiKey(String apiKey) {
-      this.apiKey = apiKey;
-      return self();
-    }
-
     /**
      * Sets how often the {@link Watchdog} will check ongoing streaming RPCs. Defaults to 10 secs.
      * Use {@link Duration#ZERO} to disable.
@@ -528,10 +513,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return quotaProjectId;
     }
 
-    public String getApiKey() {
-      return apiKey;
-    }
-
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nonnull
     public Duration getStreamWatchdogCheckInterval() {
@@ -568,7 +549,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("mtlsEndpoint", mtlsEndpoint)
           .add("switchToMtlsEndpointAllowed", switchToMtlsEndpointAllowed)
           .add("quotaProjectId", quotaProjectId)
-          .add("apiKey", apiKey)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
           .add("tracerFactory", tracerFactory)

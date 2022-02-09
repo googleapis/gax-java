@@ -39,6 +39,8 @@ import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
@@ -171,6 +173,28 @@ public class HttpJsonCallableFactory {
         Callables.longRunningOperation(
             operationSnapshotCallable, operationCallSettings, clientContext, longRunningClient);
     return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          HttpJsonCallSettings<RequestT, ResponseT> httpJsoncallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+
+    ServerStreamingCallable<RequestT, ResponseT> callable =
+        new HttpJsonDirectServerStreamingCallable<>(httpJsoncallSettings.getMethodDescriptor());
+
+    callable =
+        new HttpJsonExceptionServerStreamingCallable<>(
+            callable, streamingCallSettings.getRetryableCodes());
+
+    if (clientContext.getStreamWatchdog() != null) {
+      callable = Callables.watched(callable, streamingCallSettings, clientContext);
+    }
+
+    callable = Callables.retrying(callable, streamingCallSettings, clientContext);
+    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   @InternalApi("Visible for testing")
