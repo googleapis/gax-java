@@ -50,7 +50,10 @@ save pom.xml
 EOF
 
 cd ..
-mvn -Denforcer.skip=true clean install
+mvn verify install -B -V -ntp -fae \
+-DskipTests=true \
+-Dmaven.javadoc.skip=true \
+-Dgcloud.download.skip=true
 
 # Namespace (xmlns) prevents xmllint from specifying tag names in XPath
 SHARED_DEPS_VERSION=$( sed -e 's/xmlns=".*"//' pom.xml | xmllint --xpath '/project/version/text()' - )
@@ -82,4 +85,6 @@ if [[ $CLIENT_LIBRARY == "bigtable" ]]; then
   popd
 fi
 
-mvn -Denforcer.skip=true clean install
+mvn verify install -B -V -ntp -fae \
+-Dmaven.javadoc.skip=true \
+-Dgcloud.download.skip=true
