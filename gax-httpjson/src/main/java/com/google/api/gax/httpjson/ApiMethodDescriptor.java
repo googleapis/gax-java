@@ -68,6 +68,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         .setType(MethodType.UNARY);
   }
 
+  public abstract Builder<RequestT, ResponseT> toBuilder();
+
   @AutoValue.Builder
   public abstract static class Builder<RequestT, ResponseT> {
 
@@ -75,6 +77,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
     public abstract Builder<RequestT, ResponseT> setRequestFormatter(
         HttpRequestFormatter<RequestT> requestFormatter);
+
+    public abstract HttpRequestFormatter<RequestT> getRequestFormatter();
 
     public abstract Builder<RequestT, ResponseT> setResponseParser(
         HttpResponseParser<ResponseT> responseParser);
