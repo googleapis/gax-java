@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.12.1](https://github.com/googleapis/gax-java/compare/v2.12.0...v2.12.1) (2022-02-09)
+
+
+### Bug Fixes
+
+* revert "feat: add api key support ([#1436](https://github.com/googleapis/gax-java/issues/1436))" ([#1617](https://github.com/googleapis/gax-java/issues/1617)) ([47f98b8](https://github.com/googleapis/gax-java/commit/47f98b872c6896ad2af37e30db440321c2adb492))
+
 ## [2.12.0](https://github.com/googleapis/gax-java/compare/v2.11.0...v2.12.0) (2022-01-28)
 
 
