@@ -123,12 +123,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return credentialsProvider;
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public final HeaderProvider getHeaderProvider() {
     return headerProvider;
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected final HeaderProvider getInternalHeaderProvider() {
     return internalHeaderProvider;
   }
@@ -154,13 +152,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return quotaProjectId;
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getStreamWatchdogProvider() {
     return streamWatchdogProvider;
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public final Duration getStreamWatchdogCheckInterval() {
     return streamWatchdogCheckInterval;
@@ -351,7 +347,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * Some reserved headers can be overridden (e.g. Content-Type) or merged with the default value
      * (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
       if (this.quotaProjectId == null
@@ -368,7 +363,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * the constructed client. Some reserved headers can be overridden (e.g. Content-Type) or merged
      * with the default value (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       this.internalHeaderProvider = internalHeaderProvider;
       if (this.quotaProjectId == null
@@ -392,7 +386,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      *
      * <p>This will default to a {@link InstantiatingWatchdogProvider} if it is not set.
      */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setStreamWatchdogProvider(@Nullable WatchdogProvider streamWatchdogProvider) {
       this.streamWatchdogProvider = streamWatchdogProvider;
       return self();
@@ -436,7 +429,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * Sets how often the {@link Watchdog} will check ongoing streaming RPCs. Defaults to 10 secs.
      * Use {@link Duration#ZERO} to disable.
      */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setStreamWatchdogCheckInterval(@Nonnull Duration checkInterval) {
       Preconditions.checkNotNull(checkInterval);
       this.streamWatchdogCheckInterval = checkInterval;
@@ -477,19 +469,16 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     /** Gets the custom HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
       return headerProvider;
     }
 
     /** Gets the internal HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected HeaderProvider getInternalHeaderProvider() {
       return internalHeaderProvider;
     }
 
     /** Gets the {@link WatchdogProvider }that was previously set on this Builder. */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getStreamWatchdogProvider() {
       return streamWatchdogProvider;
@@ -513,7 +502,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return quotaProjectId;
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nonnull
     public Duration getStreamWatchdogCheckInterval() {
       return streamWatchdogCheckInterval;

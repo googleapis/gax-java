@@ -78,7 +78,6 @@ public interface TransportChannelProvider {
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   boolean needsHeaders();
 
   /**
@@ -86,7 +85,6 @@ public interface TransportChannelProvider {
    *
    * <p>This method should only be called if {@link #needsHeaders()} returns true.
    */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   TransportChannelProvider withHeaders(Map<String, String> headers);
 
   /** True if the TransportProvider has no endpoint set. */

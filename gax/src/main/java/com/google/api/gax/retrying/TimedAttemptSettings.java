@@ -30,13 +30,10 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.AutoValue.Builder;
 import org.threeten.bp.Duration;
 
 /** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
-@BetaApi
 @AutoValue
 public abstract class TimedAttemptSettings {
 

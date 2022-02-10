@@ -41,7 +41,7 @@ import com.google.longrunning.Operation;
  *
  * <p>Public for technical reasons. For internal use only.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
+@BetaApi
 @InternalApi
 public class HttpJsonOperationSnapshot implements OperationSnapshot {
   private final String name;

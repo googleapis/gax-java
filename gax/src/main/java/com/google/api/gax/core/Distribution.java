@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  *
  * <p>Methods may be called concurrently.
  */
-@BetaApi
+@Deprecated
 public class Distribution {
 
   private final AtomicLongArray buckets;

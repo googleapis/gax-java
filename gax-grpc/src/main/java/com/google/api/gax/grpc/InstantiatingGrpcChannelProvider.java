@@ -166,13 +166,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return headerProvider == null;
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
     return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
   }

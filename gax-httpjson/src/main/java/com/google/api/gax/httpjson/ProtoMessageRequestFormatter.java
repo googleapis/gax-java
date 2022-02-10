@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.protobuf.Message;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 /** Creates parts of a HTTP request from a protobuf message. */
-@BetaApi
 public class ProtoMessageRequestFormatter<RequestT extends Message>
     implements HttpRequestFormatter<RequestT> {
 

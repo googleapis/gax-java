@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.common.base.MoreObjects;
@@ -82,12 +81,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getCredentialsProvider();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public final HeaderProvider getHeaderProvider() {
     return stubSettings.getHeaderProvider();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected final HeaderProvider getInternalHeaderProvider() {
     return stubSettings.getInternalHeaderProvider();
   }
@@ -104,13 +101,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getQuotaProjectId();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getWatchdogProvider() {
     return stubSettings.getStreamWatchdogProvider();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public final Duration getWatchdogCheckInterval() {
     return stubSettings.getStreamWatchdogCheckInterval();
@@ -204,7 +199,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * Some reserved headers can be overridden (e.g. Content-Type) or merged with the default value
      * (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       stubSettings.setHeaderProvider(headerProvider);
       return self();
@@ -217,7 +211,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * the constructed client. Some reserved headers can be overridden (e.g. Content-Type) or merged
      * with the default value (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       stubSettings.setInternalHeaderProvider(internalHeaderProvider);
       return self();
@@ -252,13 +245,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
       stubSettings.setStreamWatchdogProvider(watchdogProvider);
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogCheckInterval(@Nullable Duration checkInterval) {
       stubSettings.setStreamWatchdogCheckInterval(checkInterval);
       return self();
@@ -298,13 +289,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     }
 
     /** Gets the custom HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
       return stubSettings.getHeaderProvider();
     }
 
     /** Gets the internal HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected HeaderProvider getInternalHeaderProvider() {
       return stubSettings.getInternalHeaderProvider();
     }
@@ -323,13 +312,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getQuotaProjectId();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getWatchdogProvider() {
       return stubSettings.getStreamWatchdogProvider();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public Duration getWatchdogCheckInterval() {
       return stubSettings.getStreamWatchdogCheckInterval();
