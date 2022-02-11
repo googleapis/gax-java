@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
@@ -39,6 +38,8 @@ import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
@@ -49,7 +50,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 /** Class with utility methods to create http/json-based direct callables. */
-@BetaApi
 public class HttpJsonCallableFactory {
   // Used to extract service and method name from a grpc MethodDescriptor.
   // fullMethodName has the format: service.resource.action
@@ -159,8 +159,6 @@ public class HttpJsonCallableFactory {
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
-  @BetaApi(
-      "The surface for long-running operations is not stable yet and may change in the future.")
   public static <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
@@ -171,6 +169,27 @@ public class HttpJsonCallableFactory {
         Callables.longRunningOperation(
             operationSnapshotCallable, operationCallSettings, clientContext, longRunningClient);
     return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          HttpJsonCallSettings<RequestT, ResponseT> httpJsoncallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+
+    ServerStreamingCallable<RequestT, ResponseT> callable =
+        new HttpJsonDirectServerStreamingCallable<>(httpJsoncallSettings.getMethodDescriptor());
+
+    callable =
+        new HttpJsonExceptionServerStreamingCallable<>(
+            callable, streamingCallSettings.getRetryableCodes());
+
+    if (clientContext.getStreamWatchdog() != null) {
+      callable = Callables.watched(callable, streamingCallSettings, clientContext);
+    }
+
+    callable = Callables.retrying(callable, streamingCallSettings, clientContext);
+    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   @InternalApi("Visible for testing")

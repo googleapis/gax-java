@@ -30,7 +30,6 @@
 package com.google.api.gax.httpjson.longrunning.stub;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
@@ -53,6 +52,7 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,6 +60,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
@@ -67,8 +69,10 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class HttpJsonOperationsStub extends OperationsStub {
+  private static final Pattern CLIENT_PACKAGE_VERSION_PATTERN =
+      Pattern.compile("\\.(?<version>v\\d+[a-zA-Z]*\\d*[a-zA-Z]*\\d*)\\.[\\w.]*stub");
+
   private static final ApiMethodDescriptor<ListOperationsRequest, ListOperationsResponse>
       listOperationsMethodDescriptor =
           ApiMethodDescriptor.<ListOperationsRequest, ListOperationsResponse>newBuilder()
@@ -77,7 +81,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
               .setRequestFormatter(
                   ProtoMessageRequestFormatter.<ListOperationsRequest>newBuilder()
                       .setPath(
-                          "/v1/{name=operations}",
+                          "/v1/{name=**}/operations",
                           request -> {
                             Map<String, String> fields = new HashMap<>();
                             ProtoRestSerializer<ListOperationsRequest> serializer =
@@ -111,7 +115,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
               .setRequestFormatter(
                   ProtoMessageRequestFormatter.<GetOperationRequest>newBuilder()
                       .setPath(
-                          "/v1/{name=operations/**}",
+                          "/v1/{name=**/operations/*}",
                           request -> {
                             Map<String, String> fields = new HashMap<>();
                             ProtoRestSerializer<GetOperationRequest> serializer =
@@ -141,7 +145,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
               .setRequestFormatter(
                   ProtoMessageRequestFormatter.<DeleteOperationRequest>newBuilder()
                       .setPath(
-                          "/v1/{name=operations/**}",
+                          "/v1/{name=**/operations/*}",
                           request -> {
                             Map<String, String> fields = new HashMap<>();
                             ProtoRestSerializer<DeleteOperationRequest> serializer =
@@ -166,7 +170,7 @@ public class HttpJsonOperationsStub extends OperationsStub {
               .setRequestFormatter(
                   ProtoMessageRequestFormatter.<CancelOperationRequest>newBuilder()
                       .setPath(
-                          "/v1/{name=operations/**}:cancel",
+                          "/v1/{name=**/operations/*}:cancel",
                           request -> {
                             Map<String, String> fields = new HashMap<>();
                             ProtoRestSerializer<CancelOperationRequest> serializer =
@@ -249,25 +253,34 @@ public class HttpJsonOperationsStub extends OperationsStub {
       throws IOException {
     this.callableFactory = callableFactory;
 
+    Matcher packageMatcher =
+        CLIENT_PACKAGE_VERSION_PATTERN.matcher(callableFactory.getClass().getPackage().getName());
+
+    String apiVersion = packageMatcher.find() ? packageMatcher.group("version") : null;
+
     HttpJsonCallSettings<ListOperationsRequest, ListOperationsResponse>
         listOperationsTransportSettings =
             HttpJsonCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
-                .setMethodDescriptor(listOperationsMethodDescriptor)
+                .setMethodDescriptor(
+                    getApiVersionedMethodDescriptor(listOperationsMethodDescriptor, apiVersion))
                 .setTypeRegistry(typeRegistry)
                 .build();
     HttpJsonCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         HttpJsonCallSettings.<GetOperationRequest, Operation>newBuilder()
-            .setMethodDescriptor(getOperationMethodDescriptor)
+            .setMethodDescriptor(
+                getApiVersionedMethodDescriptor(getOperationMethodDescriptor, apiVersion))
             .setTypeRegistry(typeRegistry)
             .build();
     HttpJsonCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         HttpJsonCallSettings.<DeleteOperationRequest, Empty>newBuilder()
-            .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .setMethodDescriptor(
+                getApiVersionedMethodDescriptor(deleteOperationMethodDescriptor, apiVersion))
             .setTypeRegistry(typeRegistry)
             .build();
     HttpJsonCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         HttpJsonCallSettings.<CancelOperationRequest, Empty>newBuilder()
-            .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .setMethodDescriptor(
+                getApiVersionedMethodDescriptor(cancelOperationMethodDescriptor, apiVersion))
             .setTypeRegistry(typeRegistry)
             .build();
 
@@ -294,6 +307,24 @@ public class HttpJsonOperationsStub extends OperationsStub {
             getOperationMethodDescriptor.getPollingRequestFactory());
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
+  }
+
+  private static <RequestT extends Message, ResponseT>
+      ApiMethodDescriptor<RequestT, ResponseT> getApiVersionedMethodDescriptor(
+          ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, String apiVersion) {
+    if (apiVersion == null) {
+      return methodDescriptor;
+    }
+
+    ApiMethodDescriptor.Builder<RequestT, ResponseT> descriptorBuilder =
+        methodDescriptor.toBuilder();
+    ProtoMessageRequestFormatter<RequestT> requestFormatter =
+        (ProtoMessageRequestFormatter<RequestT>) descriptorBuilder.getRequestFormatter();
+
+    return descriptorBuilder
+        .setRequestFormatter(
+            requestFormatter.toBuilder().updateRawPath("/v1/", '/' + apiVersion + '/').build())
+        .build();
   }
 
   @InternalApi

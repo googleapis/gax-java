@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
@@ -42,7 +41,6 @@ import java.util.Set;
  * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
  * batching. The settings are provided using an instance of {@link BatchingSettings}.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalExtensionOnly
 public final class BatchingCallSettings<RequestT, ResponseT>
     extends UnaryCallSettings<RequestT, ResponseT> {

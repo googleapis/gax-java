@@ -29,14 +29,12 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /**
  * Simplest implementation of a {@link StreamResumptionStrategy} which returns the initial request
  * for unstarted streams.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
     implements StreamResumptionStrategy<RequestT, ResponseT> {
   private boolean seenFirstResponse;

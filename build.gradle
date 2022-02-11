@@ -4,14 +4,16 @@ plugins {
   id 'java'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 
-  id 'com.diffplug.eclipse.apt' version '3.34.1' apply false
+  id 'com.diffplug.eclipse.apt' version '3.35.0' apply false
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '7.1.2' apply false
   id 'com.github.sherter.google-java-format' version '0.9' apply false
+
+  id 'org.sonarqube' version '3.3'
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.8.2-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "2.12.3-SNAPSHOT" // {x-version-update:gax:current}
 
 allprojects {
   group = 'com.google.api'
@@ -138,7 +140,7 @@ configure(javaProjects) {
   task sourcesJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
 
-    from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.resources.srcDirs
+    from sourceSets.main.allSource, sourceSets.test.allSource
     exclude('**/*Test.java')
   }
 
@@ -304,7 +306,7 @@ task javadocCombinedV3(type: Javadoc) {
   options.addStringOption('encoding', 'UTF-8')
   options.addStringOption('doclet', 'com.microsoft.doclet.DocFxDoclet')
   options.addStringOption('projectname', 'gax')
-  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + '/java-docfx-doclet-1.4.0.jar')]
+  options.docletpath = [file(System.getenv('KOKORO_GFILE_DIR') + '/java-docfx-doclet-1.5.0.jar')]
   // Newer Gradle 6 passes -notimestamp by default, which the doclet above doesn't understand:
   // https://github.com/gradle/gradle/issues/11898
   options.noTimestamp false
@@ -312,4 +314,12 @@ task javadocCombinedV3(type: Javadoc) {
 
 clean {
   delete 'tmp_docs/'
+}
+
+sonarqube {
+  properties {
+    property 'sonar.projectKey', 'googleapis_gax-java'
+    property 'sonar.organization', 'googleapis'
+    property 'sonar.host.url', 'https://sonarcloud.io'
+  }
 }

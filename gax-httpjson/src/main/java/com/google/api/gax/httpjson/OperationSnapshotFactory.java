@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 
 /**
@@ -42,7 +41,6 @@ import com.google.api.gax.longrunning.OperationSnapshot;
  * @param <RequestT> initial request message type
  * @param <OperationT> initial or polling response type
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface OperationSnapshotFactory<RequestT, OperationT> {
   OperationSnapshot create(RequestT request, OperationT response);
 }

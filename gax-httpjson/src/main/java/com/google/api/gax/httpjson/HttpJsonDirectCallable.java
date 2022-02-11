@@ -34,9 +34,6 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.TypeRegistry;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import org.threeten.bp.Instant;
 
 /**
  * {@code HttpJsonDirectCallable} creates HTTP calls.
@@ -62,23 +59,13 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
     Preconditions.checkNotNull(request);
     HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
 
-    @Nullable Instant deadline = context.getDeadline();
-    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
-    if (context.getTimeout() != null) {
-      @Nonnull Instant newDeadline = Instant.now().plus(context.getTimeout());
+    context =
+        context.withCallOptions(
+            context.getCallOptions().toBuilder().setTypeRegistry(typeRegistry).build());
 
-      if (deadline == null || newDeadline.isBefore(deadline)) {
-        deadline = newDeadline;
-      }
-    }
-
-    HttpJsonCallOptions callOptions =
-        HttpJsonCallOptions.newBuilder()
-            .setDeadline(deadline)
-            .setCredentials(context.getCredentials())
-            .setTypeRegistry(typeRegistry)
-            .build();
-    return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
+    HttpJsonClientCall<RequestT, ResponseT> clientCall =
+        HttpJsonClientCalls.newCall(descriptor, context);
+    return HttpJsonClientCalls.eagerFutureUnaryCall(clientCall, request);
   }
 
   @Override

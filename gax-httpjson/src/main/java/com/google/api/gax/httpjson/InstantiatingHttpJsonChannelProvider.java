@@ -36,16 +36,13 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
-import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -65,29 +62,24 @@ import java.util.concurrent.ScheduledExecutorService;
 @BetaApi
 @InternalExtensionOnly
 public final class InstantiatingHttpJsonChannelProvider implements TransportChannelProvider {
+
   private final Executor executor;
   private final HeaderProvider headerProvider;
+  private final HttpJsonInterceptorProvider interceptorProvider;
   private final String endpoint;
   private final HttpTransport httpTransport;
   private final MtlsProvider mtlsProvider;
 
   private InstantiatingHttpJsonChannelProvider(
-      Executor executor, HeaderProvider headerProvider, String endpoint) {
-    this.executor = executor;
-    this.headerProvider = headerProvider;
-    this.endpoint = endpoint;
-    this.httpTransport = null;
-    this.mtlsProvider = new MtlsProvider();
-  }
-
-  private InstantiatingHttpJsonChannelProvider(
       Executor executor,
       HeaderProvider headerProvider,
+      HttpJsonInterceptorProvider interceptorProvider,
       String endpoint,
       HttpTransport httpTransport,
       MtlsProvider mtlsProvider) {
     this.executor = executor;
     this.headerProvider = headerProvider;
+    this.interceptorProvider = interceptorProvider;
     this.endpoint = endpoint;
     this.httpTransport = httpTransport;
     this.mtlsProvider = mtlsProvider;
@@ -155,7 +147,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   @Override
-  public TransportChannel getTransportChannel() throws IOException {
+  public HttpJsonTransportChannel getTransportChannel() throws IOException {
     if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
@@ -188,14 +180,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     return null;
   }
 
-  private TransportChannel createChannel() throws IOException, GeneralSecurityException {
-    Map<String, String> headers = headerProvider.getHeaders();
-
-    List<HttpJsonHeaderEnhancer> headerEnhancers = Lists.newArrayList();
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      headerEnhancers.add(HttpJsonHeaderEnhancers.create(header.getKey(), header.getValue()));
-    }
-
+  private HttpJsonTransportChannel createChannel() throws IOException, GeneralSecurityException {
     HttpTransport httpTransportToUse = httpTransport;
     if (httpTransportToUse == null) {
       httpTransportToUse = createHttpTransport();
@@ -204,10 +189,19 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     ManagedHttpJsonChannel channel =
         ManagedHttpJsonChannel.newBuilder()
             .setEndpoint(endpoint)
-            .setHeaderEnhancers(headerEnhancers)
             .setExecutor(executor)
             .setHttpTransport(httpTransportToUse)
             .build();
+
+    HttpJsonClientInterceptor headerInterceptor =
+        new HttpJsonHeaderInterceptor(headerProvider.getHeaders());
+
+    channel = new ManagedHttpJsonInterceptorChannel(channel, headerInterceptor);
+    if (interceptorProvider != null && interceptorProvider.getInterceptors() != null) {
+      for (HttpJsonClientInterceptor interceptor : interceptorProvider.getInterceptors()) {
+        channel = new ManagedHttpJsonInterceptorChannel(channel, interceptor);
+      }
+    }
 
     return HttpJsonTransportChannel.newBuilder().setManagedChannel(channel).build();
   }
@@ -231,8 +225,10 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   public static final class Builder {
+
     private Executor executor;
     private HeaderProvider headerProvider;
+    private HttpJsonInterceptorProvider interceptorProvider;
     private String endpoint;
     private HttpTransport httpTransport;
     private MtlsProvider mtlsProvider = new MtlsProvider();
@@ -245,6 +241,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       this.endpoint = provider.endpoint;
       this.httpTransport = provider.httpTransport;
       this.mtlsProvider = provider.mtlsProvider;
+      this.interceptorProvider = provider.interceptorProvider;
     }
 
     /**
@@ -278,6 +275,18 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       return this;
     }
 
+    /**
+     * Sets the GrpcInterceptorProvider for this TransportChannelProvider.
+     *
+     * <p>The provider will be called once for each underlying gRPC ManagedChannel that is created.
+     * It is recommended to return a new list of new interceptors on each call so that interceptors
+     * are not shared among channels, but this is not required.
+     */
+    public Builder setInterceptorProvider(HttpJsonInterceptorProvider interceptorProvider) {
+      this.interceptorProvider = interceptorProvider;
+      return this;
+    }
+
     /** Sets the endpoint used to reach the service, eg "localhost:8080". */
     public Builder setEndpoint(String endpoint) {
       this.endpoint = endpoint;
@@ -302,7 +311,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
     public InstantiatingHttpJsonChannelProvider build() {
       return new InstantiatingHttpJsonChannelProvider(
-          executor, headerProvider, endpoint, httpTransport, mtlsProvider);
+          executor, headerProvider, interceptorProvider, endpoint, httpTransport, mtlsProvider);
     }
   }
 }

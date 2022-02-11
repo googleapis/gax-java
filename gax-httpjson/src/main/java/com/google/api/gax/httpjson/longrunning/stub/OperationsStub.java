@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson.longrunning.stub;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.httpjson.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.api.gax.rpc.LongRunningClient;
@@ -48,7 +47,6 @@ import com.google.protobuf.Empty;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@BetaApi
 public abstract class OperationsStub implements BackgroundResource {
 
   public UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
