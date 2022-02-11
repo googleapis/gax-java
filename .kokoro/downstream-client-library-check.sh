@@ -19,9 +19,9 @@ set -x
 
 CLIENT_LIBRARY=$1
 ## Get the directory of the build script
-scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+scriptDir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 ## cd to the parent directory, i.e. the root of the git repo
-cd ${scriptDir}/..
+cd "${scriptDir}"/..
 
 # Round 1
 # Publish gax to local maven to make it available for downstream libraries
@@ -67,7 +67,7 @@ fi
 # Round 3
 # Run this shared-dependencies BOM against java client libraries
 git clone "https://github.com/googleapis/java-${CLIENT_LIBRARY}.git" --depth=1
-pushd java-${CLIENT_LIBRARY}
+pushd java-"${CLIENT_LIBRARY}"
 
 if [[ $CLIENT_LIBRARY == "bigtable" ]]; then
   pushd google-cloud-bigtable-deps-bom
