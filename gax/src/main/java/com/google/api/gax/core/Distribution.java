@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLongArray;
  *
  * <p>Methods may be called concurrently.
  */
-@Deprecated
 public class Distribution {
 
   private final AtomicLongArray buckets;

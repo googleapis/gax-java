@@ -32,7 +32,6 @@ package com.google.api.gax.paging;
 import java.util.Collections;
 
 /** Utility class for {@link Page}s. */
-@Deprecated
 public class Pages {
   private Pages() {}
 
