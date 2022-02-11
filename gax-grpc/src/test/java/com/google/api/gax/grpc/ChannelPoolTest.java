@@ -401,13 +401,12 @@ public class ChannelPoolTest {
           ManagedChannel channel = Mockito.mock(ManagedChannel.class);
           Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
               .thenAnswer(
-                  (Answer<ClientCall<?, ?>>)
-                      invocation -> {
-                        @SuppressWarnings("unchecked")
-                        ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
-                        startedCalls.add(clientCall);
-                        return clientCall;
-                      });
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
 
           channels.add(channel);
           return channel;

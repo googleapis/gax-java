@@ -107,7 +107,7 @@ class ChannelPool extends ManagedChannel {
     return new ChannelPool(
         ChannelPoolSettings.staticallySized(poolSize)
             .toBuilder()
-            .setPreemptiveReconnectEnabled(true)
+            .setPreemptiveRefreshEnabled(true)
             .build(),
         channelFactory,
         executor);
@@ -123,9 +123,9 @@ class ChannelPool extends ManagedChannel {
    *
    * @param settings options for controling the ChannelPool sizing behavior
    * @param channelFactory method to create the channels
-   * @param executor periodically refreshes the channels. Must be single threaded
+   * @param executor periodically refreshes the channels
    */
-  @InternalApi("VisibleForTesting")
+  @VisibleForTesting
   ChannelPool(
       ChannelPoolSettings settings,
       ChannelFactory channelFactory,
@@ -151,7 +151,7 @@ class ChannelPool extends ManagedChannel {
           ChannelPoolSettings.RESIZE_INTERVAL.getSeconds(),
           TimeUnit.SECONDS);
     }
-    if (settings.isPreemptiveReconnectEnabled()) {
+    if (settings.isPreemptiveRefreshEnabled()) {
       executor.scheduleAtFixedRate(
           this::refreshSafely,
           REFRESH_PERIOD.getSeconds(),
@@ -253,7 +253,7 @@ class ChannelPool extends ManagedChannel {
     return isTerminated();
   }
 
-  void resizeSafely() {
+  private void resizeSafely() {
     try {
       synchronized (entryWriteLock) {
         resize();
@@ -277,6 +277,7 @@ class ChannelPool extends ManagedChannel {
    *
    * <p>Not threadsafe, must be called under the entryWriteLock monitor
    */
+  @VisibleForTesting
   void resize() {
     List<Entry> localEntries = entries.get();
     // Estimate the peak of RPCs in the last interval by summing the peak of RPCs per channel
@@ -292,6 +293,7 @@ class ChannelPool extends ManagedChannel {
     }
 
     // Number of channels if each channel operated at minimum capacity
+    // Note: getMinRpcsPerChannel() can return 0, but division by 0 shouldn't cause a problem.
     int maxChannels =
         (int) Math.ceil(actualOutstandingRpcs / (double) settings.getMinRpcsPerChannel());
     // Limit the threshold to absolute range
@@ -320,25 +322,25 @@ class ChannelPool extends ManagedChannel {
               "Detected throughput peak of %d, expanding channel pool size: %d -> %d.",
               actualOutstandingRpcs, currentSize, dampenedTarget));
 
-      expand(tentativeTarget);
+      expand(dampenedTarget);
     } else if (localEntries.size() > maxChannels) {
       LOG.fine(
           String.format(
               "Detected throughput drop to %d, shrinking channel pool size: %d -> %d.",
               actualOutstandingRpcs, currentSize, dampenedTarget));
 
-      shrink(tentativeTarget);
+      shrink(dampenedTarget);
     }
   }
 
   /** Not threadsafe, must be called under the entryWriteLock monitor */
   private void shrink(int desiredSize) {
-    List<Entry> localEntries = entries.get();
+    ImmutableList<Entry> localEntries = entries.get();
     Preconditions.checkState(
-        localEntries.size() >= desiredSize, "desired size is already smaller than the current");
+        localEntries.size() >= desiredSize, "current size is already smaller than the desired");
 
     // Set the new list
-    entries.set(ImmutableList.copyOf(localEntries.subList(0, desiredSize)));
+    entries.set(localEntries.subList(0, desiredSize));
     // clean up removed entries
     List<Entry> removed = localEntries.subList(desiredSize, localEntries.size());
     removed.forEach(Entry::requestShutdown);
@@ -348,7 +350,7 @@ class ChannelPool extends ManagedChannel {
   private void expand(int desiredSize) {
     List<Entry> localEntries = entries.get();
     Preconditions.checkState(
-        localEntries.size() <= desiredSize, "desired size is already bigger than the current");
+        localEntries.size() <= desiredSize, "current size is already bigger than the desired");
 
     ImmutableList.Builder<Entry> newEntries = ImmutableList.<Entry>builder().addAll(localEntries);
 
@@ -441,12 +443,7 @@ class ChannelPool extends ManagedChannel {
   private Entry getEntry(int affinity) {
     List<Entry> localEntries = entries.get();
 
-    int index = affinity % localEntries.size();
-    index = Math.abs(index);
-    // If index is the most negative int, abs(index) is still negative.
-    if (index < 0) {
-      index = 0;
-    }
+    int index = Math.abs(affinity % localEntries.size());
 
     return localEntries.get(index);
   }

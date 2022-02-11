@@ -72,7 +72,8 @@ public abstract class ChannelPoolSettings {
    * Threshold to start scaling up the channel pool.
    *
    * <p>When the average of the maximum number of outstanding RPCs in a single minute surpass this
-   * threshold, channels will be added to the pool.
+   * threshold, channels will be added to the pool. For google services, gRPC channels will start
+   * locally queuing RPC when there are 100 concurrent RPCs.
    */
   public abstract int getMaxRpcsPerChannel();
 
@@ -105,7 +106,7 @@ public abstract class ChannelPoolSettings {
    * reconnects, this will create a new channel asynchronuously, prime it and then swap it with an
    * old channel.
    */
-  public abstract boolean isPreemptiveReconnectEnabled();
+  public abstract boolean isPreemptiveRefreshEnabled();
 
   /** Helper to check if the {@link ChannelPool} implementation can skip dynamic size logic */
   boolean isStaticSize() {
@@ -140,7 +141,7 @@ public abstract class ChannelPoolSettings {
         .setMaxChannelCount(200)
         .setMinRpcsPerChannel(0)
         .setMaxRpcsPerChannel(Integer.MAX_VALUE)
-        .setPreemptiveReconnectEnabled(false);
+        .setPreemptiveRefreshEnabled(false);
   }
 
   @AutoValue.Builder
@@ -155,7 +156,7 @@ public abstract class ChannelPoolSettings {
 
     public abstract Builder setInitialChannelCount(int count);
 
-    public abstract Builder setPreemptiveReconnectEnabled(boolean enabled);
+    public abstract Builder setPreemptiveRefreshEnabled(boolean enabled);
 
     abstract ChannelPoolSettings autoBuild();
 
@@ -169,9 +170,11 @@ public abstract class ChannelPoolSettings {
       Preconditions.checkState(
           s.getMinChannelCount() <= s.getMaxRpcsPerChannel(), "absolute channel range is invalid");
       Preconditions.checkState(
-          s.getMinChannelCount() <= s.getInitialChannelCount()
-              && s.getInitialChannelCount() <= s.getMaxChannelCount(),
-          "initial channel count must be with the absolute channel count range");
+          s.getMinChannelCount() <= s.getInitialChannelCount(),
+          "initial channel count be at least minChannelCount");
+      Preconditions.checkState(
+          s.getInitialChannelCount() <= s.getMaxChannelCount(),
+          "initial channel count must be less than maxChannelCount");
       Preconditions.checkState(
           s.getInitialChannelCount() > 0, "Initial channel count must be greater than 0");
       return s;

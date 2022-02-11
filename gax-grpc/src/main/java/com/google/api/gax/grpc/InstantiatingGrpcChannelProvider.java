@@ -87,8 +87,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private static final String DIRECT_PATH_ENV_ENABLE_XDS = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH_XDS";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
-  // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
-  static final int MAX_POOL_SIZE = 1000;
   static final String GCE_PRODUCTION_NAME_PRIOR_2016 = "Google";
   static final String GCE_PRODUCTION_NAME_AFTER_2016 = "Google Compute Engine";
 
