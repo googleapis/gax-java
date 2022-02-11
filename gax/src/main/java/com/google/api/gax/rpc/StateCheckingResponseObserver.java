@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /** Base implementation of {@link ResponseObserver} that performs state sanity checks. */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class StateCheckingResponseObserver<V> implements ResponseObserver<V> {
   private boolean isStarted;
   private boolean isClosed;

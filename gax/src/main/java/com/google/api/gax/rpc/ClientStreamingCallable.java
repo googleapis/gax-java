@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A ClientStreamingCallable is an immutable object which is capable of making RPC calls to client
  * streaming API methods. Not all transports support streaming.
@@ -39,7 +37,6 @@ import com.google.api.core.BetaApi;
  * This class is intended to be created by a generated client class, and configured by instances of
  * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class ClientStreamingCallable<RequestT, ResponseT> {
 
   protected ClientStreamingCallable() {}

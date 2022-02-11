@@ -30,7 +30,6 @@
 package com.google.api.gax.httpjson.longrunning.stub;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
@@ -70,7 +69,6 @@ import java.util.regex.Pattern;
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class HttpJsonOperationsStub extends OperationsStub {
   private static final Pattern CLIENT_PACKAGE_VERSION_PATTERN =
       Pattern.compile("\\.(?<version>v\\d+[a-zA-Z]*\\d*[a-zA-Z]*\\d*)\\.[\\w.]*stub");

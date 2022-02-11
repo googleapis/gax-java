@@ -30,13 +30,11 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /** A simple ThresholdBatchReceiver that just accumulates batches. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
   private final ConcurrentLinkedQueue<T> batches = new ConcurrentLinkedQueue<>();
   private final ApiFuture<?> retFuture;

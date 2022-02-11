@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /** A threshold which accumulates a count based on the provided ElementCounter. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class NumericThreshold<E> implements BatchingThreshold<E> {
   private final long threshold;
   private final ElementCounter<E> extractor;

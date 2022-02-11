@@ -34,7 +34,6 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.paging.AbstractFixedSizeCollection;
 import com.google.api.gax.paging.AbstractPage;
@@ -125,7 +124,6 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer to use OperationsSettings}.
    */
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public static final OperationsClient create(OperationsStub stub) {
     return new OperationsClient(stub);
   }
@@ -139,7 +137,6 @@ public class OperationsClient implements BackgroundResource {
     this.stub = ((OperationsStubSettings) settings.getStubSettings()).createStub();
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   protected OperationsClient(OperationsStub stub) {
     this.settings = null;
     this.stub = stub;
@@ -149,7 +146,6 @@ public class OperationsClient implements BackgroundResource {
     return settings;
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public OperationsStub getStub() {
     return stub;
   }

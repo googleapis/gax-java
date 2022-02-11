@@ -31,7 +31,6 @@ package com.google.api.gax.longrunning;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
@@ -40,7 +39,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public class OperationFutures {
   private OperationFutures() {
     // Utility class

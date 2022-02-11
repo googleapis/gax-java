@@ -29,10 +29,7 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
-
 /** Represents exception occurred during batching. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class BatchingException extends RuntimeException {
 
   BatchingException(String message) {

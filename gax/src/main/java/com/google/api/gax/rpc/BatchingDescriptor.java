@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import java.util.Collection;
@@ -43,7 +42,6 @@ import java.util.Collection;
  *
  * <p>This class is designed to be used by generated code.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface BatchingDescriptor<RequestT, ResponseT> {
 
   /** Returns the value of the partition key for the given request. */
