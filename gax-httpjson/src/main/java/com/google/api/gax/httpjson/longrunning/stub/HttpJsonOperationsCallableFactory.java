@@ -81,8 +81,6 @@ public class HttpJsonOperationsCallableFactory
         httpJsonCallSettings, callSettings, clientContext);
   }
 
-  @BetaApi(
-      "The surface for long-running operations is not stable yet and may change in the future.")
   @Override
   public <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(

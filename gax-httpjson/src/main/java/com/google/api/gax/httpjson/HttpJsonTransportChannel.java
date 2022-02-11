@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auto.value.AutoValue;
@@ -37,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 
 /** Implementation of TransportChannel based on http/json. */
 @AutoValue
-@BetaApi
 @InternalExtensionOnly
 public abstract class HttpJsonTransportChannel implements TransportChannel {
 

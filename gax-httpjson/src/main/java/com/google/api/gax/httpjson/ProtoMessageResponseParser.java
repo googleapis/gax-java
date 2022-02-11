@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
@@ -39,7 +38,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /** The implementation of {@link HttpResponseParser} which works with protobuf messages. */
-@BetaApi
 public class ProtoMessageResponseParser<ResponseT extends Message>
     implements HttpResponseParser<ResponseT> {
 

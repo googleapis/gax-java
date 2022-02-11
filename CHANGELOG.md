@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.12.2](https://github.com/googleapis/gax-java/compare/v2.12.1...v2.12.2) (2022-02-09)
+
+
+### Bug Fixes
+
+* REST: Make make LRO stub accept APIs of different versions ([#1622](https://github.com/googleapis/gax-java/issues/1622)) ([3ae8d85](https://github.com/googleapis/gax-java/commit/3ae8d850c5599ce487778d98d562d5b9b9e85d25))
+
 ### [2.12.1](https://github.com/googleapis/gax-java/compare/v2.12.0...v2.12.1) (2022-02-09)
 
 
