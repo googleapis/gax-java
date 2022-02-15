@@ -78,41 +78,6 @@ class ChannelPool extends ManagedChannel {
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
-  /**
-   * Factory method to create a non-refreshing channel pool
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @return ChannelPool of non-refreshing channels
-   */
-  @VisibleForTesting
-  static ChannelPool create(int poolSize, ChannelFactory channelFactory) throws IOException {
-    return new ChannelPool(ChannelPoolSettings.staticallySized(poolSize), channelFactory, null);
-  }
-
-  /**
-   * Factory method to create a refreshing channel pool
-   *
-   * <p>Package-private for testing purposes only
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @param executor used to schedule maintenance tasks like refresh channels and resizing the pool.
-   * @return ChannelPool of refreshing channels
-   */
-  @VisibleForTesting
-  static ChannelPool createRefreshing(
-      int poolSize, ChannelFactory channelFactory, ScheduledExecutorService executor)
-      throws IOException {
-    return new ChannelPool(
-        ChannelPoolSettings.staticallySized(poolSize)
-            .toBuilder()
-            .setPreemptiveRefreshEnabled(true)
-            .build(),
-        channelFactory,
-        executor);
-  }
-
   static ChannelPool create(ChannelPoolSettings settings, ChannelFactory channelFactory)
       throws IOException {
     return new ChannelPool(settings, channelFactory, Executors.newSingleThreadScheduledExecutor());

@@ -71,7 +71,10 @@ public class ChannelPoolTest {
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)));
+    ChannelPool pool =
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(2),
+            new FakeChannelFactory(Arrays.asList(sub1, sub2)));
     assertThat(pool.authority()).isEqualTo("myAuth");
   }
 
@@ -83,7 +86,9 @@ public class ChannelPoolTest {
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
     ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
-    ChannelPool pool = ChannelPool.create(channels.size(), new FakeChannelFactory(channels));
+    ChannelPool pool =
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(channels.size()), new FakeChannelFactory(channels));
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
@@ -138,7 +143,9 @@ public class ChannelPoolTest {
     }
 
     final ChannelPool pool =
-        ChannelPool.create(numChannels, new FakeChannelFactory(Arrays.asList(channels)));
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(numChannels),
+            new FakeChannelFactory(Arrays.asList(channels)));
 
     int numThreads = 20;
     final int numPerThread = 1000;
@@ -170,7 +177,11 @@ public class ChannelPoolTest {
     ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
 
     ChannelPool.create(
-        2, new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer));
+        ChannelPoolSettings.staticallySized(2)
+            .toBuilder()
+            .setPreemptiveRefreshEnabled(true)
+            .build(),
+        new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer));
     Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
   }
@@ -202,7 +213,13 @@ public class ChannelPoolTest {
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(Arrays.asList(channel1, channel2, channel3), mockChannelPrimer);
 
-    ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    new ChannelPool(
+        ChannelPoolSettings.staticallySized(1)
+            .toBuilder()
+            .setPreemptiveRefreshEnabled(true)
+            .build(),
+        channelFactory,
+        scheduledExecutorService);
     // 1 call during the creation
     Mockito.verify(mockChannelPrimer, Mockito.times(1))
         .primeChannel(Mockito.any(ManagedChannel.class));
@@ -226,7 +243,7 @@ public class ChannelPoolTest {
     ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -275,7 +292,7 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -320,7 +337,7 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -372,7 +389,14 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel1, underlyingChannel2));
-    ChannelPool pool = ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    ChannelPool pool =
+        new ChannelPool(
+            ChannelPoolSettings.staticallySized(1)
+                .toBuilder()
+                .setPreemptiveRefreshEnabled(true)
+                .build(),
+            channelFactory,
+            scheduledExecutorService);
     Mockito.reset(underlyingChannel1);
 
     pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
@@ -482,13 +506,12 @@ public class ChannelPoolTest {
           ManagedChannel channel = Mockito.mock(ManagedChannel.class);
           Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
               .thenAnswer(
-                  (Answer<ClientCall<?, ?>>)
-                      invocation -> {
-                        @SuppressWarnings("unchecked")
-                        ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
-                        startedCalls.add(clientCall);
-                        return clientCall;
-                      });
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
 
           channels.add(channel);
           return channel;
@@ -523,13 +546,12 @@ public class ChannelPoolTest {
           ManagedChannel channel = Mockito.mock(ManagedChannel.class);
           Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
               .thenAnswer(
-                  (Answer<ClientCall<?, ?>>)
-                      invocation -> {
-                        @SuppressWarnings("unchecked")
-                        ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
-                        startedCalls.add(clientCall);
-                        return clientCall;
-                      });
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
 
           channels.add(channel);
           return channel;
