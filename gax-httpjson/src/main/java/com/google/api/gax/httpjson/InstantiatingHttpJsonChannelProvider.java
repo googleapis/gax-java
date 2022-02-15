@@ -126,14 +126,16 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     return toBuilder().setEndpoint(endpoint).build();
   }
 
+  /** @deprecated REST transport channel doesn't support channel pooling */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return false;
   }
 
+  /** @deprecated REST transport channel doesn't support channel pooling */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "InstantiatingHttpJsonChannelProvider doesn't allow pool size customization");

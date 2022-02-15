@@ -97,12 +97,20 @@ public interface TransportChannelProvider {
    */
   TransportChannelProvider withEndpoint(String endpoint);
 
-  /** Reports whether this provider allows pool size customization. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  /**
+   * Reports whether this provider allows pool size customization.
+   *
+   * @deprecated Pool settings should be configured on the builder of the specific implementation.
+   */
+  @Deprecated
   boolean acceptsPoolSize();
 
-  /** Number of underlying transport channels to open. Calls will be load balanced across them. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  /**
+   * Number of underlying transport channels to open. Calls will be load balanced across them.
+   *
+   * @deprecated Pool settings should be configured on the builder of the specific implementation.
+   */
+  @Deprecated
   TransportChannelProvider withPoolSize(int size);
 
   /** True if credentials are needed before channel creation. */

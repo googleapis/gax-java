@@ -74,7 +74,10 @@ public class GrpcClientCallsTest {
         .thenReturn(clientCall0);
     Mockito.when(channel1.newCall(Mockito.eq(descriptor), Mockito.<CallOptions>any()))
         .thenReturn(clientCall1);
-    Channel pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(channel0, channel1)));
+    Channel pool =
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(2),
+            new FakeChannelFactory(Arrays.asList(channel0, channel1)));
     GrpcCallContext context = GrpcCallContext.createDefault().withChannel(pool);
 
     ClientCall<Color, Money> gotCallA =
