@@ -137,6 +137,7 @@ jobs:
     - uses: actions/setup-java@v3
       with:
         java-version: ${{matrix.java}}
+        distribution: temurin
     - run: java -version
     - run: sudo apt-get install libxml2-utils
     - run: .kokoro/downstream-client-library-check.sh ${{matrix.repo}}
