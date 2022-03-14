@@ -127,7 +127,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .toString();
   }
 
-  public abstract <B extends Builder<SettingsT, B>> B toBuilder();
+  public abstract Builder<SettingsT, ?> toBuilder();
 
   public abstract static class Builder<
       SettingsT extends ClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {

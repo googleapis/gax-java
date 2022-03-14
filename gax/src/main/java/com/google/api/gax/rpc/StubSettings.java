@@ -191,7 +191,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .toString();
   }
 
-  public abstract StubSettings.Builder toBuilder();
+  public abstract StubSettings.Builder<SettingsT, ?> toBuilder();
 
   public abstract static class Builder<
       SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
@@ -522,7 +522,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       }
     }
 
-    public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
+    public abstract SettingsT build() throws IOException;
 
     @Override
     public String toString() {
