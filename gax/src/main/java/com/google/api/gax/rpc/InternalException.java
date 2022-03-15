@@ -42,4 +42,9 @@ public class InternalException extends ApiException {
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }
+
+  public InternalException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    super(cause, statusCode, retryable, errorDetails);
+  }
 }

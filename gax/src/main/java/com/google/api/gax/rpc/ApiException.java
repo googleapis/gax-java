@@ -30,11 +30,13 @@
 package com.google.api.gax.rpc;
 
 import com.google.common.base.Preconditions;
+import java.util.Map;
 
 /** Represents an exception thrown during an RPC call. */
 public class ApiException extends RuntimeException {
   private static final long serialVersionUID = -4375114339928877996L;
 
+  private ErrorDetails errorDetails;
   private final StatusCode statusCode;
   private final boolean retryable;
 
@@ -50,6 +52,12 @@ public class ApiException extends RuntimeException {
     this.retryable = retryable;
   }
 
+  public ApiException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    this(cause, statusCode, retryable);
+    this.errorDetails = errorDetails;
+  }
+
   /** Returns whether the failed request can be retried. */
   public boolean isRetryable() {
     return retryable;
@@ -58,5 +66,21 @@ public class ApiException extends RuntimeException {
   /** Returns the status code of the underlying exception. */
   public StatusCode getStatusCode() {
     return statusCode;
+  }
+
+  public ErrorDetails getErrorDetails() {
+    return errorDetails;
+  }
+
+  public String getReason() {
+    return errorDetails.reason();
+  }
+
+  public String getDomain() {
+    return errorDetails.domain();
+  }
+
+  public Map<String, String> getErrorInfoMetadata() {
+    return errorDetails.errorInfoMetadata();
   }
 }
