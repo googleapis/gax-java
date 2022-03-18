@@ -73,14 +73,27 @@ public class ApiException extends RuntimeException {
   }
 
   public String getReason() {
-    return errorDetails.reason();
+    if (!hasErrorInfo()) {
+      return null;
+    }
+    return errorDetails.errorInfo().getReason();
   }
 
   public String getDomain() {
-    return errorDetails.domain();
+    if (!hasErrorInfo()) {
+      return null;
+    }
+    return errorDetails.errorInfo().getDomain();
   }
 
   public Map<String, String> getErrorInfoMetadata() {
-    return errorDetails.errorInfoMetadata();
+    if (!hasErrorInfo()) {
+      return null;
+    }
+    return errorDetails.errorInfo().getMetadataMap();
+  }
+
+  private boolean hasErrorInfo() {
+    return errorDetails != null && errorDetails.errorInfo() != null;
   }
 }
