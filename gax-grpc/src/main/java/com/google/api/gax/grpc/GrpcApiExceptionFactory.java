@@ -91,14 +91,11 @@ class GrpcApiExceptionFactory {
       return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
     }
 
-    byte[] bytes = metadata.get(Metadata.Key.of(ERROR_DETAIL_KEY, Metadata.BINARY_BYTE_MARSHALLER));
-    if (bytes == null) {
-      return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
-    }
-
     com.google.rpc.Status status;
     try {
-      status = com.google.rpc.Status.parseFrom(bytes);
+      status =
+          com.google.rpc.Status.parseFrom(
+              metadata.get(Metadata.Key.of(ERROR_DETAIL_KEY, Metadata.BINARY_BYTE_MARSHALLER)));
     } catch (InvalidProtocolBufferException e) {
       return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
     }

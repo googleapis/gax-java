@@ -34,6 +34,7 @@ import java.util.Map;
 
 /** Represents an exception thrown during an RPC call. */
 public class ApiException extends RuntimeException {
+
   private static final long serialVersionUID = -4375114339928877996L;
 
   private ErrorDetails errorDetails;
@@ -68,32 +69,42 @@ public class ApiException extends RuntimeException {
     return statusCode;
   }
 
-  public ErrorDetails getErrorDetails() {
-    return errorDetails;
-  }
-
+  /**
+   * Returns the reason of the exception. This is a constant value that identifies the proximate
+   * cause of the error.
+   */
   public String getReason() {
-    if (!hasErrorInfo()) {
+    if (isErrorInfoEmpty()) {
       return null;
     }
     return errorDetails.errorInfo().getReason();
   }
 
+  /**
+   * Returns the logical grouping to which the "reason" belongs. The error domain is typically the
+   * registered service name of the tool or product that generates the error.
+   */
   public String getDomain() {
-    if (!hasErrorInfo()) {
+    if (isErrorInfoEmpty()) {
       return null;
     }
     return errorDetails.errorInfo().getDomain();
   }
 
+  /** Returns additional structured details about this exception. */
   public Map<String, String> getErrorInfoMetadata() {
-    if (!hasErrorInfo()) {
+    if (isErrorInfoEmpty()) {
       return null;
     }
     return errorDetails.errorInfo().getMetadataMap();
   }
 
-  private boolean hasErrorInfo() {
-    return errorDetails != null && errorDetails.errorInfo() != null;
+  /** Returns all standard error messages that server sends. */
+  public ErrorDetails getErrorDetails() {
+    return errorDetails;
+  }
+
+  private boolean isErrorInfoEmpty() {
+    return errorDetails == null || errorDetails.errorInfo() == null;
   }
 }
