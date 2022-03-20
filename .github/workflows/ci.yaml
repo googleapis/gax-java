@@ -60,7 +60,7 @@ jobs:
           bazel --version
           bazel --batch test //... --noshow_progress --test_output=errors
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ failure() }}
         with:
           name: test-artifacts
