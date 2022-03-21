@@ -91,45 +91,52 @@ class GrpcApiExceptionFactory {
       return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
     }
 
+    byte[] bytes = metadata.get(Metadata.Key.of(ERROR_DETAIL_KEY, Metadata.BINARY_BYTE_MARSHALLER));
+    if (bytes == null) {
+      return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
+    }
+
     com.google.rpc.Status status;
     try {
-      status =
-          com.google.rpc.Status.parseFrom(
-              metadata.get(Metadata.Key.of(ERROR_DETAIL_KEY, Metadata.BINARY_BYTE_MARSHALLER)));
+      status = com.google.rpc.Status.parseFrom(bytes);
     } catch (InvalidProtocolBufferException e) {
       return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
     }
 
-    ErrorDetails.Builder errorDetailsBuilder = ErrorDetails.builder();
-    for (Any detail : status.getDetailsList()) {
-      unpackAndAddErrorDetail(detail, errorDetailsBuilder);
-    }
     return ApiExceptionFactory.createException(
-        throwable, grpcStatusCode, canRetry, errorDetailsBuilder.build());
+        throwable, grpcStatusCode, canRetry, buildErrorDetails(status));
   }
 
-  private void unpackAndAddErrorDetail(Any detail, ErrorDetails.Builder builder) {
+  private ErrorDetails buildErrorDetails(com.google.rpc.Status status) {
+    ErrorDetails.Builder errorDetailsBuilder = ErrorDetails.builder();
+    for (Any detail : status.getDetailsList()) {
+      addErrorDetail(errorDetailsBuilder, detail);
+    }
+    return errorDetailsBuilder.build();
+  }
+
+  private void addErrorDetail(ErrorDetails.Builder errorDetailsBuilder, Any detail) {
     try {
       if (detail.is(ErrorInfo.class)) {
-        builder.setErrorInfo(detail.unpack(ErrorInfo.class));
+        errorDetailsBuilder.setErrorInfo(detail.unpack(ErrorInfo.class));
       } else if (detail.is(RetryInfo.class)) {
-        builder.setRetryInfo(detail.unpack(RetryInfo.class));
+        errorDetailsBuilder.setRetryInfo(detail.unpack(RetryInfo.class));
       } else if (detail.is(DebugInfo.class)) {
-        builder.setDebugInfo(detail.unpack(DebugInfo.class));
+        errorDetailsBuilder.setDebugInfo(detail.unpack(DebugInfo.class));
       } else if (detail.is(QuotaFailure.class)) {
-        builder.setQuotaFailure(detail.unpack(QuotaFailure.class));
+        errorDetailsBuilder.setQuotaFailure(detail.unpack(QuotaFailure.class));
       } else if (detail.is(PreconditionFailure.class)) {
-        builder.setPreconditionFailure(detail.unpack(PreconditionFailure.class));
+        errorDetailsBuilder.setPreconditionFailure(detail.unpack(PreconditionFailure.class));
       } else if (detail.is(BadRequest.class)) {
-        builder.setBadRequest(detail.unpack(BadRequest.class));
+        errorDetailsBuilder.setBadRequest(detail.unpack(BadRequest.class));
       } else if (detail.is(RequestInfo.class)) {
-        builder.setRequestInfo(detail.unpack(RequestInfo.class));
+        errorDetailsBuilder.setRequestInfo(detail.unpack(RequestInfo.class));
       } else if (detail.is(ResourceInfo.class)) {
-        builder.setResourceInfo(detail.unpack(ResourceInfo.class));
+        errorDetailsBuilder.setResourceInfo(detail.unpack(ResourceInfo.class));
       } else if (detail.is(Help.class)) {
-        builder.setHelp(detail.unpack(Help.class));
+        errorDetailsBuilder.setHelp(detail.unpack(Help.class));
       } else if (detail.is(LocalizedMessage.class)) {
-        builder.setLocalizedMessage(detail.unpack(LocalizedMessage.class));
+        errorDetailsBuilder.setLocalizedMessage(detail.unpack(LocalizedMessage.class));
       }
     } catch (InvalidProtocolBufferException e) {
       // If unpacking one of the error detail fails, it should not block unpacking other error

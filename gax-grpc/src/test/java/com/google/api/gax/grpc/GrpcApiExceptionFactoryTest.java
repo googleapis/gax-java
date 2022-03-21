@@ -176,6 +176,16 @@ public class GrpcApiExceptionFactoryTest {
   }
 
   @Test
+  public void create_shouldCreateApiExceptionWithNoErrorDetailsIfMetadataDoesNotHaveErrorDetails() {
+    StatusRuntimeException statusException =
+        new StatusRuntimeException(GRPC_STATUS, new Metadata());
+
+    ApiException actual = factory.create(statusException);
+
+    Truth.assertThat(actual.getErrorDetails()).isNull();
+  }
+
+  @Test
   public void create_shouldCreateApiExceptionWithNoErrorDetailsIfStatusIsMalformed() {
     Metadata trailers = new Metadata();
     Status status = Status.newBuilder().addDetails(Any.pack(ERROR_INFO)).build();
