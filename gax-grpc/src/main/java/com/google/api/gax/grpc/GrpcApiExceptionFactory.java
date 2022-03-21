@@ -33,6 +33,7 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ErrorDetails;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -60,7 +61,7 @@ import java.util.Set;
  */
 class GrpcApiExceptionFactory {
 
-  static final String ERROR_DETAIL_KEY = "grpc-status-details-bin";
+  @VisibleForTesting static final String ERROR_DETAIL_KEY = "grpc-status-details-bin";
   private final ImmutableSet<Code> retryableCodes;
 
   GrpcApiExceptionFactory(Set<Code> retryCodes) {
