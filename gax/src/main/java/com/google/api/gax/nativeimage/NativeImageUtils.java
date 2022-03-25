@@ -41,6 +41,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.graalvm.nativeimage.hosted.Feature.FeatureAccess;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
@@ -48,15 +49,18 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 /** Internal class offering helper methods for registering methods/classes for reflection. */
 public class NativeImageUtils {
 
+  private NativeImageUtils(){}
+
   private static final Logger LOGGER = Logger.getLogger(NativeImageUtils.class.getName());
+  private static final String CLASS_REFLECTION_ERROR_MESSAGE =  "Failed to find {0} on the classpath for reflection.";
 
   /** Returns the method of a class or fails if it is not present. */
   public static Method getMethodOrFail(Class<?> clazz, String methodName, Class<?>... params) {
     try {
       return clazz.getDeclaredMethod(methodName, params);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException(
-          "Failed to find method " + methodName + " for class " + clazz.getName(), e);
+      throw new IllegalStateException(
+          String.format("Failed to find method %s for class %s", methodName, clazz.getName()), e);
     }
   }
 
@@ -67,8 +71,7 @@ public class NativeImageUtils {
       RuntimeReflection.register(clazz);
       RuntimeReflection.registerForReflectiveInstantiation(clazz);
     } else {
-      LOGGER.warning(
-          "Failed to find " + className + " on the classpath for reflective instantiation.");
+      LOGGER.log(Level.WARNING, "Failed to find {0} on the classpath for reflective instantiation.",className);
     }
   }
 
@@ -79,7 +82,7 @@ public class NativeImageUtils {
       RuntimeReflection.register(clazz);
       RuntimeReflection.register(clazz.getDeclaredConstructors());
     } else {
-      LOGGER.warning("Failed to find " + name + " on the classpath for reflection.");
+      LOGGER.log(Level.WARNING, CLASS_REFLECTION_ERROR_MESSAGE, name);
     }
   }
 
@@ -92,7 +95,7 @@ public class NativeImageUtils {
       RuntimeReflection.register(clazz.getDeclaredFields());
       RuntimeReflection.register(clazz.getDeclaredMethods());
     } else {
-      LOGGER.warning("Failed to find " + name + " on the classpath for reflection.");
+      LOGGER.log(Level.WARNING, CLASS_REFLECTION_ERROR_MESSAGE, name);
     }
   }
 
@@ -112,7 +115,7 @@ public class NativeImageUtils {
         }
       }
     } else {
-      LOGGER.warning("Failed to find " + className + " on the classpath for reflection.");
+      LOGGER.log(Level.WARNING, CLASS_REFLECTION_ERROR_MESSAGE, className);
     }
   }
 
@@ -131,10 +134,8 @@ public class NativeImageUtils {
         }
       }
     } else {
-      LOGGER.warning(
-          "Failed to find "
-              + className
-              + " on the classpath for unsafe fields access registration.");
+      LOGGER.log(Level.WARNING,
+          "Failed to find {0} on the classpath for unsafe fields access registration.", className);
     }
   }
 
@@ -158,7 +159,7 @@ public class NativeImageUtils {
         }
       }
     } catch (IOException e) {
-      throw new RuntimeException("Failed to load classes under package name.", e);
+      throw new IllegalStateException("Failed to load classes under package name.", e);
     }
   }
 
