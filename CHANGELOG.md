@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.13.0](https://github.com/googleapis/gax-java/compare/v2.12.2...v2.13.0) (2022-03-25)
+
+
+### Features
+
+* dynamic channel pool scaled by number of outstanding request ([#1569](https://github.com/googleapis/gax-java/issues/1569)) ([fff2bab](https://github.com/googleapis/gax-java/commit/fff2babaf2620686c2e0be1b6d338ac088248cf6))
+
+
+### Dependencies
+
+* update dependency com_google_protobuf to 3.19.4 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.api:api-common to 2.1.5 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.api.grpc:grpc-google-common-protos to 2.8.0 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.api.grpc:proto-google-common-protos to 2.8.0 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.guava:guava to 31.1-jre ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.http-client:google-http-client to 1.41.5 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency com.google.http-client:google-http-client-gson to 1.41.5 ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+* update dependency io_grpc to 1.45.0. ([#1639](https://github.com/googleapis/gax-java/issues/1639)) ([5c01174](https://github.com/googleapis/gax-java/commit/5c0117408ecfaec4e445b4fd813da6478415ea8e))
+
 ### [2.12.2](https://github.com/googleapis/gax-java/compare/v2.12.1...v2.12.2) (2022-02-09)
 
 
