@@ -46,19 +46,16 @@ import java.util.logging.Logger;
 import org.graalvm.nativeimage.hosted.Feature.FeatureAccess;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
-/**
- * Internal class offering helper methods for registering methods/classes for reflection.
- */
+/** Internal class offering helper methods for registering methods/classes for reflection. */
 public class NativeImageUtils {
 
   private static final Logger LOGGER = Logger.getLogger(NativeImageUtils.class.getName());
-  private static final String CLASS_REFLECTION_ERROR_MESSAGE = "Failed to find {0} on the classpath for reflection.";
-  private NativeImageUtils() {
-  }
+  private static final String CLASS_REFLECTION_ERROR_MESSAGE =
+      "Failed to find {0} on the classpath for reflection.";
 
-  /**
-   * Returns the method of a class or fails if it is not present.
-   */
+  private NativeImageUtils() {}
+
+  /** Returns the method of a class or fails if it is not present. */
   public static Method getMethodOrFail(Class<?> clazz, String methodName, Class<?>... params) {
     try {
       return clazz.getDeclaredMethod(methodName, params);
@@ -68,23 +65,21 @@ public class NativeImageUtils {
     }
   }
 
-  /**
-   * Registers a class for reflective construction via its default constructor.
-   */
+  /** Registers a class for reflective construction via its default constructor. */
   public static void registerForReflectiveInstantiation(FeatureAccess access, String className) {
     Class<?> clazz = access.findClassByName(className);
     if (clazz != null) {
       RuntimeReflection.register(clazz);
       RuntimeReflection.registerForReflectiveInstantiation(clazz);
     } else {
-      LOGGER.log(Level.WARNING, "Failed to find {0} on the classpath for reflective instantiation.",
+      LOGGER.log(
+          Level.WARNING,
+          "Failed to find {0} on the classpath for reflective instantiation.",
           className);
     }
   }
 
-  /**
-   * Registers all constructors of a class for reflection.
-   */
+  /** Registers all constructors of a class for reflection. */
   public static void registerConstructorsForReflection(FeatureAccess access, String name) {
     Class<?> clazz = access.findClassByName(name);
     if (clazz != null) {
@@ -95,9 +90,7 @@ public class NativeImageUtils {
     }
   }
 
-  /**
-   * Registers an entire class for reflection use.
-   */
+  /** Registers an entire class for reflection use. */
   public static void registerClassForReflection(FeatureAccess access, String name) {
     Class<?> clazz = access.findClassByName(name);
     if (clazz != null) {
@@ -130,9 +123,7 @@ public class NativeImageUtils {
     }
   }
 
-  /**
-   * Registers a class for unsafe reflective field access.
-   */
+  /** Registers a class for unsafe reflective field access. */
   public static void registerForUnsafeFieldAccess(
       FeatureAccess access, String className, String... fields) {
     Class<?> clazz = access.findClassByName(className);
@@ -147,14 +138,14 @@ public class NativeImageUtils {
         }
       }
     } else {
-      LOGGER.log(Level.WARNING,
-          "Failed to find {0} on the classpath for unsafe fields access registration.", className);
+      LOGGER.log(
+          Level.WARNING,
+          "Failed to find {0} on the classpath for unsafe fields access registration.",
+          className);
     }
   }
 
-  /**
-   * Registers all the classes under the specified package for reflection.
-   */
+  /** Registers all the classes under the specified package for reflection. */
   public static void registerPackageForReflection(FeatureAccess access, String packageName) {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
