@@ -48,21 +48,14 @@ final class GrpcNettyFeature implements Feature {
   private static final String GOOGLE_AUTH_CLASS =
       "com.google.auth.oauth2.ServiceAccountCredentials";
 
-  private static final String NETTY_SHADED_PACKAGE = "io.grpc.netty.shaded.io.netty.util.internal.shaded.";
-
-  @Override
-  public void beforeAnalysis(BeforeAnalysisAccess access) {
-    loadGoogleAuthClasses(access);
-    loadGrpcNettyClasses(access);
-    loadMiscClasses(access);
-  }
+  private static final String NETTY_SHADED_PACKAGE =
+      "io.grpc.netty.shaded.io.netty.util.internal.shaded.";
 
   private static void loadGoogleAuthClasses(BeforeAnalysisAccess access) {
     // For com.google.auth:google-auth-library-oauth2-http
     Class<?> authClass = access.findClassByName(GOOGLE_AUTH_CLASS);
     if (authClass != null) {
-      registerClassHierarchyForReflection(
-          access, GOOGLE_AUTH_CLASS);
+      registerClassHierarchyForReflection(access, GOOGLE_AUTH_CLASS);
       registerClassHierarchyForReflection(
           access, "com.google.auth.oauth2.ServiceAccountJwtAccessCredentials");
     }
@@ -95,33 +88,27 @@ final class GrpcNettyFeature implements Feature {
       // Unsafe field accesses
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.MpscArrayQueueProducerIndexField",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.MpscArrayQueueProducerIndexField",
           "producerIndex");
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.MpscArrayQueueProducerLimitField",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.MpscArrayQueueProducerLimitField",
           "producerLimit");
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.MpscArrayQueueConsumerIndexField",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.MpscArrayQueueConsumerIndexField",
           "consumerIndex");
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
           "producerIndex");
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
           "producerLimit");
       registerForUnsafeFieldAccess(
           access,
-          NETTY_SHADED_PACKAGE
-              + "org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
+          NETTY_SHADED_PACKAGE + "org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
           "consumerIndex");
     }
   }
@@ -134,5 +121,12 @@ final class GrpcNettyFeature implements Feature {
     registerForUnsafeFieldAccess(access, "javax.net.ssl.SSLContext", "contextSpi");
     registerClassForReflection(access, "java.lang.management.ManagementFactory");
     registerClassForReflection(access, "java.lang.management.RuntimeMXBean");
+  }
+
+  @Override
+  public void beforeAnalysis(BeforeAnalysisAccess access) {
+    loadGoogleAuthClasses(access);
+    loadGrpcNettyClasses(access);
+    loadMiscClasses(access);
   }
 }
