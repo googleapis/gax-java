@@ -51,6 +51,13 @@ final class GrpcNettyFeature implements Feature {
   private static final String NETTY_SHADED_PACKAGE =
       "io.grpc.netty.shaded.io.netty.util.internal.shaded.";
 
+  @Override
+  public void beforeAnalysis(BeforeAnalysisAccess access) {
+    loadGoogleAuthClasses(access);
+    loadGrpcNettyClasses(access);
+    loadMiscClasses(access);
+  }
+
   private static void loadGoogleAuthClasses(BeforeAnalysisAccess access) {
     // For com.google.auth:google-auth-library-oauth2-http
     Class<?> authClass = access.findClassByName(GOOGLE_AUTH_CLASS);
@@ -121,12 +128,5 @@ final class GrpcNettyFeature implements Feature {
     registerForUnsafeFieldAccess(access, "javax.net.ssl.SSLContext", "contextSpi");
     registerClassForReflection(access, "java.lang.management.ManagementFactory");
     registerClassForReflection(access, "java.lang.management.RuntimeMXBean");
-  }
-
-  @Override
-  public void beforeAnalysis(BeforeAnalysisAccess access) {
-    loadGoogleAuthClasses(access);
-    loadGrpcNettyClasses(access);
-    loadMiscClasses(access);
   }
 }
