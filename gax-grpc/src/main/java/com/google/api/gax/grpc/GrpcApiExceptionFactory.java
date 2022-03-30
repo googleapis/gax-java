@@ -35,18 +35,7 @@ import com.google.api.gax.rpc.ErrorDetails;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.rpc.BadRequest;
-import com.google.rpc.DebugInfo;
-import com.google.rpc.ErrorInfo;
-import com.google.rpc.Help;
-import com.google.rpc.LocalizedMessage;
-import com.google.rpc.PreconditionFailure;
-import com.google.rpc.QuotaFailure;
-import com.google.rpc.RequestInfo;
-import com.google.rpc.ResourceInfo;
-import com.google.rpc.RetryInfo;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
@@ -104,45 +93,9 @@ class GrpcApiExceptionFactory {
       return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
     }
 
-    return ApiExceptionFactory.createException(
-        throwable, grpcStatusCode, canRetry, buildErrorDetails(status));
-  }
-
-  private ErrorDetails buildErrorDetails(com.google.rpc.Status status) {
     ErrorDetails.Builder errorDetailsBuilder = ErrorDetails.builder();
-    for (Any detail : status.getDetailsList()) {
-      addErrorDetail(errorDetailsBuilder, detail);
-    }
-    return errorDetailsBuilder.build();
-  }
-
-  private void addErrorDetail(ErrorDetails.Builder errorDetailsBuilder, Any detail) {
-    try {
-      if (detail.is(ErrorInfo.class)) {
-        errorDetailsBuilder.setErrorInfo(detail.unpack(ErrorInfo.class));
-      } else if (detail.is(RetryInfo.class)) {
-        errorDetailsBuilder.setRetryInfo(detail.unpack(RetryInfo.class));
-      } else if (detail.is(DebugInfo.class)) {
-        errorDetailsBuilder.setDebugInfo(detail.unpack(DebugInfo.class));
-      } else if (detail.is(QuotaFailure.class)) {
-        errorDetailsBuilder.setQuotaFailure(detail.unpack(QuotaFailure.class));
-      } else if (detail.is(PreconditionFailure.class)) {
-        errorDetailsBuilder.setPreconditionFailure(detail.unpack(PreconditionFailure.class));
-      } else if (detail.is(BadRequest.class)) {
-        errorDetailsBuilder.setBadRequest(detail.unpack(BadRequest.class));
-      } else if (detail.is(RequestInfo.class)) {
-        errorDetailsBuilder.setRequestInfo(detail.unpack(RequestInfo.class));
-      } else if (detail.is(ResourceInfo.class)) {
-        errorDetailsBuilder.setResourceInfo(detail.unpack(ResourceInfo.class));
-      } else if (detail.is(Help.class)) {
-        errorDetailsBuilder.setHelp(detail.unpack(Help.class));
-      } else if (detail.is(LocalizedMessage.class)) {
-        errorDetailsBuilder.setLocalizedMessage(detail.unpack(LocalizedMessage.class));
-      }
-    } catch (InvalidProtocolBufferException e) {
-      // If unpacking one of the error detail fails, it should not block unpacking other error
-      // details so that end users can still get some info back. Hence, we don't need to do
-      // anything.
-    }
+    errorDetailsBuilder.setRawErrorMessages(status.getDetailsList());
+    return ApiExceptionFactory.createException(
+        throwable, grpcStatusCode, canRetry, errorDetailsBuilder.build());
   }
 }

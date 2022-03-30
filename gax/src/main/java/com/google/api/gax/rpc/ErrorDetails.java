@@ -31,6 +31,10 @@ package com.google.api.gax.rpc;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.toprettystring.ToPrettyString;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.rpc.BadRequest;
 import com.google.rpc.DebugInfo;
 import com.google.rpc.ErrorInfo;
@@ -41,9 +45,10 @@ import com.google.rpc.QuotaFailure;
 import com.google.rpc.RequestInfo;
 import com.google.rpc.ResourceInfo;
 import com.google.rpc.RetryInfo;
+import java.util.List;
 import javax.annotation.Nullable;
 
-/** This class contains a set of standard error messages that returns from server. */
+/** This class contains a list of standard error messages that returns from server. */
 @AutoValue
 public abstract class ErrorDetails {
 
@@ -52,55 +57,78 @@ public abstract class ErrorDetails {
    * structured details that both humans and applications can depend on.
    */
   @Nullable
-  public abstract ErrorInfo errorInfo();
+  public ErrorInfo errorInfo() {
+    return unpack(ErrorInfo.class);
+  }
 
   /**
    * Describes when the clients can retry a failed request. Clients could ignore the recommendation
    * here or retry when this information is missing from error responses.
    */
   @Nullable
-  public abstract RetryInfo retryInfo();
+  public RetryInfo retryInfo() {
+    return unpack(RetryInfo.class);
+  }
 
   /** Describes additional debugging info. */
   @Nullable
-  public abstract DebugInfo debugInfo();
+  public DebugInfo debugInfo() {
+    return unpack(DebugInfo.class);
+  }
 
   /** Describes how a quota check failed. */
   @Nullable
-  public abstract QuotaFailure quotaFailure();
+  public QuotaFailure quotaFailure() {
+    return unpack(QuotaFailure.class);
+  }
 
   /** Describes what preconditions have failed. */
   @Nullable
-  public abstract PreconditionFailure preconditionFailure();
+  public PreconditionFailure preconditionFailure() {
+    return unpack(PreconditionFailure.class);
+  }
 
   /**
    * Describes violations in a client request. This error type focuses on the syntactic aspects of
    * the request.
    */
   @Nullable
-  public abstract BadRequest badRequest();
+  public BadRequest badRequest() {
+    return unpack(BadRequest.class);
+  }
 
   /**
    * Contains metadata about the request that clients can attach when filing a bug or providing
    * other forms of feedback.
    */
   @Nullable
-  public abstract RequestInfo requestInfo();
+  public RequestInfo requestInfo() {
+    return unpack(RequestInfo.class);
+  }
 
   /** Describes the resource that is being accessed. */
   @Nullable
-  public abstract ResourceInfo resourceInfo();
+  public ResourceInfo resourceInfo() {
+    return unpack(ResourceInfo.class);
+  }
 
   /** Provides links to documentation or for performing an out-of-band action. */
   @Nullable
-  public abstract Help help();
+  public Help help() {
+    return unpack(Help.class);
+  }
 
   /**
    * Provides a localized error message that is safe to return to the user which can be attached to
    * an RPC error
    */
   @Nullable
-  public abstract LocalizedMessage localizedMessage();
+  public LocalizedMessage localizedMessage() {
+    return unpack(LocalizedMessage.class);
+  }
+
+  @Nullable
+  abstract List<Any> rawErrorMessages();
 
   public static Builder builder() {
     return new AutoValue_ErrorDetails.Builder();
@@ -109,27 +137,28 @@ public abstract class ErrorDetails {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract Builder setErrorInfo(ErrorInfo errorInfo);
-
-    public abstract Builder setRetryInfo(RetryInfo retryInfo);
-
-    public abstract Builder setDebugInfo(DebugInfo debugInfo);
-
-    public abstract Builder setQuotaFailure(QuotaFailure quotaFailure);
-
-    public abstract Builder setPreconditionFailure(PreconditionFailure preconditionFailure);
-
-    public abstract Builder setBadRequest(BadRequest badRequest);
-
-    public abstract Builder setRequestInfo(RequestInfo requestInfo);
-
-    public abstract Builder setResourceInfo(ResourceInfo resourceInfo);
-
-    public abstract Builder setHelp(Help help);
-
-    public abstract Builder setLocalizedMessage(LocalizedMessage localizedMessage);
+    public abstract Builder setRawErrorMessages(List<Any> rawErrorMessages);
 
     public abstract ErrorDetails build();
+  }
+
+  @VisibleForTesting
+  <T extends Message> T unpack(Class<T> errorTypeClazz) {
+    List<Any> rawErrorMessages = rawErrorMessages();
+    if (rawErrorMessages == null) {
+      return null;
+    }
+    for (Any detail : rawErrorMessages) {
+      if (!detail.is(errorTypeClazz)) {
+        continue;
+      }
+      try {
+        return detail.unpack(errorTypeClazz);
+      } catch (InvalidProtocolBufferException e) {
+        throw new ProtocolBufferParsingException(e);
+      }
+    }
+    return null;
   }
 
   @ToPrettyString

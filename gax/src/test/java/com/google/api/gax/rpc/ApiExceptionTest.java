@@ -31,8 +31,11 @@ package com.google.api.gax.rpc;
 
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
+import com.google.protobuf.Any;
 import com.google.rpc.ErrorInfo;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,19 +44,21 @@ import org.junit.runners.JUnit4;
 public class ApiExceptionTest {
 
   private static final ErrorDetails ERROR_DETAILS_WITH_NO_ERROR_INFO =
-      ErrorDetails.builder().build();
+      ErrorDetails.builder().setRawErrorMessages(Collections.emptyList()).build();
   private static final String DOMAIN = "googleapis.com";
   private static final String REASON = "SERVICE_DISABLED";
   private static final String METADATA_KEY = "service";
   private static final String METADATA_VALUE = "language.googleapis.com";
   private static final ErrorDetails ERROR_DETAILS_WITH_ERROR_INFO =
       ErrorDetails.builder()
-          .setErrorInfo(
-              ErrorInfo.newBuilder()
-                  .setDomain(DOMAIN)
-                  .setReason(REASON)
-                  .putMetadata(METADATA_KEY, METADATA_VALUE)
-                  .build())
+          .setRawErrorMessages(
+              ImmutableList.of(
+                  Any.pack(
+                      ErrorInfo.newBuilder()
+                          .setDomain(DOMAIN)
+                          .setReason(REASON)
+                          .putMetadata(METADATA_KEY, METADATA_VALUE)
+                          .build())))
           .build();
   private static final FakeStatusCode STATUS_CODE = FakeStatusCode.of(Code.UNAVAILABLE);
 
