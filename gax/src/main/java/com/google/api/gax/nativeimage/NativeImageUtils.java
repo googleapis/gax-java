@@ -52,6 +52,8 @@ public class NativeImageUtils {
   private static final Logger LOGGER = Logger.getLogger(NativeImageUtils.class.getName());
   private static final String CLASS_REFLECTION_ERROR_MESSAGE =
       "Failed to find {0} on the classpath for reflection.";
+  
+  private static final int THRESHOLD_ENTRIES = 10000;
 
   private NativeImageUtils() {}
 
@@ -173,12 +175,19 @@ public class NativeImageUtils {
       throws IOException {
 
     List<String> result = new ArrayList<>();
+    int totalEntries = 0;
 
     final JarFile jarFile = urlConnection.getJarFile();
     final Enumeration<JarEntry> entries = jarFile.entries();
 
     while (entries.hasMoreElements()) {
       JarEntry entry = entries.nextElement();
+
+      totalEntries++;
+      if (totalEntries > THRESHOLD_ENTRIES) {
+        throw new IllegalStateException("Zip file contains too many files: " + totalEntries);
+      }
+
       String entryName = entry.getName();
 
       if (entryName.endsWith(".class")) {
@@ -189,7 +198,6 @@ public class NativeImageUtils {
         }
       }
     }
-
     return result;
   }
 }
