@@ -52,7 +52,7 @@ public class NativeImageUtils {
   private static final Logger LOGGER = Logger.getLogger(NativeImageUtils.class.getName());
   private static final String CLASS_REFLECTION_ERROR_MESSAGE =
       "Failed to find {0} on the classpath for reflection.";
-  
+
   private static final int THRESHOLD_ENTRIES = 10000;
 
   private NativeImageUtils() {}
