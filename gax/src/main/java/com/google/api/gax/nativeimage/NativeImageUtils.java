@@ -30,7 +30,9 @@
 
 package com.google.api.gax.nativeimage;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
@@ -53,7 +55,11 @@ public class NativeImageUtils {
   private static final String CLASS_REFLECTION_ERROR_MESSAGE =
       "Failed to find {0} on the classpath for reflection.";
 
-  private static final int THRESHOLD_ENTRIES = 10000;
+  // 1 GB
+  private static final int MAX_JAR_SIZE = 1000000000;
+
+  private static final int MAX_ENTRIES = 10000;
+  private static final int MAX_RATIO = 10;
 
   private NativeImageUtils() {}
 
@@ -175,21 +181,18 @@ public class NativeImageUtils {
       throws IOException {
 
     List<String> result = new ArrayList<>();
-    int totalEntries = 0;
-
     final JarFile jarFile = urlConnection.getJarFile();
-    final Enumeration<JarEntry> entries = jarFile.entries();
 
+    int totalEntries = 0;
+    int totalArchiveSize = 0;
+    final Enumeration<JarEntry> entries = jarFile.entries();
     while (entries.hasMoreElements()) {
       JarEntry entry = entries.nextElement();
-
+      InputStream inputStream = new BufferedInputStream(jarFile.getInputStream(entry));
       totalEntries++;
-      if (totalEntries > THRESHOLD_ENTRIES) {
-        throw new IllegalStateException("Zip file contains too many files: " + totalEntries);
-      }
+      verifyJarIntegrity(totalEntries, totalArchiveSize, inputStream, entry);
 
       String entryName = entry.getName();
-
       if (entryName.endsWith(".class")) {
         String javaClassName = entryName.replace(".class", "").replace('/', '.');
 
@@ -199,5 +202,32 @@ public class NativeImageUtils {
       }
     }
     return result;
+  }
+
+  private static void verifyJarIntegrity(
+      int totalEntries, int totalArchiveSize, InputStream inputStream, JarEntry entry)
+      throws IOException {
+    // Compare compressed and uncompressed size of the Jar entry file. If the
+    // ratio is high (>10) then there is a possibility of a zip bomb attack.
+    byte[] buffer = new byte[2048];
+    int totalEntrySize = 0;
+    int bytesRead = inputStream.read(buffer);
+    if (bytesRead > 0) {
+      totalEntrySize += bytesRead;
+      totalArchiveSize += bytesRead;
+      double compressionRatio = (double) totalEntrySize / entry.getCompressedSize();
+      if (compressionRatio > MAX_RATIO) {
+        throw new IllegalStateException(
+            "Ratio of uncompressed and compressed of JAR entry is too big.");
+      }
+    }
+
+    if (totalArchiveSize > MAX_JAR_SIZE) {
+      throw new IllegalStateException(
+          "The total uncompressed size (in bytes) of the JAR file is too big: " + totalArchiveSize);
+    }
+    if (totalEntries > MAX_ENTRIES) {
+      throw new IllegalStateException("Zip file contains too many files: " + totalEntries);
+    }
   }
 }
