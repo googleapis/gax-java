@@ -30,36 +30,21 @@
 
 package com.google.api.gax.nativeimage;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import com.google.api.core.InternalApi;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.graalvm.nativeimage.hosted.Feature.FeatureAccess;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 /** Internal class offering helper methods for registering methods/classes for reflection. */
+@InternalApi
 public class NativeImageUtils {
 
   private static final Logger LOGGER = Logger.getLogger(NativeImageUtils.class.getName());
   private static final String CLASS_REFLECTION_ERROR_MESSAGE =
       "Failed to find {0} on the classpath for reflection.";
-
-  // 1 GB
-  private static final int MAX_JAR_SIZE = 1000000000;
-
-  private static final int MAX_ENTRIES = 10000;
-  private static final int MAX_RATIO = 10;
 
   private NativeImageUtils() {}
 
@@ -150,84 +135,6 @@ public class NativeImageUtils {
           Level.WARNING,
           "Failed to find {0} on the classpath for unsafe fields access registration.",
           className);
-    }
-  }
-
-  /** Registers all the classes under the specified package for reflection. */
-  public static void registerPackageForReflection(FeatureAccess access, String packageName) {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-
-    try {
-      String path = packageName.replace('.', '/');
-
-      Enumeration<URL> resources = classLoader.getResources(path);
-      while (resources.hasMoreElements()) {
-        URL url = resources.nextElement();
-
-        URLConnection connection = url.openConnection();
-        if (connection instanceof JarURLConnection) {
-          List<String> classes = findClassesInJar((JarURLConnection) connection, packageName);
-          for (String className : classes) {
-            registerClassHierarchyForReflection(access, className);
-          }
-        }
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException("Failed to load classes under package name.", e);
-    }
-  }
-
-  private static List<String> findClassesInJar(JarURLConnection urlConnection, String packageName)
-      throws IOException {
-
-    List<String> result = new ArrayList<>();
-    final JarFile jarFile = urlConnection.getJarFile();
-
-    int totalEntries = 0;
-    int totalArchiveSize = 0;
-    final Enumeration<JarEntry> entries = jarFile.entries();
-    while (entries.hasMoreElements()) {
-      JarEntry entry = entries.nextElement();
-      InputStream inputStream = new BufferedInputStream(jarFile.getInputStream(entry));
-      totalEntries++;
-      verifyJarIntegrity(totalEntries, totalArchiveSize, inputStream, entry);
-
-      String entryName = entry.getName();
-      if (entryName.endsWith(".class")) {
-        String javaClassName = entryName.replace(".class", "").replace('/', '.');
-
-        if (javaClassName.startsWith(packageName)) {
-          result.add(javaClassName);
-        }
-      }
-    }
-    return result;
-  }
-
-  private static void verifyJarIntegrity(
-      int totalEntries, int totalArchiveSize, InputStream inputStream, JarEntry entry)
-      throws IOException {
-    // Compare compressed and uncompressed size of the Jar entry file. If the
-    // ratio is high (>10) then there is a possibility of a zip bomb attack.
-    byte[] buffer = new byte[2048];
-    int totalEntrySize = 0;
-    int bytesRead = inputStream.read(buffer);
-    if (bytesRead > 0) {
-      totalEntrySize += bytesRead;
-      totalArchiveSize += bytesRead;
-      double compressionRatio = (double) totalEntrySize / entry.getCompressedSize();
-      if (compressionRatio > MAX_RATIO) {
-        throw new IllegalStateException(
-            "Ratio of uncompressed and compressed of JAR entry is too big.");
-      }
-    }
-
-    if (totalArchiveSize > MAX_JAR_SIZE) {
-      throw new IllegalStateException(
-          "The total uncompressed size (in bytes) of the JAR file is too big: " + totalArchiveSize);
-    }
-    if (totalEntries > MAX_ENTRIES) {
-      throw new IllegalStateException("Zip file contains too many files: " + totalEntries);
     }
   }
 }
