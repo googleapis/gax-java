@@ -72,7 +72,7 @@ public class ApiException extends RuntimeException {
 
   /**
    * Returns the reason of the exception. This is a constant value that identifies the proximate
-   * cause of the error.
+   * cause of the error. e.g. SERVICE_DISABLED
    */
   public String getReason() {
     if (isErrorInfoEmpty()) {
@@ -83,7 +83,7 @@ public class ApiException extends RuntimeException {
 
   /**
    * Returns the logical grouping to which the "reason" belongs. The error domain is typically the
-   * registered service name of the tool or product that generates the error.
+   * registered service name of the tool or product that generates the error. e.g. googleapis.com
    */
   public String getDomain() {
     if (isErrorInfoEmpty()) {
@@ -93,7 +93,7 @@ public class ApiException extends RuntimeException {
   }
 
   /** Returns additional structured details about this exception. */
-  public Map<String, String> getErrorInfoMetadata() {
+  public Map<String, String> getMetadata() {
     if (isErrorInfoEmpty()) {
       return null;
     }

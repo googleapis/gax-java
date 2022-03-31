@@ -103,14 +103,13 @@ public class ApiExceptionTest {
   public void getMetadata_shouldReturnNullIfErrorInfoIsNull() {
     apiException = new ApiException(null, STATUS_CODE, false, ERROR_DETAILS_WITH_NO_ERROR_INFO);
 
-    Truth.assertThat(apiException.getErrorInfoMetadata()).isNull();
+    Truth.assertThat(apiException.getMetadata()).isNull();
   }
 
   @Test
   public void getMetadata_shouldReturnMetadataIfAvailable() {
     apiException = new ApiException(null, STATUS_CODE, false, ERROR_DETAILS_WITH_ERROR_INFO);
 
-    Truth.assertThat(apiException.getErrorInfoMetadata())
-        .containsExactly(METADATA_KEY, METADATA_VALUE);
+    Truth.assertThat(apiException.getMetadata()).containsExactly(METADATA_KEY, METADATA_VALUE);
   }
 }

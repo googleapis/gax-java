@@ -175,4 +175,54 @@ public class ErrorDetailsTest {
   public void unpack_shouldReturnDesiredErrorMessageTypeIfItExist() {
     Truth.assertThat(errorDetails.unpack(ErrorInfo.class)).isEqualTo(ERROR_INFO);
   }
+
+  @Test
+  public void errorInfo_shouldUnpackErrorInfoProtoMessage() {
+    Truth.assertThat(errorDetails.errorInfo()).isEqualTo(ERROR_INFO);
+  }
+
+  @Test
+  public void retryInfo_shouldUnpackRetryInfoProtoMessage() {
+    Truth.assertThat(errorDetails.retryInfo()).isEqualTo(RETRY_INFO);
+  }
+
+  @Test
+  public void debugInfo_shouldUnpackDebugInfoProtoMessage() {
+    Truth.assertThat(errorDetails.debugInfo()).isEqualTo(DEBUG_INFO);
+  }
+
+  @Test
+  public void quotaFailure_shouldUnpackQuotaFailureProtoMessage() {
+    Truth.assertThat(errorDetails.quotaFailure()).isEqualTo(QUOTA_FAILURE);
+  }
+
+  @Test
+  public void preconditionFailure_shouldUnpackPreconditionFailureProtoMessage() {
+    Truth.assertThat(errorDetails.preconditionFailure()).isEqualTo(PRECONDITION_FAILURE);
+  }
+
+  @Test
+  public void badRequest_shouldUnpackBadRequestProtoMessage() {
+    Truth.assertThat(errorDetails.badRequest()).isEqualTo(BAD_REQUEST);
+  }
+
+  @Test
+  public void requestInfo_shouldUnpackRequestInfoProtoMessage() {
+    Truth.assertThat(errorDetails.requestInfo()).isEqualTo(REQUEST_INFO);
+  }
+
+  @Test
+  public void resourceInfo_shouldUnpackResourceInfoProtoMessage() {
+    Truth.assertThat(errorDetails.resourceInfo()).isEqualTo(RESOURCE_INFO);
+  }
+
+  @Test
+  public void help_shouldUnpackHelpProtoMessage() {
+    Truth.assertThat(errorDetails.help()).isEqualTo(HELP);
+  }
+
+  @Test
+  public void localizedMessage_shouldUnpackLocalizedMessageProtoMessage() {
+    Truth.assertThat(errorDetails.help()).isEqualTo(HELP);
+  }
 }

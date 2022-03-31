@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.toprettystring.ToPrettyString;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -127,6 +126,7 @@ public abstract class ErrorDetails {
     return unpack(LocalizedMessage.class);
   }
 
+  /** This is a list of raw/unparsed error messages that returns from server. */
   @Nullable
   abstract List<Any> rawErrorMessages();
 
@@ -160,7 +160,4 @@ public abstract class ErrorDetails {
     }
     return null;
   }
-
-  @ToPrettyString
-  abstract String toPrettyString();
 }
