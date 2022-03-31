@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.nativeimage;
+package com.google.api.gax.grpc.nativeimage;
 
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerClassForReflection;
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerClassHierarchyForReflection;
