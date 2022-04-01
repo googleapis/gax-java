@@ -49,7 +49,7 @@ final class OpenCensusFeature implements Feature {
     }
     if (access.findClassByName(TAGS_COMPONENT_CLASS) != null) {
       registerForReflectiveInstantiation(access, "io.opencensus.impl.metrics.MetricsComponentImpl");
-      registerForReflectiveInstantiation(access, "io.opencensus.impl.tags.TagsComponentImpl");
+      registerForReflectiveInstantiation(access, TAGS_COMPONENT_CLASS);
       registerForReflectiveInstantiation(access, "io.opencensus.impl.trace.TraceComponentImpl");
     }
   }
