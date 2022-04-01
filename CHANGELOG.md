@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.14.0](https://github.com/googleapis/gax-java/compare/v2.13.0...v2.14.0) (2022-04-01)
+
+
+### Features
+
+* relocate Netty Native Image configurations from java-core to gax ([#1638](https://github.com/googleapis/gax-java/issues/1638)) ([aafded4](https://github.com/googleapis/gax-java/commit/aafded4a0b779c68d0d5702b722672a0f86ccdd1))
+* relocate protobuf configurations from java-core to gax-java ([#1641](https://github.com/googleapis/gax-java/issues/1641)) ([01d395f](https://github.com/googleapis/gax-java/commit/01d395f486ccd7c364c03ccdfcfbf83b900192c3))
+
+
+### Bug Fixes
+
+* update the runtime dependency grpc-java xds to googleapis ([#1643](https://github.com/googleapis/gax-java/issues/1643)) ([b8d9e30](https://github.com/googleapis/gax-java/commit/b8d9e30c3e2209bcd4cc0f808dfdf0a0608aa466))
+
 ## [2.13.0](https://github.com/googleapis/gax-java/compare/v2.12.2...v2.13.0) (2022-03-25)
 
 
