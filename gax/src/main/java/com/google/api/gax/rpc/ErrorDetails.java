@@ -155,7 +155,10 @@ public abstract class ErrorDetails {
       try {
         return detail.unpack(errorTypeClazz);
       } catch (InvalidProtocolBufferException e) {
-        throw new ProtocolBufferParsingException(e);
+        throw new ProtocolBufferParsingException(
+            String.format(
+                "Failed to unpack %s from raw error messages", errorTypeClazz.getSimpleName()),
+            e);
       }
     }
     return null;

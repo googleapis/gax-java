@@ -32,7 +32,7 @@ package com.google.api.gax.rpc;
 /** Exception thrown when parsing protocol buffer message failed */
 public class ProtocolBufferParsingException extends RuntimeException {
 
-  public ProtocolBufferParsingException(Throwable cause) {
-    super(cause);
+  public ProtocolBufferParsingException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

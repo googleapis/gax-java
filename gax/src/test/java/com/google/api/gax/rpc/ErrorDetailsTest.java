@@ -168,7 +168,13 @@ public class ErrorDetailsTest {
             .build();
     errorDetails =
         ErrorDetails.builder().setRawErrorMessages(ImmutableList.of(malformedErrorType)).build();
-    assertThrows(ProtocolBufferParsingException.class, () -> errorDetails.unpack(ErrorInfo.class));
+    ProtocolBufferParsingException exception =
+        assertThrows(
+            ProtocolBufferParsingException.class, () -> errorDetails.unpack(ErrorInfo.class));
+    Truth.assertThat(exception.getMessage())
+        .isEqualTo(
+            String.format(
+                "Failed to unpack %s from raw error messages", ErrorInfo.class.getSimpleName()));
   }
 
   @Test
