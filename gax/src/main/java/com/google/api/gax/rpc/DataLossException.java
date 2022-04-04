@@ -39,4 +39,9 @@ public class DataLossException extends ApiException {
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }
+
+  public DataLossException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    super(cause, statusCode, retryable, errorDetails);
+  }
 }
