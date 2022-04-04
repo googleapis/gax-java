@@ -41,4 +41,9 @@ public class UnimplementedException extends ApiException {
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }
+
+  public UnimplementedException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    super(cause, statusCode, retryable, errorDetails);
+  }
 }

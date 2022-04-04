@@ -5,7 +5,8 @@ project.version = "2.14.0" // {x-version-update:gax:current}
 
 dependencies {
   api(libraries['maven.com_google_api_api_common'],
-    libraries['maven.com_google_auth_google_auth_library_credentials'],
+          libraries['maven.com_google_api_grpc_proto_google_common_protos'],
+          libraries['maven.com_google_auth_google_auth_library_credentials'],
     libraries['maven.org_threeten_threetenbp'])
 
   implementation(libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
