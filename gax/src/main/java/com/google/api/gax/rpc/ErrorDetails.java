@@ -56,7 +56,7 @@ public abstract class ErrorDetails {
    * structured details that both humans and applications can depend on.
    */
   @Nullable
-  public ErrorInfo errorInfo() {
+  public ErrorInfo getErrorInfo() {
     return unpack(ErrorInfo.class);
   }
 
@@ -65,25 +65,25 @@ public abstract class ErrorDetails {
    * here or retry when this information is missing from error responses.
    */
   @Nullable
-  public RetryInfo retryInfo() {
+  public RetryInfo getRetryInfo() {
     return unpack(RetryInfo.class);
   }
 
   /** Describes additional debugging info. */
   @Nullable
-  public DebugInfo debugInfo() {
+  public DebugInfo getDebugInfo() {
     return unpack(DebugInfo.class);
   }
 
   /** Describes how a quota check failed. */
   @Nullable
-  public QuotaFailure quotaFailure() {
+  public QuotaFailure getQuotaFailure() {
     return unpack(QuotaFailure.class);
   }
 
   /** Describes what preconditions have failed. */
   @Nullable
-  public PreconditionFailure preconditionFailure() {
+  public PreconditionFailure getPreconditionFailure() {
     return unpack(PreconditionFailure.class);
   }
 
@@ -92,7 +92,7 @@ public abstract class ErrorDetails {
    * the request.
    */
   @Nullable
-  public BadRequest badRequest() {
+  public BadRequest getBadRequest() {
     return unpack(BadRequest.class);
   }
 
@@ -101,19 +101,19 @@ public abstract class ErrorDetails {
    * other forms of feedback.
    */
   @Nullable
-  public RequestInfo requestInfo() {
+  public RequestInfo getRequestInfo() {
     return unpack(RequestInfo.class);
   }
 
   /** Describes the resource that is being accessed. */
   @Nullable
-  public ResourceInfo resourceInfo() {
+  public ResourceInfo getResourceInfo() {
     return unpack(ResourceInfo.class);
   }
 
   /** Provides links to documentation or for performing an out-of-band action. */
   @Nullable
-  public Help help() {
+  public Help getHelp() {
     return unpack(Help.class);
   }
 
@@ -122,13 +122,13 @@ public abstract class ErrorDetails {
    * an RPC error
    */
   @Nullable
-  public LocalizedMessage localizedMessage() {
+  public LocalizedMessage getLocalizedMessage() {
     return unpack(LocalizedMessage.class);
   }
 
   /** This is a list of raw/unparsed error messages that returns from server. */
   @Nullable
-  abstract List<Any> rawErrorMessages();
+  abstract List<Any> getRawErrorMessages();
 
   public static Builder builder() {
     return new AutoValue_ErrorDetails.Builder();
@@ -144,7 +144,7 @@ public abstract class ErrorDetails {
 
   @VisibleForTesting
   <T extends Message> T unpack(Class<T> errorTypeClazz) {
-    List<Any> rawErrorMessages = rawErrorMessages();
+    List<Any> rawErrorMessages = getRawErrorMessages();
     if (rawErrorMessages == null) {
       return null;
     }

@@ -184,51 +184,51 @@ public class ErrorDetailsTest {
 
   @Test
   public void errorInfo_shouldUnpackErrorInfoProtoMessage() {
-    Truth.assertThat(errorDetails.errorInfo()).isEqualTo(ERROR_INFO);
+    Truth.assertThat(errorDetails.getErrorInfo()).isEqualTo(ERROR_INFO);
   }
 
   @Test
   public void retryInfo_shouldUnpackRetryInfoProtoMessage() {
-    Truth.assertThat(errorDetails.retryInfo()).isEqualTo(RETRY_INFO);
+    Truth.assertThat(errorDetails.getRetryInfo()).isEqualTo(RETRY_INFO);
   }
 
   @Test
   public void debugInfo_shouldUnpackDebugInfoProtoMessage() {
-    Truth.assertThat(errorDetails.debugInfo()).isEqualTo(DEBUG_INFO);
+    Truth.assertThat(errorDetails.getDebugInfo()).isEqualTo(DEBUG_INFO);
   }
 
   @Test
   public void quotaFailure_shouldUnpackQuotaFailureProtoMessage() {
-    Truth.assertThat(errorDetails.quotaFailure()).isEqualTo(QUOTA_FAILURE);
+    Truth.assertThat(errorDetails.getQuotaFailure()).isEqualTo(QUOTA_FAILURE);
   }
 
   @Test
   public void preconditionFailure_shouldUnpackPreconditionFailureProtoMessage() {
-    Truth.assertThat(errorDetails.preconditionFailure()).isEqualTo(PRECONDITION_FAILURE);
+    Truth.assertThat(errorDetails.getPreconditionFailure()).isEqualTo(PRECONDITION_FAILURE);
   }
 
   @Test
   public void badRequest_shouldUnpackBadRequestProtoMessage() {
-    Truth.assertThat(errorDetails.badRequest()).isEqualTo(BAD_REQUEST);
+    Truth.assertThat(errorDetails.getBadRequest()).isEqualTo(BAD_REQUEST);
   }
 
   @Test
   public void requestInfo_shouldUnpackRequestInfoProtoMessage() {
-    Truth.assertThat(errorDetails.requestInfo()).isEqualTo(REQUEST_INFO);
+    Truth.assertThat(errorDetails.getRequestInfo()).isEqualTo(REQUEST_INFO);
   }
 
   @Test
   public void resourceInfo_shouldUnpackResourceInfoProtoMessage() {
-    Truth.assertThat(errorDetails.resourceInfo()).isEqualTo(RESOURCE_INFO);
+    Truth.assertThat(errorDetails.getResourceInfo()).isEqualTo(RESOURCE_INFO);
   }
 
   @Test
   public void help_shouldUnpackHelpProtoMessage() {
-    Truth.assertThat(errorDetails.help()).isEqualTo(HELP);
+    Truth.assertThat(errorDetails.getHelp()).isEqualTo(HELP);
   }
 
   @Test
   public void localizedMessage_shouldUnpackLocalizedMessageProtoMessage() {
-    Truth.assertThat(errorDetails.help()).isEqualTo(HELP);
+    Truth.assertThat(errorDetails.getHelp()).isEqualTo(HELP);
   }
 }

@@ -78,7 +78,7 @@ public class ApiException extends RuntimeException {
     if (isErrorInfoEmpty()) {
       return null;
     }
-    return errorDetails.errorInfo().getReason();
+    return errorDetails.getErrorInfo().getReason();
   }
 
   /**
@@ -89,7 +89,7 @@ public class ApiException extends RuntimeException {
     if (isErrorInfoEmpty()) {
       return null;
     }
-    return errorDetails.errorInfo().getDomain();
+    return errorDetails.getErrorInfo().getDomain();
   }
 
   /** Returns additional structured details about this exception. */
@@ -97,7 +97,7 @@ public class ApiException extends RuntimeException {
     if (isErrorInfoEmpty()) {
       return null;
     }
-    return errorDetails.errorInfo().getMetadataMap();
+    return errorDetails.getErrorInfo().getMetadataMap();
   }
 
   /** Returns all standard error messages that server sends. */
@@ -106,6 +106,6 @@ public class ApiException extends RuntimeException {
   }
 
   private boolean isErrorInfoEmpty() {
-    return errorDetails == null || errorDetails.errorInfo() == null;
+    return errorDetails == null || errorDetails.getErrorInfo() == null;
   }
 }
