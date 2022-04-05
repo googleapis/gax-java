@@ -82,6 +82,14 @@ def com_google_api_gax_java_repositories():
 
     _maybe(
         jvm_maven_import_external,
+        name = "com_google_protobuf_java",
+        artifact = "com.google.protobuf:protobuf-java:%s" % PROPERTIES["version.com_google_protobuf"],
+        server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+        licenses = ["notice", "reciprocal"],
+    )
+
+    _maybe(
+        jvm_maven_import_external,
         name = "io_grpc_grpc_netty_shaded",
         artifact = "io.grpc:grpc-netty-shaded:%s" % PROPERTIES["version.io_grpc"],
         server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],

@@ -31,8 +31,12 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.ErrorDetails;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
@@ -40,11 +44,13 @@ import java.util.Set;
 
 /**
  * Core logic for transforming GRPC exceptions into {@link ApiException}s. This logic is shared
- * amongst all of the call types.
+ * amongst all the call types.
  *
  * <p>Package-private for internal use.
  */
 class GrpcApiExceptionFactory {
+
+  @VisibleForTesting static final String ERROR_DETAIL_KEY = "grpc-status-details-bin";
   private final ImmutableSet<Code> retryableCodes;
 
   GrpcApiExceptionFactory(Set<Code> retryCodes) {
@@ -54,10 +60,10 @@ class GrpcApiExceptionFactory {
   ApiException create(Throwable throwable) {
     if (throwable instanceof StatusException) {
       StatusException e = (StatusException) throwable;
-      return create(throwable, e.getStatus().getCode());
+      return create(throwable, e.getStatus().getCode(), e.getTrailers());
     } else if (throwable instanceof StatusRuntimeException) {
       StatusRuntimeException e = (StatusRuntimeException) throwable;
-      return create(throwable, e.getStatus().getCode());
+      return create(throwable, e.getStatus().getCode(), e.getTrailers());
     } else if (throwable instanceof ApiException) {
       return (ApiException) throwable;
     } else {
@@ -67,8 +73,29 @@ class GrpcApiExceptionFactory {
     }
   }
 
-  private ApiException create(Throwable throwable, Status.Code statusCode) {
+  private ApiException create(Throwable throwable, Status.Code statusCode, Metadata metadata) {
     boolean canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
-    return ApiExceptionFactory.createException(throwable, GrpcStatusCode.of(statusCode), canRetry);
+    GrpcStatusCode grpcStatusCode = GrpcStatusCode.of(statusCode);
+
+    if (metadata == null) {
+      return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
+    }
+
+    byte[] bytes = metadata.get(Metadata.Key.of(ERROR_DETAIL_KEY, Metadata.BINARY_BYTE_MARSHALLER));
+    if (bytes == null) {
+      return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
+    }
+
+    com.google.rpc.Status status;
+    try {
+      status = com.google.rpc.Status.parseFrom(bytes);
+    } catch (InvalidProtocolBufferException e) {
+      return ApiExceptionFactory.createException(throwable, grpcStatusCode, canRetry);
+    }
+
+    ErrorDetails.Builder errorDetailsBuilder = ErrorDetails.builder();
+    errorDetailsBuilder.setRawErrorMessages(status.getDetailsList());
+    return ApiExceptionFactory.createException(
+        throwable, grpcStatusCode, canRetry, errorDetailsBuilder.build());
   }
 }
