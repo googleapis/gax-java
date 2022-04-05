@@ -42,4 +42,9 @@ public class UnavailableException extends ApiException {
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }
+
+  public UnavailableException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    super(cause, statusCode, retryable, errorDetails);
+  }
 }
