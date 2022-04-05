@@ -45,7 +45,7 @@ import java.util.function.BooleanSupplier;
     onlyWith = NettyInternalLoggerFactorySubstitutions.OnlyIfInClassPath.class)
 final class NettyInternalLoggerFactorySubstitutions {
 
-  private NettyInternalLoggerFactorySubstitutions(){}
+  private NettyInternalLoggerFactorySubstitutions() {}
 
   @Substitute
   private static InternalLoggerFactory newDefaultFactory(String name) {
