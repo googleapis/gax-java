@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.15.0](https://github.com/googleapis/gax-java/compare/v2.14.0...v2.15.0) (2022-04-06)
+
+
+### Features
+
+* Error Details Improvements - GRPC ([#1634](https://github.com/googleapis/gax-java/issues/1634)) ([00c3b9d](https://github.com/googleapis/gax-java/commit/00c3b9ddae11736e1231e4aa45965deff7689f2a))
+* relocate native image properties from java-core to gax ([#1648](https://github.com/googleapis/gax-java/issues/1648)) ([609c2aa](https://github.com/googleapis/gax-java/commit/609c2aab94ff215c879932e60ae041309f20c2c7))
+
+
+### Dependencies
+
+* upgrade grpc to 1.45.1 and auth to 1.6.0 ([#1652](https://github.com/googleapis/gax-java/issues/1652)) ([8f8f625](https://github.com/googleapis/gax-java/commit/8f8f62572795c83b4459f6d3a0f33f31a1ecfb71))
+
 ## [2.14.0](https://github.com/googleapis/gax-java/compare/v2.13.0...v2.14.0) (2022-04-01)
 
 
