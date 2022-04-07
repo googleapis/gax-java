@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,22 +29,10 @@
  */
 package com.google.api.gax.rpc;
 
-/**
- * Exception thrown when some resource has been exhausted, perhaps a per-user quota, or perhaps the
- * entire file system is out of space.
- */
-public class ResourceExhaustedException extends ApiException {
-  public ResourceExhaustedException(Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(cause, statusCode, retryable);
-  }
+/** Exception thrown when parsing protocol buffer message failed */
+public class ProtocolBufferParsingException extends RuntimeException {
 
-  public ResourceExhaustedException(
-      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(message, cause, statusCode, retryable);
-  }
-
-  public ResourceExhaustedException(
-      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
-    super(cause, statusCode, retryable, errorDetails);
+  public ProtocolBufferParsingException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

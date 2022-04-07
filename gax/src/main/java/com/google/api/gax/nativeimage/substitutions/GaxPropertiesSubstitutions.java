@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,24 +27,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+
+package com.google.api.gax.nativeimage.substitutions;
+
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.RecomputeFieldValue;
+import com.oracle.svm.core.annotate.RecomputeFieldValue.Kind;
+import com.oracle.svm.core.annotate.TargetClass;
+import java.util.function.BooleanSupplier;
 
 /**
- * Exception thrown when some resource has been exhausted, perhaps a per-user quota, or perhaps the
- * entire file system is out of space.
+ * This file contains the GaxProperties substitution to correctly set the Java language string in
+ * API call headers for Native Image users.
  */
-public class ResourceExhaustedException extends ApiException {
-  public ResourceExhaustedException(Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(cause, statusCode, retryable);
-  }
+@TargetClass(
+    className = "com.google.api.gax.core.GaxProperties",
+    onlyWith = GaxPropertiesSubstitutions.OnlyIfInClassPath.class)
+final class GaxPropertiesSubstitutions {
 
-  public ResourceExhaustedException(
-      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(message, cause, statusCode, retryable);
-  }
+  @Alias
+  @RecomputeFieldValue(kind = Kind.FromAlias)
+  private static String JAVA_VERSION = System.getProperty("java.version") + "-graalvm";
 
-  public ResourceExhaustedException(
-      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
-    super(cause, statusCode, retryable, errorDetails);
+  private GaxPropertiesSubstitutions() {}
+
+  static class OnlyIfInClassPath implements BooleanSupplier {
+
+    @Override
+    public boolean getAsBoolean() {
+      try {
+        // Note: Set initialize = false to avoid initializing the class when looking it up.
+        Class.forName(
+            "com.google.api.gax.core.GaxProperties",
+            false,
+            Thread.currentThread().getContextClassLoader());
+        return true;
+      } catch (ClassNotFoundException e) {
+        return false;
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,24 +27,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
 
-/**
- * Exception thrown when some resource has been exhausted, perhaps a per-user quota, or perhaps the
- * entire file system is out of space.
- */
-public class ResourceExhaustedException extends ApiException {
-  public ResourceExhaustedException(Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(cause, statusCode, retryable);
-  }
+package com.google.api.gax.nativeimage;
 
-  public ResourceExhaustedException(
-      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(message, cause, statusCode, retryable);
-  }
+import static com.google.api.gax.nativeimage.NativeImageUtils.registerForReflectiveInstantiation;
 
-  public ResourceExhaustedException(
-      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
-    super(cause, statusCode, retryable, errorDetails);
+import com.oracle.svm.core.annotate.AutomaticFeature;
+import org.graalvm.nativeimage.hosted.Feature;
+
+/** Registers reflection usage in OpenCensus libraries. */
+@AutomaticFeature
+final class OpenCensusFeature implements Feature {
+
+  private static final String TAGS_COMPONENT_CLASS = "io.opencensus.impl.tags.TagsComponentImpl";
+  private static final String STATS_COMPONENT_CLASS = "io.opencensus.impl.stats.StatsComponentImpl";
+
+  @Override
+  public void beforeAnalysis(BeforeAnalysisAccess access) {
+    if (access.findClassByName(STATS_COMPONENT_CLASS) != null) {
+      registerForReflectiveInstantiation(access, STATS_COMPONENT_CLASS);
+    }
+    if (access.findClassByName(TAGS_COMPONENT_CLASS) != null) {
+      registerForReflectiveInstantiation(access, "io.opencensus.impl.metrics.MetricsComponentImpl");
+      registerForReflectiveInstantiation(access, TAGS_COMPONENT_CLASS);
+      registerForReflectiveInstantiation(access, "io.opencensus.impl.trace.TraceComponentImpl");
+    }
   }
 }
