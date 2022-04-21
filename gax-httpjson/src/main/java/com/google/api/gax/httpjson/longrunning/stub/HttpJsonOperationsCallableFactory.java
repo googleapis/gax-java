@@ -31,7 +31,6 @@ package com.google.api.gax.httpjson.longrunning.stub;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
-import com.google.api.gax.httpjson.ApiMessage;
 import com.google.api.gax.httpjson.HttpJsonCallSettings;
 import com.google.api.gax.httpjson.HttpJsonCallableFactory;
 import com.google.api.gax.httpjson.HttpJsonStubCallableFactory;
@@ -42,6 +41,7 @@ import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.longrunning.Operation;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS.
 /**
@@ -51,7 +51,7 @@ import com.google.api.gax.rpc.UnaryCallable;
  */
 @BetaApi
 public class HttpJsonOperationsCallableFactory
-    implements HttpJsonStubCallableFactory<ApiMessage, BackgroundResource> {
+    implements HttpJsonStubCallableFactory<Operation, BackgroundResource> {
 
   @Override
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
@@ -84,7 +84,7 @@ public class HttpJsonOperationsCallableFactory
   @Override
   public <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
-          HttpJsonCallSettings<RequestT, ApiMessage> httpJsonCallSettings,
+          HttpJsonCallSettings<RequestT, Operation> httpJsonCallSettings,
           OperationCallSettings<RequestT, ResponseT, MetadataT> callSettings,
           ClientContext clientContext,
           BackgroundResource operationsStub) {

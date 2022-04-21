@@ -32,97 +32,81 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.testing.http.MockHttpTransport;
-import com.google.api.gax.httpjson.testing.FakeApiMessage;
-import com.google.api.pathtemplate.PathTemplate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
+import com.google.longrunning.ListOperationsRequest;
+import com.google.protobuf.Empty;
+import com.google.protobuf.Field;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class HttpRequestRunnableTest {
-  private static CatMessage catMessage;
-  private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
-  private static HttpRequestFormatter<CatMessage> catFormatter;
-  private static HttpResponseParser<EmptyMessage> catParser;
-  private static final PathTemplate nameTemplate = PathTemplate.create("name/{name}");
-  private static final Set<String> queryParams =
-      Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
+  private static Field requestMessage;
+  private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects";
+  private static HttpRequestFormatter<Field> requestFormatter;
+  private static HttpResponseParser<Empty> responseParser;
 
   @SuppressWarnings("unchecked")
   @BeforeClass
   public static void setUp() {
-    catMessage =
-        new CatMessage(
-            ImmutableMap.of(
-                "name", "feline",
-                "size", Arrays.asList("small"),
-                "food", Arrays.asList("bird", "mouse")),
-            null,
-            null);
+    requestMessage =
+        Field.newBuilder()
+            .setName("feline")
+            .setNumber(2)
+            .setDefaultValue("bird")
+            .setJsonName("mouse")
+            .setTypeUrl("small")
+            .build();
 
-    catFormatter =
-        new HttpRequestFormatter<CatMessage>() {
-          private PathTemplate namePattern = PathTemplate.create("name/{name}");
+    requestFormatter =
+        ProtoMessageRequestFormatter.<Field>newBuilder()
+            .setPath(
+                "/name/{name=*}",
+                request -> {
+                  Map<String, String> fields = new HashMap<>();
+                  ProtoRestSerializer<ListOperationsRequest> serializer =
+                      ProtoRestSerializer.create();
+                  serializer.putPathParam(fields, "name", request.getName());
+                  return fields;
+                })
+            .setQueryParamsExtractor(
+                request -> {
+                  Map<String, List<String>> fields = new LinkedHashMap<>();
+                  ProtoRestSerializer<ListOperationsRequest> serializer =
+                      ProtoRestSerializer.create();
 
-          @Override
-          public Map<String, List<String>> getQueryParamNames(CatMessage apiMessage) {
-            Map<String, List<String>> values = new TreeMap<>();
-            for (String queryParam : queryParams) {
-              Object fieldValue = apiMessage.getFieldValue(queryParam);
-              if (fieldValue == null) {
-                continue;
-              }
-              if (fieldValue instanceof List) {
-                values.put(queryParam, (List<String>) fieldValue);
-              } else {
-                values.put(queryParam, Lists.newArrayList(fieldValue.toString()));
-              }
-            }
-            return values;
-          }
+                  serializer.putQueryParam(
+                      fields,
+                      "food",
+                      Arrays.asList(request.getDefaultValue(), request.getJsonName()));
+                  serializer.putQueryParam(fields, "size", request.getTypeUrl());
+                  return fields;
+                })
+            .setRequestBodyExtractor(request -> null)
+            .build();
 
-          @Override
-          public String getRequestBody(CatMessage apiMessage) {
-            return null;
-          }
-
-          @Override
-          public String getPath(CatMessage apiMessage) {
-            String name = apiMessage.getFieldValue("name").toString();
-            return nameTemplate.instantiate("name", name);
-          }
-
-          @Override
-          public PathTemplate getPathTemplate() {
-            return namePattern;
-          }
-        };
-
-    catParser = Mockito.mock(HttpResponseParser.class);
+    responseParser = Mockito.mock(HttpResponseParser.class);
   }
 
   @Test
   public void testRequestUrl() throws IOException {
-    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
-        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
+    ApiMethodDescriptor<Field, Empty> methodDescriptor =
+        ApiMethodDescriptor.<Field, Empty>newBuilder()
             .setFullMethodName("house.cat.get")
             .setHttpMethod(null)
-            .setRequestFormatter(catFormatter)
-            .setResponseParser(catParser)
+            .setRequestFormatter(requestFormatter)
+            .setResponseParser(responseParser)
             .build();
 
-    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
+    HttpRequestRunnable<Field, Empty> httpRequestRunnable =
         new HttpRequestRunnable<>(
-            catMessage,
+            requestMessage,
             methodDescriptor,
             ENDPOINT,
             HttpJsonCallOptions.newBuilder().build(),
@@ -132,23 +116,23 @@ public class HttpRequestRunnableTest {
 
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
-    String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
+    String expectedUrl = ENDPOINT + "/name/feline" + "?food=bird&food=mouse&size=small";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }
 
   @Test
   public void testRequestUrlUnnormalized() throws IOException {
-    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
-        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
+    ApiMethodDescriptor<Field, Empty> methodDescriptor =
+        ApiMethodDescriptor.<Field, Empty>newBuilder()
             .setFullMethodName("house.cat.get")
             .setHttpMethod("PUT")
-            .setRequestFormatter(catFormatter)
-            .setResponseParser(catParser)
+            .setRequestFormatter(requestFormatter)
+            .setResponseParser(responseParser)
             .build();
 
-    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
+    HttpRequestRunnable<Field, Empty> httpRequestRunnable =
         new HttpRequestRunnable<>(
-            catMessage,
+            requestMessage,
             methodDescriptor,
             "www.googleapis.com/animals/v1/projects",
             HttpJsonCallOptions.newBuilder().build(),
@@ -167,17 +151,17 @@ public class HttpRequestRunnableTest {
 
   @Test
   public void testRequestUrlUnnormalizedPatch() throws IOException {
-    ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor =
-        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
+    ApiMethodDescriptor<Field, Empty> methodDescriptor =
+        ApiMethodDescriptor.<Field, Empty>newBuilder()
             .setFullMethodName("house.cat.get")
             .setHttpMethod("PATCH")
-            .setRequestFormatter(catFormatter)
-            .setResponseParser(catParser)
+            .setRequestFormatter(requestFormatter)
+            .setResponseParser(responseParser)
             .build();
 
-    HttpRequestRunnable<CatMessage, EmptyMessage> httpRequestRunnable =
+    HttpRequestRunnable<Field, Empty> httpRequestRunnable =
         new HttpRequestRunnable<>(
-            catMessage,
+            requestMessage,
             methodDescriptor,
             "www.googleapis.com/animals/v1/projects",
             HttpJsonCallOptions.newBuilder().build(),
@@ -192,13 +176,5 @@ public class HttpRequestRunnableTest {
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
     Truth.assertThat(httpRequest.getRequestMethod()).isEqualTo("POST");
     Truth.assertThat(httpRequest.getHeaders().get("X-HTTP-Method-Override")).isEqualTo("PATCH");
-  }
-
-  // TODO(andrealin): test request body
-
-  private static class CatMessage extends FakeApiMessage {
-    CatMessage(Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
-      super(fieldValues, messageBody, fieldMask);
-    }
   }
 }
