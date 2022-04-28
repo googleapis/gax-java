@@ -189,7 +189,6 @@ public class HttpJsonDirectCallableTest {
       assertThat(respExp.getStatusCode()).isEqualTo(200);
       assertThat(respExp.getCause().getMessage())
           .isEqualTo("Both response message and response exception were null");
-      // assertThat(respExp.getContent()).isEqualTo(exception.toString());
     }
   }
 
