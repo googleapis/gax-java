@@ -138,14 +138,7 @@ public class HttpJsonDirectCallableTest {
 
     Field request;
     Field expectedResponse;
-    request =
-        expectedResponse =
-            Field.newBuilder() // "echo" service
-                .setName("imTheBestField")
-                .setNumber(2)
-                .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
-                .setDefaultValue("blah")
-                .build();
+    request = expectedResponse = createTestMessage();
 
     MOCK_SERVICE.addResponse(expectedResponse);
 
@@ -164,27 +157,65 @@ public class HttpJsonDirectCallableTest {
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
-    Field request;
-    request =
-        Field.newBuilder() // "echo" service
-            .setName("imTheBestField")
-            .setNumber(2)
-            .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
-            .setDefaultValue("blah")
-            .build();
-
     ApiException exception =
         ApiExceptionFactory.createException(
             new Exception(), FakeStatusCode.of(Code.NOT_FOUND), false);
     MOCK_SERVICE.addException(exception);
 
     try {
-      callable.futureCall(request, callContext).get();
+      callable.futureCall(createTestMessage(), callContext).get();
       Assert.fail("No exception raised");
     } catch (ExecutionException e) {
       HttpResponseException respExp = (HttpResponseException) e.getCause();
       assertThat(respExp.getStatusCode()).isEqualTo(400);
       assertThat(respExp.getContent()).isEqualTo(exception.toString());
     }
+  }
+
+  @Test
+  public void testErrorNullContentSuccessfulResponse() throws InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+
+    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
+
+    MOCK_SERVICE.addNullResponse();
+
+    try {
+      callable.futureCall(createTestMessage(), callContext).get();
+      Assert.fail("No exception raised");
+    } catch (ExecutionException e) {
+      HttpJsonStatusRuntimeException respExp = (HttpJsonStatusRuntimeException) e.getCause();
+      assertThat(respExp.getStatusCode()).isEqualTo(200);
+      assertThat(respExp.getCause().getMessage())
+          .isEqualTo("Both response message and response exception were null");
+    }
+  }
+
+  @Test
+  public void testErrorNullContentFailedResponse() throws InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+
+    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
+    MOCK_SERVICE.addNullResponse(400);
+
+    try {
+      callable.futureCall(createTestMessage(), callContext).get();
+      Assert.fail("No exception raised");
+    } catch (ExecutionException e) {
+      HttpResponseException respExp = (HttpResponseException) e.getCause();
+      assertThat(respExp.getStatusCode()).isEqualTo(400);
+      assertThat(respExp.getContent()).isNull();
+    }
+  }
+
+  private Field createTestMessage() {
+    return Field.newBuilder() // "echo" service
+        .setName("imTheBestField")
+        .setNumber(2)
+        .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
+        .setDefaultValue("blah")
+        .build();
   }
 }

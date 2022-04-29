@@ -131,7 +131,9 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       result.setStatusCode(e.getStatusCode());
       result.setResponseHeaders(HttpJsonMetadata.newBuilder().setHeaders(e.getHeaders()).build());
       result.setResponseContent(
-          new ByteArrayInputStream(e.getContent().getBytes(StandardCharsets.UTF_8)));
+          e.getContent() != null
+              ? new ByteArrayInputStream(e.getContent().getBytes(StandardCharsets.UTF_8))
+              : null);
       trailers.setStatusMessage(e.getStatusMessage());
       trailers.setException(e);
     } catch (Throwable e) {
