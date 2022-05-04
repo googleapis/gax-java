@@ -25,16 +25,12 @@ jobs:
       with:
         java-version: 8
         distribution: zulu
-    - run: java -version
-    - run: which java
-    - run: export JAVA8_HOME=${JAVA_HOME}
+    - run: echo "JAVA8_HOME=${JAVA_HOME}" >> $GITHUB_ENV
     - uses: actions/setup-java@v3
       with:
         java-version: 11
         distribution: zulu
-    - run: java -version
-    - run: which java
-    - run: export JAVA11_HOME=${JAVA_HOME}
+    - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
     - run: printenv
     - run: .kokoro/build.sh
       env:
