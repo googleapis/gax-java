@@ -34,7 +34,7 @@ fi
 echo "Compiling using Java:"
 java -version
 echo
-./gradlew compileJava compileTestJava
+./gradlew compileJava compileTestJava javadoc
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
@@ -45,4 +45,5 @@ echo "Running tests using Java:"
 java -version
 echo
 ./gradlew build publishToMavenLocal \
-  --exclude-task compileJava --exclude-task compileTestJava
+  --exclude-task compileJava --exclude-task compileTestJava \
+  --exclude-task javadoc
