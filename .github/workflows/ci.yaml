@@ -6,6 +6,7 @@ on:
 name: ci
 jobs:
   units-java11:
+    name: "units (11)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,6 +19,7 @@ jobs:
         env:
           JOB_TYPE: test
   units-java8:
+    name: "units (8)"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
