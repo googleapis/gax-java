@@ -5,21 +5,38 @@ on:
   pull_request:
 name: ci
 jobs:
-  units:
+  units-java11:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [8, 11]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
         with:
-          java-version: ${{ matrix.java }}
+          java-version: 11
+          distribution: zulu
       - run: java -version
       - run: .kokoro/build.sh
         env:
           JOB_TYPE: test
-
+  units-java8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+        java-version: 8
+        distribution: zulu
+    - run: java -version
+    - run: which java
+    - uses: actions/setup-java@v3
+      with:
+        java-version: 11
+        distribution: zulu
+    - run: java -version
+    - run: which java
+    - run: printenv
+    - run: .kokoro/build.sh
+      env:
+        JOB_TYPE: test
   bazel:
     runs-on: ubuntu-latest
     # Not using a container. The ubuntu-latest has Bazel 4.2 installed as of
