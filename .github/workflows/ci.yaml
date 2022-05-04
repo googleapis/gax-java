@@ -27,12 +27,14 @@ jobs:
         distribution: zulu
     - run: java -version
     - run: which java
+    - run: export JAVA8_HOME=${JAVA_HOME}
     - uses: actions/setup-java@v3
       with:
         java-version: 11
         distribution: zulu
     - run: java -version
     - run: which java
+    - run: export JAVA11_HOME=${JAVA_HOME}
     - run: printenv
     - run: .kokoro/build.sh
       env:

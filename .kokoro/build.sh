@@ -19,8 +19,27 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 # cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
-# Print out Java
-java -version
 echo $JOB_TYPE
 
-./gradlew build publishToMavenLocal
+function setJava() {
+  export JAVA_HOME=$1
+  export PATH=${JAVA_HOME}/bin:$PATH
+}
+
+# GraalVM dependencies require to compiling the classes in JDK 11 or higher
+if [ ! -z "${JAVA11_HOME}" ]; then
+  setJava "${JAVA11_HOME}"
+fi
+
+echo "Compiling using Java:"
+java -version
+./gradlew build -x test
+
+# We ensure the generated class files are compatible with Java 8
+if [ ! -z "${JAVA8_HOME}" ]; then
+  setJava "${JAVA8_HOME}"
+fi
+
+echo "Running tests using Java:"
+java -version
+./gradlew build publishToMavenLocal -x compileJava
