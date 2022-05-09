@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,26 +27,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import java.util.List;
-import javax.annotation.Nullable;
+package com.google.api.gax.nativeimage.substitutions;
 
-/* An interface for message classes. */
-@BetaApi
-public interface ApiMessage {
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.RecomputeFieldValue;
+import com.oracle.svm.core.annotate.RecomputeFieldValue.Kind;
+import com.oracle.svm.core.annotate.TargetClass;
+import java.util.function.BooleanSupplier;
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  Object getFieldValue(String fieldName);
+/**
+ * This file contains the GaxProperties substitution to correctly set the Java language string in
+ * API call headers for Native Image users.
+ */
+@TargetClass(
+    className = "com.google.api.gax.core.GaxProperties",
+    onlyWith = GaxPropertiesSubstitutions.OnlyIfInClassPath.class)
+final class GaxPropertiesSubstitutions {
 
-  /* List of names of fields to include in the serialized request body. */
-  @Nullable
-  List<String> getFieldMask();
+  @Alias
+  @RecomputeFieldValue(kind = Kind.FromAlias)
+  private static String JAVA_VERSION = System.getProperty("java.version") + "-graalvm";
 
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  ApiMessage getApiMessageRequestBody();
+  private GaxPropertiesSubstitutions() {}
+
+  static class OnlyIfInClassPath implements BooleanSupplier {
+
+    @Override
+    public boolean getAsBoolean() {
+      try {
+        // Note: Set initialize = false to avoid initializing the class when looking it up.
+        Class.forName(
+            "com.google.api.gax.core.GaxProperties",
+            false,
+            Thread.currentThread().getContextClassLoader());
+        return true;
+      } catch (ClassNotFoundException e) {
+        return false;
+      }
+    }
+  }
 }

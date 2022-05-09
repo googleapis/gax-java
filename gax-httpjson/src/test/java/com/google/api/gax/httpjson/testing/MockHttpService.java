@@ -87,10 +87,15 @@ public final class MockHttpService extends MockHttpTransport {
     responseHandlers.add(new MessageResponseFactory(endpoint, serviceMethodDescriptors, response));
   }
 
+  /** Add an expected null response (empty HTTP response body) with a custom status code. */
+  public synchronized void addNullResponse(int statusCode) {
+    responseHandlers.add(
+        (httpMethod, targetUrl) -> new MockLowLevelHttpResponse().setStatusCode(statusCode));
+  }
+
   /** Add an expected null response (empty HTTP response body). */
   public synchronized void addNullResponse() {
-    responseHandlers.add(
-        (httpMethod, targetUrl) -> new MockLowLevelHttpResponse().setStatusCode(200));
+    addNullResponse(200);
   }
 
   /** Add an Exception to the response queue. */

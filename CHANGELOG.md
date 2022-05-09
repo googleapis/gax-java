@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.16.0](https://github.com/googleapis/gax-java/compare/v2.15.0...v2.16.0) (2022-04-14)
+
+
+### Features
+
+* relocate ApiClientSubstitutions from java-core to gax ([#1651](https://github.com/googleapis/gax-java/issues/1651)) ([321103f](https://github.com/googleapis/gax-java/commit/321103f129cb1ece3f3a4d62e3c050c975d33179))
+* relocate GoogleJsonClientFeature from java-core to gax ([#1655](https://github.com/googleapis/gax-java/issues/1655)) ([6e75ec7](https://github.com/googleapis/gax-java/commit/6e75ec76f2bf448eb56f644e61019efb3940a388))
+* relocate netty and gax substitutions from java-core ([#1650](https://github.com/googleapis/gax-java/issues/1650)) ([afd1917](https://github.com/googleapis/gax-java/commit/afd19177c44c9cd0a982e545e4b0e60c0313d6f4))
+* relocate Opencensus configurations from java-core to gax ([#1646](https://github.com/googleapis/gax-java/issues/1646)) ([b34ffb1](https://github.com/googleapis/gax-java/commit/b34ffb1fb2af6b18a4272dcc951b2f4294c75317))
+* relocate resource-config from java-core to gax ([#1656](https://github.com/googleapis/gax-java/issues/1656)) ([a9e5483](https://github.com/googleapis/gax-java/commit/a9e5483d5b67e080d1a8b012f0a3fb4ca8aadf18))
+
+
+### Dependencies
+
+* google-common-protos 2.8.3 ([#1657](https://github.com/googleapis/gax-java/issues/1657)) ([24b9138](https://github.com/googleapis/gax-java/commit/24b9138cc8088c2124f6d9e2ebc8ddc88a08fd9e))
+
+## [2.15.0](https://github.com/googleapis/gax-java/compare/v2.14.0...v2.15.0) (2022-04-06)
+
+
+### Features
+
+* Error Details Improvements - GRPC ([#1634](https://github.com/googleapis/gax-java/issues/1634)) ([00c3b9d](https://github.com/googleapis/gax-java/commit/00c3b9ddae11736e1231e4aa45965deff7689f2a))
+* relocate native image properties from java-core to gax ([#1648](https://github.com/googleapis/gax-java/issues/1648)) ([609c2aa](https://github.com/googleapis/gax-java/commit/609c2aab94ff215c879932e60ae041309f20c2c7))
+
+
+### Dependencies
+
+* upgrade grpc to 1.45.1 and auth to 1.6.0 ([#1652](https://github.com/googleapis/gax-java/issues/1652)) ([8f8f625](https://github.com/googleapis/gax-java/commit/8f8f62572795c83b4459f6d3a0f33f31a1ecfb71))
+
+## [2.14.0](https://github.com/googleapis/gax-java/compare/v2.13.0...v2.14.0) (2022-04-01)
+
+
+### Features
+
+* relocate Netty Native Image configurations from java-core to gax ([#1638](https://github.com/googleapis/gax-java/issues/1638)) ([aafded4](https://github.com/googleapis/gax-java/commit/aafded4a0b779c68d0d5702b722672a0f86ccdd1))
+* relocate protobuf configurations from java-core to gax-java ([#1641](https://github.com/googleapis/gax-java/issues/1641)) ([01d395f](https://github.com/googleapis/gax-java/commit/01d395f486ccd7c364c03ccdfcfbf83b900192c3))
+
+
+### Bug Fixes
+
+* update the runtime dependency grpc-java xds to googleapis ([#1643](https://github.com/googleapis/gax-java/issues/1643)) ([b8d9e30](https://github.com/googleapis/gax-java/commit/b8d9e30c3e2209bcd4cc0f808dfdf0a0608aa466))
+
 ## [2.13.0](https://github.com/googleapis/gax-java/compare/v2.12.2...v2.13.0) (2022-03-25)
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import java.lang.reflect.Type;
-import java.util.List;
+package com.google.api.gax.grpc.nativeimage.substitutions;
 
-/** JSON Serializer for messages with a field mask to selectively serialize fields. */
-public class FieldMaskedSerializer implements JsonSerializer<ApiMessage> {
-  private final List<String> fieldMask;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
+import io.grpc.netty.shaded.io.netty.util.internal.logging.InternalLoggerFactory;
+import io.grpc.netty.shaded.io.netty.util.internal.logging.JdkLoggerFactory;
+import java.util.function.BooleanSupplier;
 
-  public FieldMaskedSerializer(List<String> fieldMask) {
-    this.fieldMask = fieldMask;
+/**
+ * Substitutions for {@link InternalLoggerFactory} which are needed to avoid dynamic loading of
+ * logging library.
+ */
+@TargetClass(
+    className = "io.grpc.netty.shaded.io.netty.util.internal.logging.InternalLoggerFactory",
+    onlyWith = NettyInternalLoggerFactorySubstitutions.OnlyIfInClassPath.class)
+final class NettyInternalLoggerFactorySubstitutions {
+
+  private NettyInternalLoggerFactorySubstitutions() {}
+
+  @Substitute
+  private static InternalLoggerFactory newDefaultFactory(String name) {
+    return JdkLoggerFactory.INSTANCE;
   }
 
-  @Override
-  public JsonElement serialize(
-      ApiMessage requestBody, Type typeOfSrc, JsonSerializationContext context) {
-    Gson gson = new GsonBuilder().serializeNulls().create();
-    if (fieldMask == null) {
-      return gson.toJsonTree(requestBody, typeOfSrc);
-    }
-    JsonObject jsonObject = new JsonObject();
-    for (String fieldName : fieldMask) {
-      Object fieldValue = requestBody.getFieldValue(fieldName);
-      if (fieldValue != null) {
-        jsonObject.add(fieldName, gson.toJsonTree(fieldValue, fieldValue.getClass()));
-      } else {
-        // TODO(andrealin): This doesn't distinguish between the non-existence of a field
-        // and a field value being null.
-        jsonObject.add(fieldName, JsonNull.INSTANCE);
+  static class OnlyIfInClassPath implements BooleanSupplier {
+
+    @Override
+    public boolean getAsBoolean() {
+      try {
+        // Note: Set initialize = false to avoid initializing the class when looking it up.
+        Class.forName(
+            "io.grpc.netty.shaded.io.netty.util.internal.logging.InternalLoggerFactory",
+            false,
+            Thread.currentThread().getContextClassLoader());
+        return true;
+      } catch (ClassNotFoundException e) {
+        return false;
       }
     }
-
-    return jsonObject;
   }
 }

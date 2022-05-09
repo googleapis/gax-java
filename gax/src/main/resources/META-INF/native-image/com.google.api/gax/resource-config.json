@@ -1,0 +1,6 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/services/jdk.vm.ci.services.JVMCIServiceLocator\\E"},
+    {"pattern":"\\Qdependencies.properties\\E"}],
+  "bundles":[]
+}

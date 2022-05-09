@@ -30,24 +30,34 @@
 package com.google.api.gax.rpc;
 
 import com.google.common.base.Preconditions;
+import java.util.Map;
 
 /** Represents an exception thrown during an RPC call. */
 public class ApiException extends RuntimeException {
+
   private static final long serialVersionUID = -4375114339928877996L;
 
+  private final ErrorDetails errorDetails;
   private final StatusCode statusCode;
   private final boolean retryable;
 
   public ApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(cause);
-    this.statusCode = Preconditions.checkNotNull(statusCode);
-    this.retryable = retryable;
+    this(cause, statusCode, retryable, null);
   }
 
   public ApiException(String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
+    this.errorDetails = null;
+  }
+
+  public ApiException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    super(cause);
+    this.statusCode = Preconditions.checkNotNull(statusCode);
+    this.retryable = retryable;
+    this.errorDetails = errorDetails;
   }
 
   /** Returns whether the failed request can be retried. */
@@ -58,5 +68,44 @@ public class ApiException extends RuntimeException {
   /** Returns the status code of the underlying exception. */
   public StatusCode getStatusCode() {
     return statusCode;
+  }
+
+  /**
+   * Returns the reason of the exception. This is a constant value that identifies the proximate
+   * cause of the error. e.g. SERVICE_DISABLED
+   */
+  public String getReason() {
+    if (isErrorInfoEmpty()) {
+      return null;
+    }
+    return errorDetails.getErrorInfo().getReason();
+  }
+
+  /**
+   * Returns the logical grouping to which the "reason" belongs. The error domain is typically the
+   * registered service name of the tool or product that generates the error. e.g. googleapis.com
+   */
+  public String getDomain() {
+    if (isErrorInfoEmpty()) {
+      return null;
+    }
+    return errorDetails.getErrorInfo().getDomain();
+  }
+
+  /** Returns additional structured details about this exception. */
+  public Map<String, String> getMetadata() {
+    if (isErrorInfoEmpty()) {
+      return null;
+    }
+    return errorDetails.getErrorInfo().getMetadataMap();
+  }
+
+  /** Returns all standard error messages that server sends. */
+  public ErrorDetails getErrorDetails() {
+    return errorDetails;
+  }
+
+  private boolean isErrorInfoEmpty() {
+    return errorDetails == null || errorDetails.getErrorInfo() == null;
   }
 }
