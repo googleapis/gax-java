@@ -40,6 +40,7 @@ ext {
     'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
     'maven.io_grpc_grpc_alts': "io.grpc:grpc-alts:${libraries['version.io_grpc']}",
     'maven.io_grpc_grpc_googleapis': "io.grpc:grpc-googleapis:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_rls': "io.grpc:grpc-rls:${libraries['version.io_grpc']}",
     'maven.com_google_protobuf': "com.google.protobuf:protobuf-java:${libraries['version.com_google_protobuf']}",
     'maven.com_google_protobuf_java_util': "com.google.protobuf:protobuf-java-util:${libraries['version.com_google_protobuf']}")
 }
