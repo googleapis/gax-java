@@ -32,11 +32,9 @@ package com.google.api.gax.nativeimage;
 
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerForReflectiveInstantiation;
 
-import com.oracle.svm.core.annotate.AutomaticFeature;
 import org.graalvm.nativeimage.hosted.Feature;
 
 /** Registers reflection usage in OpenCensus libraries. */
-@AutomaticFeature
 final class OpenCensusFeature implements Feature {
 
   private static final String TAGS_COMPONENT_CLASS = "io.opencensus.impl.tags.TagsComponentImpl";
