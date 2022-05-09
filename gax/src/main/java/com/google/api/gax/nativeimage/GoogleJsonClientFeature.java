@@ -33,10 +33,7 @@ package com.google.api.gax.nativeimage;
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerClassForReflection;
 
 import com.oracle.svm.core.annotate.AutomaticFeature;
-import com.oracle.svm.core.configure.ResourcesRegistry;
-import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.Feature;
-import org.graalvm.nativeimage.impl.ConfigurationCondition;
 
 /** Configures Native Image settings for the Google JSON Client. */
 @AutomaticFeature
@@ -71,17 +68,6 @@ final class GoogleJsonClientFeature implements Feature {
       access.registerSubtypeReachabilityHandler(
           (duringAccess, subtype) -> registerClassForReflection(access, subtype.getName()),
           access.findClassByName(GOOGLE_API_CLIENT_REQUEST_CLASS));
-
-      // Resources
-      ResourcesRegistry resourcesRegistry = ImageSingletons.lookup(ResourcesRegistry.class);
-      resourcesRegistry.addResources(
-          ConfigurationCondition.alwaysTrue(),
-          "\\Qcom/google/api/client/googleapis/google-api-client.properties\\E");
-      resourcesRegistry.addResources(
-          ConfigurationCondition.alwaysTrue(), "\\Qcom/google/api/client/googleapis/google.p12\\E");
-      resourcesRegistry.addResources(
-          ConfigurationCondition.alwaysTrue(),
-          "\\Qcom/google/api/client/http/google-http-client.properties\\E");
     }
   }
 
