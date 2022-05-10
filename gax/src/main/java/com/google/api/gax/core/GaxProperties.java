@@ -83,7 +83,8 @@ public class GaxProperties {
   public static String getJavaVersion() {
     // When running the application as a native image, append `-graalvm` to the
     // version.
-    if (System.getProperty("org.graalvm.nativeimage.imagecode").equals("runtime")) {
+    String imageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
+    if (imageCode != null && imageCode.equals("runtime")) {
       return System.getProperty("java.version") + "-graalvm";
     }
     return JAVA_VERSION;
