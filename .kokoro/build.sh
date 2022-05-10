@@ -46,6 +46,16 @@ fi
 
 echo "Running tests using Java:"
 java -version
+
+if [ "${GITHUB_JOB}" == "units-java8" ]; then
+  java -version 2>&1 | grep -q 'openjdk version "1.8.'
+  MATCH=$? # 0 if the output has the match
+  if [ "$MATCH" != "0" ]; then
+    echo "Please specify JDK 8 for Java 8 tests"
+    exit 1
+  fi
+fi
+
 echo
 ./gradlew build publishToMavenLocal \
   --exclude-task compileJava --exclude-task compileTestJava \
