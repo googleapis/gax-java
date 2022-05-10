@@ -54,4 +54,11 @@ public class GaxPropertiesTest {
       assertTrue(minor >= 56);
     }
   }
+
+  @Test
+  public void testGetVersion_nativeImage() {
+    System.setProperty("org.graalvm.nativeimage.imagecode", "runtime");
+    String javaVersion = GaxProperties.getJavaVersion();
+    assertTrue(javaVersion.endsWith("-graalvm"));
+  }
 }
