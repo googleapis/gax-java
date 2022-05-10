@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.17.0](https://github.com/googleapis/gax-java/compare/v2.16.0...v2.17.0) (2022-05-10)
+
+
+### Features
+
+* next release from main branch is 2.17.0 ([#1659](https://github.com/googleapis/gax-java/issues/1659)) ([5a31361](https://github.com/googleapis/gax-java/commit/5a3136121bc8365a798aa2f5c363e86de6224391))
+
+
+### Bug Fixes
+
+* Fix handling of null responses in rest transport ([#1668](https://github.com/googleapis/gax-java/issues/1668)) ([8def947](https://github.com/googleapis/gax-java/commit/8def947620610b7aab526413a1ac14fd4f890dbf))
+* use graal-sdk 21.3.2 ([#1670](https://github.com/googleapis/gax-java/issues/1670)) ([92c2697](https://github.com/googleapis/gax-java/commit/92c2697b211b2aa9e5456dbb1078870a30f0703a))
+
 ## [2.16.0](https://github.com/googleapis/gax-java/compare/v2.15.0...v2.16.0) (2022-04-14)
 
 
