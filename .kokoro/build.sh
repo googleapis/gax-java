@@ -26,7 +26,10 @@ function setJava() {
   export PATH=${JAVA_HOME}/bin:$PATH
 }
 
-# GraalVM dependencies require to compiling the classes in JDK 11 or higher
+# This project requires compiling the classes in JDK 11 or higher for GraalVM
+# classes. Compiling this project with Java 8 or earlier would fail with "class
+# file has wrong version 55.0, should be 53.0" and "unrecognized --release 8
+# option" (set in build.gradle).
 if [ ! -z "${JAVA11_HOME}" ]; then
   setJava "${JAVA11_HOME}"
 fi
