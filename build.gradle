@@ -104,6 +104,10 @@ configure(javaProjects) {
 
   tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+    // This flag is only available in JDK 9+. This flag ensures the generated
+    // bytecode is compatible with Java 8. (targetCompatibility = 1.8 is not
+    // sufficient)
+    options.compilerArgs.addAll(['--release', '8'])
   }
 
   // Dependencies
