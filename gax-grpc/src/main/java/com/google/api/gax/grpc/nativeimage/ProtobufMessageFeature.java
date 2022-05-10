@@ -31,7 +31,6 @@
 package com.google.api.gax.grpc.nativeimage;
 
 import com.google.api.gax.nativeimage.NativeImageUtils;
-import com.oracle.svm.core.annotate.AutomaticFeature;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +43,6 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
  * <p>This feature is only needed if you need to access proto objects reflectively (such as
  * printing/logging proto objects).
  */
-@AutomaticFeature
 final class ProtobufMessageFeature implements Feature {
 
   // Proto classes to check on the classpath.

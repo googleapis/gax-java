@@ -32,11 +32,11 @@ package com.google.api.gax.nativeimage;
 
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerClassForReflection;
 
-import com.oracle.svm.core.annotate.AutomaticFeature;
+import com.oracle.svm.core.configure.ResourcesRegistry;
+import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.Feature;
 
 /** Configures Native Image settings for the Google JSON Client. */
-@AutomaticFeature
 final class GoogleJsonClientFeature implements Feature {
 
   private static final String GOOGLE_API_CLIENT_CLASS =
