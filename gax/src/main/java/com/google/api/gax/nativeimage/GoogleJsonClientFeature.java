@@ -32,8 +32,6 @@ package com.google.api.gax.nativeimage;
 
 import static com.google.api.gax.nativeimage.NativeImageUtils.registerClassForReflection;
 
-import com.oracle.svm.core.configure.ResourcesRegistry;
-import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.Feature;
 
 /** Configures Native Image settings for the Google JSON Client. */
