@@ -19,8 +19,44 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 # cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
-# Print out Java
-java -version
 echo $JOB_TYPE
 
-./gradlew build publishToMavenLocal
+function setJava() {
+  export JAVA_HOME=$1
+  export PATH=${JAVA_HOME}/bin:$PATH
+}
+
+# This project requires compiling the classes in JDK 11 or higher for GraalVM
+# classes. Compiling this project with Java 8 or earlier would fail with "class
+# file has wrong version 55.0, should be 53.0" and "unrecognized --release 8
+# option" (set in build.gradle).
+if [ ! -z "${JAVA11_HOME}" ]; then
+  setJava "${JAVA11_HOME}"
+fi
+
+echo "Compiling using Java:"
+java -version
+echo
+./gradlew compileJava compileTestJava javadoc
+
+# We ensure the generated class files are compatible with Java 8
+if [ ! -z "${JAVA8_HOME}" ]; then
+  setJava "${JAVA8_HOME}"
+fi
+
+echo "Running tests using Java:"
+java -version
+
+if [ "${GITHUB_JOB}" == "units-java8" ]; then
+  java -version 2>&1 | grep -q 'openjdk version "1.8.'
+  MATCH=$? # 0 if the output has the match
+  if [ "$MATCH" != "0" ]; then
+    echo "Please specify JDK 8 for Java 8 tests"
+    exit 1
+  fi
+fi
+
+echo
+./gradlew build publishToMavenLocal \
+  --exclude-task compileJava --exclude-task compileTestJava \
+  --exclude-task javadoc
