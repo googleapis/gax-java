@@ -65,13 +65,14 @@ public class HttpJsonDirectCallableTest {
           .setRequestFormatter(
               ProtoMessageRequestFormatter.<Field>newBuilder()
                   .setPath(
-                      "/fake/v1/name/{name}",
+                      "/fake/v1/name/{name=bob/*}",
                       request -> {
                         Map<String, String> fields = new HashMap<>();
                         ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
                         serializer.putPathParam(fields, "name", request.getName());
                         return fields;
                       })
+                  .setAdditionalPaths("/fake/v1/name/{name=john/*}")
                   .setQueryParamsExtractor(
                       request -> {
                         Map<String, List<String>> fields = new HashMap<>();
@@ -212,7 +213,7 @@ public class HttpJsonDirectCallableTest {
 
   private Field createTestMessage() {
     return Field.newBuilder() // "echo" service
-        .setName("imTheBestField")
+        .setName("john/imTheBestField")
         .setNumber(2)
         .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
         .setDefaultValue("blah")

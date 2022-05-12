@@ -60,36 +60,28 @@ public class ProtoMessageRequestFormatterTest {
     formatter =
         ProtoMessageRequestFormatter.<Field>newBuilder()
             .setPath(
-                "/api/v1/names/{name}/aggregated",
-                new FieldsExtractor<Field, Map<String, String>>() {
-                  @Override
-                  public Map<String, String> extract(Field request) {
-                    Map<String, String> fields = new HashMap<>();
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.putPathParam(fields, "name", request.getName());
-                    serializer.putPathParam(fields, "kindValue", request.getKindValue());
-                    return fields;
-                  }
+                "/api/v1/names/{name=john/*}/aggregated",
+                request -> {
+                  Map<String, String> fields = new HashMap<>();
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  serializer.putPathParam(fields, "name", request.getName());
+                  serializer.putPathParam(fields, "kindValue", request.getKindValue());
+                  return fields;
                 })
             .setQueryParamsExtractor(
-                new FieldsExtractor<Field, Map<String, List<String>>>() {
-                  @Override
-                  public Map<String, List<String>> extract(Field request) {
-                    Map<String, List<String>> fields = new HashMap<>();
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.putQueryParam(fields, "number", request.getNumber());
-                    serializer.putQueryParam(fields, "typeUrl", request.getTypeUrl());
-                    return fields;
-                  }
+                request -> {
+                  Map<String, List<String>> fields = new HashMap<>();
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  serializer.putQueryParam(fields, "number", request.getNumber());
+                  serializer.putQueryParam(fields, "typeUrl", request.getTypeUrl());
+                  return fields;
                 })
             .setRequestBodyExtractor(
-                new FieldsExtractor<Field, String>() {
-                  @Override
-                  public String extract(Field request) {
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    return serializer.toBody("field", request);
-                  }
+                request -> {
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  return serializer.toBody("field", request);
                 })
+            .setAdditionalPaths("/api/v1/names/{name=bob/*}/hello")
             .build();
   }
 
