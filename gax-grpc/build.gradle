@@ -23,8 +23,7 @@ dependencies {
   runtimeOnly libraries['maven.io_grpc_grpc_googleapis']
 
   compileOnly(libraries['maven.com_google_auto_value_auto_value'],
-          libraries['maven.org_graalvm_sdk'],
-          libraries['maven.org_graalvm_nativeimage_svm'])
+          libraries['maven.org_graalvm_sdk'])
 
   testImplementation( project(':gax').sourceSets.test.output,
     libraries['maven.junit_junit'],
