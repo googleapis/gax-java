@@ -34,9 +34,9 @@ import com.google.api.core.InternalApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.protobuf.Message;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /** Creates parts of a HTTP request from a protobuf message. */
@@ -51,6 +51,7 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
   private final String rawPath;
   private final PathTemplate pathTemplate;
   private final FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
+  private final List<String> additionalRawPaths;
   private final List<PathTemplate> additionalPathTemplates;
 
   private ProtoMessageRequestFormatter(
@@ -59,23 +60,26 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
       String rawPath,
       PathTemplate pathTemplate,
       FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor,
+      List<String> additionalRawPaths,
       List<PathTemplate> additionalPathTemplates) {
     this.requestBodyExtractor = requestBodyExtractor;
     this.queryParamsExtractor = queryParamsExtractor;
     this.rawPath = rawPath;
     this.pathTemplate = pathTemplate;
     this.pathVarsExtractor = pathVarsExtractor;
+    this.additionalRawPaths = additionalRawPaths;
     this.additionalPathTemplates = additionalPathTemplates;
   }
 
   public static <RequestT extends Message>
       ProtoMessageRequestFormatter.Builder<RequestT> newBuilder() {
-    return new Builder<>();
+    return new Builder<RequestT>().setAdditionalPaths();
   }
 
   public Builder<RequestT> toBuilder() {
     return new Builder<RequestT>()
         .setPath(rawPath, pathVarsExtractor)
+        .setAdditionalPaths(additionalRawPaths.toArray(new String[] {}))
         .setQueryParamsExtractor(queryParamsExtractor)
         .setRequestBodyExtractor(requestBodyExtractor);
   }
@@ -110,6 +114,36 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     return pathTemplate;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProtoMessageRequestFormatter<?> that = (ProtoMessageRequestFormatter<?>) o;
+    return Objects.equals(requestBodyExtractor, that.requestBodyExtractor)
+        && Objects.equals(queryParamsExtractor, that.queryParamsExtractor)
+        && Objects.equals(rawPath, that.rawPath)
+        && Objects.equals(pathTemplate, that.pathTemplate)
+        && Objects.equals(pathVarsExtractor, that.pathVarsExtractor)
+        && Objects.equals(additionalRawPaths, that.additionalRawPaths)
+        && Objects.equals(additionalPathTemplates, that.additionalPathTemplates);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        requestBodyExtractor,
+        queryParamsExtractor,
+        rawPath,
+        pathTemplate,
+        pathVarsExtractor,
+        additionalRawPaths,
+        additionalPathTemplates);
+  }
+
   // This has class has compound setter methods (multiple arguments in setters), that is why not
   // using @AutoValue.
   public static class Builder<RequestT extends Message> {
@@ -117,7 +151,7 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     private FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor;
     private String rawPath;
     private FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
-    private List<String> rawAdditionalPaths = Collections.emptyList();
+    private List<String> rawAdditionalPaths;
 
     public Builder<RequestT> setRequestBodyExtractor(
         FieldsExtractor<RequestT, String> requestBodyExtractor) {
@@ -157,6 +191,7 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
           rawPath,
           PathTemplate.create(rawPath),
           pathVarsExtractor,
+          rawAdditionalPaths,
           rawAdditionalPaths.stream().map(PathTemplate::create).collect(Collectors.toList()));
     }
   }

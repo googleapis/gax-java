@@ -44,7 +44,7 @@ import org.junit.Test;
 
 public class ProtoMessageRequestFormatterTest {
   private Field field;
-  private HttpRequestFormatter<Field> formatter;
+  private ProtoMessageRequestFormatter<Field> formatter;
 
   @Before
   public void setUp() {
@@ -60,7 +60,7 @@ public class ProtoMessageRequestFormatterTest {
     formatter =
         ProtoMessageRequestFormatter.<Field>newBuilder()
             .setPath(
-                "/api/v1/names/{name=john/*}/aggregated",
+                "/api/v1/names/{name=field_name1/**}/aggregated",
                 request -> {
                   Map<String, String> fields = new HashMap<>();
                   ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
@@ -81,7 +81,7 @@ public class ProtoMessageRequestFormatterTest {
                   ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
                   return serializer.toBody("field", request);
                 })
-            .setAdditionalPaths("/api/v1/names/{name=bob/*}/hello")
+            .setAdditionalPaths("/api/v1/names/{name=field_name1/**}/hello")
             .build();
   }
 
@@ -122,5 +122,21 @@ public class ProtoMessageRequestFormatterTest {
     String path =
         formatter.getPathTemplate().instantiate(Collections.singletonMap("name", "field_name1"));
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+  }
+
+  @Test
+  public void getPathTemplates() {
+    String path =
+        formatter
+            .getAdditionalPathTemplates()
+            .get(0)
+            .instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/hello");
+  }
+
+  @Test
+  public void toBuilder() {
+    Truth.assertThat(formatter.toBuilder().build()).isEqualTo(formatter);
+    Truth.assertThat(formatter.toBuilder().build().hashCode()).isEqualTo(formatter.hashCode());
   }
 }
