@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [8]
+        java: [11]
         repo:
         # This list needs to be updated manually until an automated solution is in place.
         - accessapproval
