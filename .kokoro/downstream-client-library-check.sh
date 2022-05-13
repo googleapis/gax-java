@@ -18,6 +18,9 @@ set -eo pipefail
 set -x
 
 CLIENT_LIBRARY=$1
+
+# Example JOB_TYPE: "test" or "graalvm"
+export JOB_TYPE=$2
 ## Get the directory of the build script
 scriptDir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 ## cd to the parent directory, i.e. the root of the git repo
@@ -86,7 +89,9 @@ if [[ $CLIENT_LIBRARY == "bigtable" ]]; then
   popd
 fi
 
-mvn verify install -B -V -ntp -fae \
--Dmaven.javadoc.skip=true \
--Dgcloud.download.skip=true \
--Denforcer.skip=true
+echo "Modification on the shared dependencies BOM:"
+git diff
+echo
+
+# This reads the JOB_TYPE environmental variable ("test" or "graalvm")
+.kokoro/build.sh
