@@ -71,8 +71,6 @@ final class ProtobufMessageFeature implements Feature {
             registerFieldAccessors(getBuilderClass(method.getDeclaringClass()));
           },
           internalAccessorMethod);
-
-      throw new RuntimeException("Bad exception during Native image compilation");
     }
 
     Class<?> protoEnumClass = access.findClassByName(PROTO_ENUM_CLASS);
