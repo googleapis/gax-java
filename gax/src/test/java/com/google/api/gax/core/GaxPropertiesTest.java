@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.core;
 
+import static org.graalvm.nativeimage.ImageInfo.PROPERTY_IMAGE_CODE_KEY;
+import static org.graalvm.nativeimage.ImageInfo.PROPERTY_IMAGE_CODE_VALUE_RUNTIME;
 import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
@@ -53,5 +55,12 @@ public class GaxPropertiesTest {
     if (major == 1) {
       assertTrue(minor >= 56);
     }
+  }
+
+  @Test
+  public void testGetVersion_nativeImage() {
+    System.setProperty(PROPERTY_IMAGE_CODE_KEY, PROPERTY_IMAGE_CODE_VALUE_RUNTIME);
+    String javaVersion = GaxProperties.getJavaVersion();
+    assertTrue(javaVersion.endsWith("-graalvm"));
   }
 }

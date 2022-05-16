@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.core;
 
+import static org.graalvm.nativeimage.ImageInfo.PROPERTY_IMAGE_CODE_KEY;
+import static org.graalvm.nativeimage.ImageInfo.PROPERTY_IMAGE_CODE_VALUE_RUNTIME;
+
 import com.google.api.core.InternalApi;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,6 +84,12 @@ public class GaxProperties {
 
   /** Returns the version of the running JVM */
   public static String getJavaVersion() {
+    // When running the application as a native image, append `-graalvm` to the
+    // version.
+    String imageCode = System.getProperty(PROPERTY_IMAGE_CODE_KEY);
+    if (imageCode != null && imageCode.equals(PROPERTY_IMAGE_CODE_VALUE_RUNTIME)) {
+      return System.getProperty("java.version") + "-graalvm";
+    }
     return JAVA_VERSION;
   }
 

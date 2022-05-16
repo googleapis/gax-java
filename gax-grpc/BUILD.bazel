@@ -31,7 +31,6 @@ _COMPILE_DEPS = [
     "@io_netty_netty_tcnative_boringssl_static//jar",
     "@javax_annotation_javax_annotation_api//jar",
     "//gax:gax",
-    "@org_graalvm_nativeimage_svm//jar",
     "@org_graalvm_sdk//jar"
 ]
 

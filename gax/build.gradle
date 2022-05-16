@@ -15,13 +15,13 @@ dependencies {
     libraries['maven.io_opencensus_opencensus_api'])
 
   compileOnly(libraries['maven.com_google_auto_value_auto_value'],
-          libraries['maven.org_graalvm_sdk'],
-          libraries['maven.org_graalvm_nativeimage_svm'])
+          libraries['maven.org_graalvm_sdk'])
 
   testImplementation(libraries['maven.junit_junit'],
     libraries['maven.org_mockito_mockito_core'],
     libraries['maven.com_google_truth_truth'],
-    libraries['maven.com_google_auto_value_auto_value'])
+    libraries['maven.com_google_auto_value_auto_value'],
+          libraries['maven.org_graalvm_sdk'])
 
   annotationProcessor libraries['maven.com_google_auto_value_auto_value']
   testAnnotationProcessor libraries['maven.com_google_auto_value_auto_value']
