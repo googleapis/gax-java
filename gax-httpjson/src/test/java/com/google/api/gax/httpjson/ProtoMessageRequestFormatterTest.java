@@ -138,5 +138,11 @@ public class ProtoMessageRequestFormatterTest {
   public void toBuilder() {
     Truth.assertThat(formatter.toBuilder().build()).isEqualTo(formatter);
     Truth.assertThat(formatter.toBuilder().build().hashCode()).isEqualTo(formatter.hashCode());
+    Truth.assertThat(
+            formatter
+                .toBuilder()
+                .setAdditionalPaths("/api/v1/names/{name=field_name1/**}/hi")
+                .build())
+        .isNotEqualTo(formatter);
   }
 }
