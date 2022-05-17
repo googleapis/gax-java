@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import io.grpc.Metadata;
 
 /**
@@ -37,7 +36,6 @@ import io.grpc.Metadata;
  * GrpcMetadataHandlerInterceptor class to provide custom handling of the returned headers and
  * trailers.
  */
-@BetaApi("The surface for response metadata is not stable yet and may change in the future.")
 public interface ResponseMetadataHandler {
 
   /** Handle the headers returned by an RPC. */

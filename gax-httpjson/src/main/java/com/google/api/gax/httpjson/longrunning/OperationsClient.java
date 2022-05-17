@@ -142,7 +142,6 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer using create(OperationsSettings).
    */
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public static final OperationsClient create(OperationsStub stub) {
     return new OperationsClient(stub);
   }
@@ -151,7 +150,6 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer using create(OperationsSettings).
    */
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public static final OperationsClient create(BackgroundResource stub) {
     return new OperationsClient((OperationsStub) stub);
   }

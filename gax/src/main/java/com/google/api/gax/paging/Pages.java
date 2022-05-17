@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
 import java.util.Collections;
 
 /** Utility class for {@link Page}s. */
-@BetaApi
 public class Pages {
   private Pages() {}
 

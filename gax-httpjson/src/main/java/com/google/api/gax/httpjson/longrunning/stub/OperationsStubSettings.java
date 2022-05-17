@@ -33,7 +33,6 @@ import static com.google.api.gax.httpjson.longrunning.OperationsClient.ListOpera
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -99,7 +98,6 @@ import org.threeten.bp.Duration;
  * OperationsStubSettings operationsSettings = operationsSettingsBuilder.build();
  * }</pre>
  */
-@BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
   /** The default scopes of the service. */
   private static final ImmutableList<String> DEFAULT_SERVICE_SCOPES =
@@ -188,7 +186,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return cancelOperationSettings;
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public OperationsStub createStub() throws IOException {
     if (getTransportChannelProvider()
         .getTransportName()
@@ -235,7 +232,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return defaultHttpJsonTransportProviderBuilder().build();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratedLibToken(

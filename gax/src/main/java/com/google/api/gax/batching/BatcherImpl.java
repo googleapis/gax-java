@@ -34,7 +34,6 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.FlowController.FlowControlException;
@@ -74,7 +73,6 @@ import javax.annotation.Nullable;
  * @param <RequestT> The type of the request that will contain the accumulated elements.
  * @param <ResponseT> The type of the response that will unpack into individual element results.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalApi("For google-cloud-java client use only")
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {

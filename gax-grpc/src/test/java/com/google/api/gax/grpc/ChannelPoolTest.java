@@ -29,12 +29,13 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.gax.grpc.testing.FakeChannelFactory;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
@@ -43,6 +44,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.stub.ClientCalls;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
@@ -68,8 +71,11 @@ public class ChannelPoolTest {
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)));
-    Truth.assertThat(pool.authority()).isEqualTo("myAuth");
+    ChannelPool pool =
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(2),
+            new FakeChannelFactory(Arrays.asList(sub1, sub2)));
+    assertThat(pool.authority()).isEqualTo("myAuth");
   }
 
   @Test
@@ -80,7 +86,9 @@ public class ChannelPoolTest {
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
     ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
-    ChannelPool pool = ChannelPool.create(channels.size(), new FakeChannelFactory(channels));
+    ChannelPool pool =
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(channels.size()), new FakeChannelFactory(channels));
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
@@ -135,7 +143,9 @@ public class ChannelPoolTest {
     }
 
     final ChannelPool pool =
-        ChannelPool.create(numChannels, new FakeChannelFactory(Arrays.asList(channels)));
+        ChannelPool.create(
+            ChannelPoolSettings.staticallySized(numChannels),
+            new FakeChannelFactory(Arrays.asList(channels)));
 
     int numThreads = 20;
     final int numPerThread = 1000;
@@ -151,11 +161,11 @@ public class ChannelPoolTest {
     }
     executor.shutdown();
     boolean shutdown = executor.awaitTermination(1, TimeUnit.MINUTES);
-    Truth.assertThat(shutdown).isTrue();
+    assertThat(shutdown).isTrue();
 
     int expectedCount = (numThreads * numPerThread) / numChannels;
     for (AtomicInteger count : counts) {
-      Truth.assertThat(count.get()).isAnyOf(expectedCount, expectedCount + 1);
+      assertThat(count.get()).isAnyOf(expectedCount, expectedCount + 1);
     }
   }
 
@@ -167,7 +177,11 @@ public class ChannelPoolTest {
     ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
 
     ChannelPool.create(
-        2, new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer));
+        ChannelPoolSettings.staticallySized(2)
+            .toBuilder()
+            .setPreemptiveRefreshEnabled(true)
+            .build(),
+        new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer));
     Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
   }
@@ -193,36 +207,32 @@ public class ChannelPoolTest {
 
     Mockito.doAnswer(extractChannelRefresher)
         .when(scheduledExecutorService)
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+        .scheduleAtFixedRate(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(Arrays.asList(channel1, channel2, channel3), mockChannelPrimer);
 
-    ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    new ChannelPool(
+        ChannelPoolSettings.staticallySized(1)
+            .toBuilder()
+            .setPreemptiveRefreshEnabled(true)
+            .build(),
+        channelFactory,
+        scheduledExecutorService);
     // 1 call during the creation
     Mockito.verify(mockChannelPrimer, Mockito.times(1))
         .primeChannel(Mockito.any(ManagedChannel.class));
-    Mockito.verify(scheduledExecutorService, Mockito.times(1))
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
     channelRefreshers.get(0).run();
     // 1 more call during channel refresh
     Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
-    Mockito.verify(scheduledExecutorService, Mockito.times(2))
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
     channelRefreshers.get(0).run();
     // 1 more call during channel refresh
     Mockito.verify(mockChannelPrimer, Mockito.times(3))
         .primeChannel(Mockito.any(ManagedChannel.class));
-    Mockito.verify(scheduledExecutorService, Mockito.times(3))
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
-    scheduledExecutorService.shutdown();
   }
 
   // ----
@@ -233,7 +243,7 @@ public class ChannelPoolTest {
     ManagedChannel replacementChannel = Mockito.mock(ManagedChannel.class);
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -282,7 +292,7 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -327,7 +337,7 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel, replacementChannel));
-    ChannelPool pool = ChannelPool.create(1, channelFactory);
+    ChannelPool pool = ChannelPool.create(ChannelPoolSettings.staticallySized(1), channelFactory);
 
     // create a mock call when new call comes to the underlying channel
     MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
@@ -379,7 +389,14 @@ public class ChannelPoolTest {
 
     FakeChannelFactory channelFactory =
         new FakeChannelFactory(ImmutableList.of(underlyingChannel1, underlyingChannel2));
-    ChannelPool pool = ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
+    ChannelPool pool =
+        new ChannelPool(
+            ChannelPoolSettings.staticallySized(1)
+                .toBuilder()
+                .setPreemptiveRefreshEnabled(true)
+                .build(),
+            channelFactory,
+            scheduledExecutorService);
     Mockito.reset(underlyingChannel1);
 
     pool.newCall(FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
@@ -394,5 +411,188 @@ public class ChannelPoolTest {
 
     Mockito.verify(underlyingChannel2, Mockito.only())
         .newCall(Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
+  }
+
+  @Test
+  public void channelCountShouldNotChangeWhenOutstandingRpcsAreWithinLimits() throws Exception {
+    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+
+    List<ManagedChannel> channels = new ArrayList<>();
+    List<ClientCall<Object, Object>> startedCalls = new ArrayList<>();
+
+    ChannelFactory channelFactory =
+        () -> {
+          ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+          Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
+              .thenAnswer(
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
+
+          channels.add(channel);
+          return channel;
+        };
+
+    ChannelPool pool =
+        new ChannelPool(
+            ChannelPoolSettings.builder()
+                .setInitialChannelCount(2)
+                .setMinRpcsPerChannel(1)
+                .setMaxRpcsPerChannel(2)
+                .build(),
+            channelFactory,
+            executor);
+    assertThat(pool.entries.get()).hasSize(2);
+
+    // Start the minimum number of
+    for (int i = 0; i < 2; i++) {
+      ClientCalls.futureUnaryCall(
+          pool.newCall(FakeServiceGrpc.METHOD_RECOGNIZE, CallOptions.DEFAULT),
+          Color.getDefaultInstance());
+    }
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(2);
+
+    // Add enough RPCs to be just at the brink of expansion
+    for (int i = startedCalls.size(); i < 4; i++) {
+      ClientCalls.futureUnaryCall(
+          pool.newCall(FakeServiceGrpc.METHOD_RECOGNIZE, CallOptions.DEFAULT),
+          Color.getDefaultInstance());
+    }
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(2);
+
+    // Add another RPC to push expansion
+    pool.newCall(FakeServiceGrpc.METHOD_RECOGNIZE, CallOptions.DEFAULT);
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(4); // += ChannelPool::MAX_RESIZE_DELTA
+    assertThat(startedCalls).hasSize(5);
+
+    // Complete RPCs to the brink of shrinking
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<ClientCall.Listener<Object>> captor =
+        ArgumentCaptor.forClass(ClientCall.Listener.class);
+    Mockito.verify(startedCalls.remove(0)).start(captor.capture(), Mockito.any());
+    captor.getValue().onClose(Status.ABORTED, new Metadata());
+    // Resize twice: the first round maintains the peak from the last cycle
+    pool.resize();
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(4);
+    assertThat(startedCalls).hasSize(4);
+
+    // Complete another RPC to trigger shrinking
+    Mockito.verify(startedCalls.remove(0)).start(captor.capture(), Mockito.any());
+    captor.getValue().onClose(Status.ABORTED, new Metadata());
+    // Resize twice: the first round maintains the peak from the last cycle
+    pool.resize();
+    pool.resize();
+    assertThat(startedCalls).hasSize(3);
+    // range of channels is [2-3] rounded down average is 2
+    assertThat(pool.entries.get()).hasSize(2);
+  }
+
+  @Test
+  public void removedIdleChannelsAreShutdown() throws Exception {
+    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+
+    List<ManagedChannel> channels = new ArrayList<>();
+    List<ClientCall<Object, Object>> startedCalls = new ArrayList<>();
+
+    ChannelFactory channelFactory =
+        () -> {
+          ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+          Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
+              .thenAnswer(
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
+
+          channels.add(channel);
+          return channel;
+        };
+
+    ChannelPool pool =
+        new ChannelPool(
+            ChannelPoolSettings.builder()
+                .setInitialChannelCount(2)
+                .setMinRpcsPerChannel(1)
+                .setMaxRpcsPerChannel(2)
+                .build(),
+            channelFactory,
+            executor);
+    assertThat(pool.entries.get()).hasSize(2);
+
+    // With no outstanding RPCs, the pool should shrink
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(1);
+    Mockito.verify(channels.get(1), Mockito.times(1)).shutdown();
+  }
+
+  @Test
+  public void removedActiveChannelsAreShutdown() throws Exception {
+    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+
+    List<ManagedChannel> channels = new ArrayList<>();
+    List<ClientCall<Object, Object>> startedCalls = new ArrayList<>();
+
+    ChannelFactory channelFactory =
+        () -> {
+          ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+          Mockito.when(channel.newCall(Mockito.any(), Mockito.any()))
+              .thenAnswer(
+                  invocation -> {
+                    @SuppressWarnings("unchecked")
+                    ClientCall<Object, Object> clientCall = Mockito.mock(ClientCall.class);
+                    startedCalls.add(clientCall);
+                    return clientCall;
+                  });
+
+          channels.add(channel);
+          return channel;
+        };
+
+    ChannelPool pool =
+        new ChannelPool(
+            ChannelPoolSettings.builder()
+                .setInitialChannelCount(2)
+                .setMinRpcsPerChannel(1)
+                .setMaxRpcsPerChannel(2)
+                .build(),
+            channelFactory,
+            executor);
+    assertThat(pool.entries.get()).hasSize(2);
+
+    // Start 2 RPCs
+    for (int i = 0; i < 2; i++) {
+      ClientCalls.futureUnaryCall(
+          pool.newCall(FakeServiceGrpc.METHOD_RECOGNIZE, CallOptions.DEFAULT),
+          Color.getDefaultInstance());
+    }
+    // Complete the first one
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<ClientCall.Listener<Object>> captor =
+        ArgumentCaptor.forClass(ClientCall.Listener.class);
+    Mockito.verify(startedCalls.get(0)).start(captor.capture(), Mockito.any());
+    captor.getValue().onClose(Status.ABORTED, new Metadata());
+
+    // With a single RPC, the pool should shrink
+    pool.resize();
+    pool.resize();
+    assertThat(pool.entries.get()).hasSize(1);
+
+    // While the RPC is outstanding, the channel should still be open
+    Mockito.verify(channels.get(1), Mockito.never()).shutdown();
+
+    // Complete the RPC
+    Mockito.verify(startedCalls.get(1)).start(captor.capture(), Mockito.any());
+    captor.getValue().onClose(Status.ABORTED, new Metadata());
+    // Now the channel should be closed
+    Mockito.verify(channels.get(1), Mockito.times(1)).shutdown();
   }
 }

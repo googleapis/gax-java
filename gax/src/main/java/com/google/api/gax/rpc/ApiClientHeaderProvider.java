@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
@@ -39,7 +38,6 @@ import java.util.Map;
  * Implementation of HeaderProvider that provides headers describing the API client library making
  * API calls.
  */
-@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
   private static final long serialVersionUID = -8876627296793342119L;
   static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";

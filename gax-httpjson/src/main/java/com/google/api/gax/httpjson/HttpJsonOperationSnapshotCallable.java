@@ -46,7 +46,7 @@ import com.google.api.gax.rpc.UnaryCallable;
  *
  * <p>Public for technical reasons. For internal use only.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
+@BetaApi
 @InternalApi
 public class HttpJsonOperationSnapshotCallable<RequestT, OperationT>
     extends UnaryCallable<RequestT, OperationSnapshot> {

@@ -35,7 +35,6 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.ExecutionException;
@@ -51,7 +50,6 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 @InternalApi
 public final class OperationFutureImpl<ResponseT, MetadataT>
     implements OperationFuture<ResponseT, MetadataT> {

@@ -30,7 +30,6 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.LongRunningClient;
@@ -42,7 +41,6 @@ import com.google.api.gax.rpc.UnaryCallable;
  *
  * <p>Public for technical reasons. For internal use only.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 @InternalApi
 public class HttpJsonLongRunningClient<RequestT, OperationT> implements LongRunningClient {
 

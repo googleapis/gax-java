@@ -56,7 +56,10 @@ libraryDependencies += "com.google.api" % "gax-grpc" % "2.8.1"
 Java Versions
 -------------
 
-Java 7 or above is required for using this library.
+Java 8 or above is required for using this library.
+
+To build this project, JDK 11 or above is required. The build produces Java
+bytecode targeted for Java 8.
 
 Contributing
 ------------

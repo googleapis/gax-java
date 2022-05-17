@@ -77,7 +77,6 @@ public class Callables {
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
@@ -105,7 +104,6 @@ public class Callables {
         innerCallable, retryingExecutor, settings.getResumptionStrategy());
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
       ServerStreamingCallable<RequestT, ResponseT> callable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
@@ -132,7 +130,6 @@ public class Callables {
    * @param context {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  @BetaApi("The surface for batching is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> batching(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,

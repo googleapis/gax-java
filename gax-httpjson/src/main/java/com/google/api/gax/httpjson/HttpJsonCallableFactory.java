@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
@@ -51,7 +50,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 /** Class with utility methods to create http/json-based direct callables. */
-@BetaApi
 public class HttpJsonCallableFactory {
   // Used to extract service and method name from a grpc MethodDescriptor.
   // fullMethodName has the format: service.resource.action
@@ -161,8 +159,6 @@ public class HttpJsonCallableFactory {
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
-  @BetaApi(
-      "The surface for long-running operations is not stable yet and may change in the future.")
   public static <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
@@ -175,7 +171,6 @@ public class HttpJsonCallableFactory {
     return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           HttpJsonCallSettings<RequestT, ResponseT> httpJsoncallSettings,

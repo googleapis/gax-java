@@ -98,7 +98,6 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
 
   /**
@@ -106,7 +105,6 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamWaitTimeout();
 
@@ -128,7 +126,6 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);
 
   /**
@@ -136,7 +133,6 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamIdleTimeout();
 

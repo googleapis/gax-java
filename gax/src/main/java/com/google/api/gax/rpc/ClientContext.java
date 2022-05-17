@@ -84,21 +84,17 @@ public abstract class ClientContext {
   @Nullable
   public abstract TransportChannel getTransportChannel();
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public abstract Map<String, String> getHeaders();
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected abstract Map<String, String> getInternalHeaders();
 
   public abstract ApiClock getClock();
 
   public abstract ApiCallContext getDefaultCallContext();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public abstract Watchdog getStreamWatchdog();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public abstract Duration getStreamWatchdogCheckInterval();
 
@@ -305,10 +301,8 @@ public abstract class ClientContext {
 
     public abstract Builder setTransportChannel(TransportChannel transportChannel);
 
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public abstract Builder setHeaders(Map<String, String> headers);
 
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected abstract Builder setInternalHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
@@ -319,10 +313,8 @@ public abstract class ClientContext {
 
     public abstract Builder setQuotaProjectId(String QuotaProjectId);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdog(Watchdog watchdog);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
     /**

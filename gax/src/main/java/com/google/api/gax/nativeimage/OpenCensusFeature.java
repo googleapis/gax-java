@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,47 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson.testing;
 
-import com.google.api.core.InternalApi;
-import com.google.api.gax.httpjson.ApiMessage;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.Nullable;
+package com.google.api.gax.nativeimage;
 
-/** Simple implementation of ApiMessage. */
-@InternalApi("for testing")
-public class FakeApiMessage implements ApiMessage {
-  private final Map<String, Object> fieldValues;
-  private final ApiMessage messageBody;
-  private List<String> fieldMask;
+import static com.google.api.gax.nativeimage.NativeImageUtils.registerForReflectiveInstantiation;
 
-  /** Instantiate a FakeApiMessage with a message body and a map of field names and their values. */
-  public FakeApiMessage(
-      Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
-    this.fieldValues = new TreeMap<>(fieldValues);
-    this.messageBody = messageBody;
-    this.fieldMask = fieldMask;
-  }
+import org.graalvm.nativeimage.hosted.Feature;
 
-  @Nullable
+/** Registers reflection usage in OpenCensus libraries. */
+final class OpenCensusFeature implements Feature {
+
+  private static final String TAGS_COMPONENT_CLASS = "io.opencensus.impl.tags.TagsComponentImpl";
+  private static final String STATS_COMPONENT_CLASS = "io.opencensus.impl.stats.StatsComponentImpl";
+
   @Override
-  public Object getFieldValue(String fieldName) {
-    return fieldValues.get(fieldName);
-  }
-
-  @Nullable
-  @Override
-  public List<String> getFieldMask() {
-    return fieldMask;
-  }
-
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  @Override
-  public ApiMessage getApiMessageRequestBody() {
-    return messageBody;
+  public void beforeAnalysis(BeforeAnalysisAccess access) {
+    if (access.findClassByName(STATS_COMPONENT_CLASS) != null) {
+      registerForReflectiveInstantiation(access, STATS_COMPONENT_CLASS);
+    }
+    if (access.findClassByName(TAGS_COMPONENT_CLASS) != null) {
+      registerForReflectiveInstantiation(access, "io.opencensus.impl.metrics.MetricsComponentImpl");
+      registerForReflectiveInstantiation(access, TAGS_COMPONENT_CLASS);
+      registerForReflectiveInstantiation(access, "io.opencensus.impl.trace.TraceComponentImpl");
+    }
   }
 }

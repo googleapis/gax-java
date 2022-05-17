@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
@@ -149,15 +148,7 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
     provider.getTransportChannel().shutdownNow();
 
     provider = provider.withPoolSize(2);
-    assertThat(provider.acceptsPoolSize()).isFalse();
     provider.getTransportChannel().shutdownNow();
-
-    try {
-      provider.withPoolSize(3);
-      fail("acceptsPoolSize() returned false; we shouldn't be able to set it again");
-    } catch (IllegalStateException e) {
-
-    }
   }
 
   @Test

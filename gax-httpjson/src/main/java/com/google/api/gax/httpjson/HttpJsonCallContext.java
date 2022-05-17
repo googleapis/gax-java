@@ -59,7 +59,7 @@ import org.threeten.bp.Instant;
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */
-@BetaApi
+@BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final HttpJsonCallOptions callOptions;

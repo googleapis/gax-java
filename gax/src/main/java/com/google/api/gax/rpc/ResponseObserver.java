@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Receives notifications from server-streaming calls.
  *
@@ -50,7 +48,6 @@ import com.google.api.core.BetaApi;
  * control by calling {@code disableAutoInboundFlowControl()} in {@code onStart}. After this, the
  * consumer must request responses by calling {@code request()}.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface ResponseObserver<V> {
 
   /**

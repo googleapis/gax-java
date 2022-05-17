@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,26 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
+package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-import java.util.List;
-import javax.annotation.Nullable;
+/** Exception thrown when parsing protocol buffer message failed */
+public class ProtocolBufferParsingException extends RuntimeException {
 
-/* An interface for message classes. */
-@BetaApi
-public interface ApiMessage {
-
-  /* Get the String value of a field in this message. */
-  @Nullable
-  Object getFieldValue(String fieldName);
-
-  /* List of names of fields to include in the serialized request body. */
-  @Nullable
-  List<String> getFieldMask();
-
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  ApiMessage getApiMessageRequestBody();
+  public ProtocolBufferParsingException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

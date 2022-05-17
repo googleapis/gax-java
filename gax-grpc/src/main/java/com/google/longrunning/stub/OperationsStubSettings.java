@@ -33,7 +33,6 @@ import static com.google.longrunning.OperationsClient.ListOperationsPagedRespons
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -67,7 +66,6 @@ import java.io.IOException;
 import org.threeten.bp.Duration;
 
 /** Settings class to configure an instance of {@link OperationsStub}. */
-@BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
 
   private final UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings;
@@ -105,7 +103,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return waitOperationSettings;
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public OperationsStub createStub() throws IOException {
     if (getTransportChannelProvider()
         .getTransportName()
@@ -127,7 +124,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return GoogleCredentialsProvider.newBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratedLibToken(

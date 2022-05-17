@@ -423,7 +423,6 @@ public final class GrpcCallContext implements ApiCallContext {
    * @see ApiCallContext#withStreamWaitTimeout(Duration)
    */
   @Override
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamWaitTimeout() {
     return streamWaitTimeout;
@@ -435,14 +434,12 @@ public final class GrpcCallContext implements ApiCallContext {
    * @see ApiCallContext#withStreamIdleTimeout(Duration)
    */
   @Override
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;
   }
 
   /** The channel affinity for this context. */
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
   @Nullable
   public Integer getChannelAffinity() {
     return channelAffinity;

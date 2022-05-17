@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -44,7 +43,6 @@ import org.threeten.bp.Duration;
  * <p>This is the internal class and is public only for technical reasons. It may change any time
  * without notice, please do not depend on it explicitly.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 @InternalApi
 public final class FixedWatchdogProvider implements WatchdogProvider {
   @Nullable private final Watchdog watchdog;

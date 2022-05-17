@@ -30,7 +30,6 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 
@@ -46,7 +45,6 @@ import com.google.api.gax.rpc.ApiCallContext;
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalExtensionOnly
 public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
 

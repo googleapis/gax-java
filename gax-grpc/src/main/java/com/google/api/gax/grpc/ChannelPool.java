@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -46,14 +47,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -68,93 +67,61 @@ import org.threeten.bp.Duration;
  */
 class ChannelPool extends ManagedChannel {
   private static final Logger LOG = Logger.getLogger(ChannelPool.class.getName());
-
-  // size greater than 1 to allow multiple channel to refresh at the same time
-  // size not too large so refreshing channels doesn't use too many threads
-  private static final int CHANNEL_REFRESH_EXECUTOR_SIZE = 2;
   private static final Duration REFRESH_PERIOD = Duration.ofMinutes(50);
-  private static final double JITTER_PERCENTAGE = 0.15;
+
+  private final ChannelPoolSettings settings;
+  private final ChannelFactory channelFactory;
+  private final ScheduledExecutorService executor;
 
   private final Object entryWriteLock = new Object();
-  private final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
+  @VisibleForTesting final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
-  // if set, ChannelPool will manage the life cycle of channelRefreshExecutorService
-  @Nullable private final ScheduledExecutorService channelRefreshExecutorService;
-  private final ChannelFactory channelFactory;
 
-  private volatile ScheduledFuture<?> nextScheduledRefresh = null;
-
-  /**
-   * Factory method to create a non-refreshing channel pool
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @return ChannelPool of non-refreshing channels
-   */
-  static ChannelPool create(int poolSize, ChannelFactory channelFactory) throws IOException {
-    return new ChannelPool(channelFactory, poolSize, null);
-  }
-
-  /**
-   * Factory method to create a refreshing channel pool
-   *
-   * <p>Package-private for testing purposes only
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @param channelRefreshExecutorService periodically refreshes the channels; its life cycle will
-   *     be managed by ChannelPool
-   * @return ChannelPool of refreshing channels
-   */
-  @VisibleForTesting
-  static ChannelPool createRefreshing(
-      int poolSize,
-      ChannelFactory channelFactory,
-      ScheduledExecutorService channelRefreshExecutorService)
+  static ChannelPool create(ChannelPoolSettings settings, ChannelFactory channelFactory)
       throws IOException {
-    return new ChannelPool(channelFactory, poolSize, channelRefreshExecutorService);
-  }
-
-  /**
-   * Factory method to create a refreshing channel pool
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @return ChannelPool of refreshing channels
-   */
-  static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
-      throws IOException {
-    return createRefreshing(
-        poolSize, channelFactory, Executors.newScheduledThreadPool(CHANNEL_REFRESH_EXECUTOR_SIZE));
+    return new ChannelPool(settings, channelFactory, Executors.newSingleThreadScheduledExecutor());
   }
 
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
+   * @param settings options for controling the ChannelPool sizing behavior
    * @param channelFactory method to create the channels
-   * @param poolSize number of channels in the pool
-   * @param channelRefreshExecutorService periodically refreshes the channels
+   * @param executor periodically refreshes the channels
    */
-  private ChannelPool(
+  @VisibleForTesting
+  ChannelPool(
+      ChannelPoolSettings settings,
       ChannelFactory channelFactory,
-      int poolSize,
-      @Nullable ScheduledExecutorService channelRefreshExecutorService)
+      ScheduledExecutorService executor)
       throws IOException {
+    this.settings = settings;
     this.channelFactory = channelFactory;
 
     ImmutableList.Builder<Entry> initialListBuilder = ImmutableList.builder();
 
-    for (int i = 0; i < poolSize; i++) {
+    for (int i = 0; i < settings.getInitialChannelCount(); i++) {
       initialListBuilder.add(new Entry(channelFactory.createSingleChannel()));
     }
 
     entries.set(initialListBuilder.build());
     authority = entries.get().get(0).channel.authority();
-    this.channelRefreshExecutorService = channelRefreshExecutorService;
+    this.executor = executor;
 
-    if (channelRefreshExecutorService != null) {
-      nextScheduledRefresh = scheduleNextRefresh();
+    if (!settings.isStaticSize()) {
+      executor.scheduleAtFixedRate(
+          this::resizeSafely,
+          ChannelPoolSettings.RESIZE_INTERVAL.getSeconds(),
+          ChannelPoolSettings.RESIZE_INTERVAL.getSeconds(),
+          TimeUnit.SECONDS);
+    }
+    if (settings.isPreemptiveRefreshEnabled()) {
+      executor.scheduleAtFixedRate(
+          this::refreshSafely,
+          REFRESH_PERIOD.getSeconds(),
+          REFRESH_PERIOD.getSeconds(),
+          TimeUnit.SECONDS);
     }
   }
 
@@ -187,12 +154,9 @@ class ChannelPool extends ManagedChannel {
     for (Entry entry : localEntries) {
       entry.channel.shutdown();
     }
-    if (nextScheduledRefresh != null) {
-      nextScheduledRefresh.cancel(true);
-    }
-    if (channelRefreshExecutorService != null) {
+    if (executor != null) {
       // shutdownNow will cancel scheduled tasks
-      channelRefreshExecutorService.shutdownNow();
+      executor.shutdownNow();
     }
     return this;
   }
@@ -206,7 +170,7 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    return channelRefreshExecutorService == null || channelRefreshExecutorService.isShutdown();
+    return executor == null || executor.isShutdown();
   }
 
   /** {@inheritDoc} */
@@ -218,7 +182,8 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
-    return channelRefreshExecutorService == null || channelRefreshExecutorService.isTerminated();
+
+    return executor == null || executor.isTerminated();
   }
 
   /** {@inheritDoc} */
@@ -228,11 +193,8 @@ class ChannelPool extends ManagedChannel {
     for (Entry entry : localEntries) {
       entry.channel.shutdownNow();
     }
-    if (nextScheduledRefresh != null) {
-      nextScheduledRefresh.cancel(true);
-    }
-    if (channelRefreshExecutorService != null) {
-      channelRefreshExecutorService.shutdownNow();
+    if (executor != null) {
+      executor.shutdownNow();
     }
     return this;
   }
@@ -249,25 +211,131 @@ class ChannelPool extends ManagedChannel {
       }
       entry.channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
-    if (channelRefreshExecutorService != null) {
+    if (executor != null) {
       long awaitTimeNanos = endTimeNanos - System.nanoTime();
-      channelRefreshExecutorService.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+      executor.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
     return isTerminated();
   }
 
-  /** Scheduling loop. */
-  private ScheduledFuture<?> scheduleNextRefresh() {
-    long delayPeriod = REFRESH_PERIOD.toMillis();
-    long jitter = (long) ((Math.random() - 0.5) * JITTER_PERCENTAGE * delayPeriod);
-    long delay = jitter + delayPeriod;
-    return channelRefreshExecutorService.schedule(
-        () -> {
-          scheduleNextRefresh();
-          refresh();
-        },
-        delay,
-        TimeUnit.MILLISECONDS);
+  private void resizeSafely() {
+    try {
+      synchronized (entryWriteLock) {
+        resize();
+      }
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to resize channel pool", e);
+    }
+  }
+
+  /**
+   * Resize the number of channels based on the number of outstanding RPCs.
+   *
+   * <p>This method is expected to be called on a fixed interval. On every invocation it will:
+   *
+   * <ul>
+   *   <li>Get the maximum number of outstanding RPCs since last invocation
+   *   <li>Determine a valid range of number of channels to handle that many outstanding RPCs
+   *   <li>If the current number of channel falls outside of that range, add or remove at most
+   *       {@link ChannelPoolSettings#MAX_RESIZE_DELTA} to get closer to middle of that range.
+   * </ul>
+   *
+   * <p>Not threadsafe, must be called under the entryWriteLock monitor
+   */
+  @VisibleForTesting
+  void resize() {
+    List<Entry> localEntries = entries.get();
+    // Estimate the peak of RPCs in the last interval by summing the peak of RPCs per channel
+    int actualOutstandingRpcs =
+        localEntries.stream().mapToInt(Entry::getAndResetMaxOutstanding).sum();
+
+    // Number of channels if each channel operated at max capacity
+    int minChannels =
+        (int) Math.ceil(actualOutstandingRpcs / (double) settings.getMaxRpcsPerChannel());
+    // Limit the threshold to absolute range
+    if (minChannels < settings.getMinChannelCount()) {
+      minChannels = settings.getMinChannelCount();
+    }
+
+    // Number of channels if each channel operated at minimum capacity
+    // Note: getMinRpcsPerChannel() can return 0, but division by 0 shouldn't cause a problem.
+    int maxChannels =
+        (int) Math.ceil(actualOutstandingRpcs / (double) settings.getMinRpcsPerChannel());
+    // Limit the threshold to absolute range
+    if (maxChannels > settings.getMaxChannelCount()) {
+      maxChannels = settings.getMaxChannelCount();
+    }
+    if (maxChannels < minChannels) {
+      maxChannels = minChannels;
+    }
+
+    // If the pool were to be resized, try to aim for the middle of the bound, but limit rate of
+    // change.
+    int tentativeTarget = (maxChannels + minChannels) / 2;
+    int currentSize = localEntries.size();
+    int delta = tentativeTarget - currentSize;
+    int dampenedTarget = tentativeTarget;
+    if (Math.abs(delta) > ChannelPoolSettings.MAX_RESIZE_DELTA) {
+      dampenedTarget =
+          currentSize + (int) Math.copySign(ChannelPoolSettings.MAX_RESIZE_DELTA, delta);
+    }
+
+    // Only resize the pool when thresholds are crossed
+    if (localEntries.size() < minChannels) {
+      LOG.fine(
+          String.format(
+              "Detected throughput peak of %d, expanding channel pool size: %d -> %d.",
+              actualOutstandingRpcs, currentSize, dampenedTarget));
+
+      expand(dampenedTarget);
+    } else if (localEntries.size() > maxChannels) {
+      LOG.fine(
+          String.format(
+              "Detected throughput drop to %d, shrinking channel pool size: %d -> %d.",
+              actualOutstandingRpcs, currentSize, dampenedTarget));
+
+      shrink(dampenedTarget);
+    }
+  }
+
+  /** Not threadsafe, must be called under the entryWriteLock monitor */
+  private void shrink(int desiredSize) {
+    ImmutableList<Entry> localEntries = entries.get();
+    Preconditions.checkState(
+        localEntries.size() >= desiredSize, "current size is already smaller than the desired");
+
+    // Set the new list
+    entries.set(localEntries.subList(0, desiredSize));
+    // clean up removed entries
+    List<Entry> removed = localEntries.subList(desiredSize, localEntries.size());
+    removed.forEach(Entry::requestShutdown);
+  }
+
+  /** Not threadsafe, must be called under the entryWriteLock monitor */
+  private void expand(int desiredSize) {
+    List<Entry> localEntries = entries.get();
+    Preconditions.checkState(
+        localEntries.size() <= desiredSize, "current size is already bigger than the desired");
+
+    ImmutableList.Builder<Entry> newEntries = ImmutableList.<Entry>builder().addAll(localEntries);
+
+    for (int i = 0; i < desiredSize - localEntries.size(); i++) {
+      try {
+        newEntries.add(new Entry(channelFactory.createSingleChannel()));
+      } catch (IOException e) {
+        LOG.log(Level.WARNING, "Failed to add channel", e);
+      }
+    }
+
+    entries.set(newEntries.build());
+  }
+
+  private void refreshSafely() {
+    try {
+      refresh();
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to pre-emptively refresh channnels", e);
+    }
   }
 
   /**
@@ -341,6 +409,7 @@ class ChannelPool extends ManagedChannel {
     List<Entry> localEntries = entries.get();
 
     int index = Math.abs(affinity % localEntries.size());
+
     return localEntries.get(index);
   }
 
@@ -348,6 +417,7 @@ class ChannelPool extends ManagedChannel {
   private static class Entry {
     private final ManagedChannel channel;
     private final AtomicInteger outstandingRpcs = new AtomicInteger(0);
+    private final AtomicInteger maxOutstanding = new AtomicInteger();
 
     // Flag that the channel should be closed once all of the outstanding RPC complete.
     private final AtomicBoolean shutdownRequested = new AtomicBoolean();
@@ -358,6 +428,10 @@ class ChannelPool extends ManagedChannel {
       this.channel = channel;
     }
 
+    int getAndResetMaxOutstanding() {
+      return maxOutstanding.getAndSet(outstandingRpcs.get());
+    }
+
     /**
      * Try to increment the outstanding RPC count. The method will return false if the channel is
      * closing and the caller should pick a different channel. If the method returned true, the
@@ -366,7 +440,13 @@ class ChannelPool extends ManagedChannel {
      */
     private boolean retain() {
       // register desire to start RPC
-      outstandingRpcs.incrementAndGet();
+      int currentOutstanding = outstandingRpcs.incrementAndGet();
+
+      // Rough book keeping
+      int prevMax = maxOutstanding.get();
+      if (currentOutstanding > prevMax) {
+        maxOutstanding.incrementAndGet();
+      }
 
       // abort if the channel is closing
       if (shutdownRequested.get()) {

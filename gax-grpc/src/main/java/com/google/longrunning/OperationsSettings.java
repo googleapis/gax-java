@@ -30,7 +30,6 @@
 package com.google.longrunning;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -86,7 +85,6 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return OperationsStubSettings.defaultCredentialsProviderBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return OperationsStubSettings.defaultApiClientHeaderProviderBuilder();
   }

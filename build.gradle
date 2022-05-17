@@ -4,7 +4,7 @@ plugins {
   id 'java'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 
-  id 'com.diffplug.eclipse.apt' version '3.35.0' apply false
+  id 'com.diffplug.eclipse.apt' version '3.36.2' apply false
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '7.1.2' apply false
   id 'com.github.sherter.google-java-format' version '0.9' apply false
@@ -13,7 +13,7 @@ plugins {
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "2.12.1-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "2.17.1-SNAPSHOT" // {x-version-update:gax:current}
 
 allprojects {
   group = 'com.google.api'
@@ -39,7 +39,7 @@ ext {
     'maven.io_grpc_grpc_protobuf': "io.grpc:grpc-protobuf:${libraries['version.io_grpc']}",
     'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
     'maven.io_grpc_grpc_alts': "io.grpc:grpc-alts:${libraries['version.io_grpc']}",
-    'maven.io_grpc_grpc_xds': "io.grpc:grpc-xds:${libraries['version.io_grpc']}",
+    'maven.io_grpc_grpc_googleapis': "io.grpc:grpc-googleapis:${libraries['version.io_grpc']}",
     'maven.com_google_protobuf': "com.google.protobuf:protobuf-java:${libraries['version.com_google_protobuf']}",
     'maven.com_google_protobuf_java_util': "com.google.protobuf:protobuf-java-util:${libraries['version.com_google_protobuf']}")
 }
@@ -104,6 +104,10 @@ configure(javaProjects) {
 
   tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+    // This flag is only available in JDK 9+. This flag ensures the generated
+    // bytecode is compatible with Java 8. (targetCompatibility = 1.8 is not
+    // sufficient)
+    options.compilerArgs.addAll(['--release', '8'])
   }
 
   // Dependencies

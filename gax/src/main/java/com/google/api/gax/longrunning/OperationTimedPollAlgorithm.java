@@ -30,7 +30,6 @@
 package com.google.api.gax.longrunning;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
@@ -42,7 +41,6 @@ import java.util.concurrent.CancellationException;
  * next polling operation should be executed. If the polling exceeds the total timeout this
  * algorithm cancels polling.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
   /**
    * Creates the polling algorithm, using the default {@code NanoClock} for time computations.

@@ -78,7 +78,6 @@ public interface TransportChannelProvider {
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   boolean needsHeaders();
 
   /**
@@ -86,7 +85,6 @@ public interface TransportChannelProvider {
    *
    * <p>This method should only be called if {@link #needsHeaders()} returns true.
    */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   TransportChannelProvider withHeaders(Map<String, String> headers);
 
   /** True if the TransportProvider has no endpoint set. */
@@ -99,12 +97,20 @@ public interface TransportChannelProvider {
    */
   TransportChannelProvider withEndpoint(String endpoint);
 
-  /** Reports whether this provider allows pool size customization. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  /**
+   * Reports whether this provider allows pool size customization.
+   *
+   * @deprecated Pool settings should be configured on the builder of the specific implementation.
+   */
+  @Deprecated
   boolean acceptsPoolSize();
 
-  /** Number of underlying transport channels to open. Calls will be load balanced across them. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  /**
+   * Number of underlying transport channels to open. Calls will be load balanced across them.
+   *
+   * @deprecated Pool settings should be configured on the builder of the specific implementation.
+   */
+  @Deprecated
   TransportChannelProvider withPoolSize(int size);
 
   /** True if credentials are needed before channel creation. */
