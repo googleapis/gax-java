@@ -92,6 +92,12 @@ public class ProtoMessageRequestFormatterTest {
     expected.put("number", Arrays.asList("2"));
     expected.put("typeUrl", Arrays.asList(""));
     Truth.assertThat(queryParamNames).isEqualTo(expected);
+
+    // Test toBuilder() case
+    queryParamNames = formatter.toBuilder().build().getQueryParamNames(field);
+    expected.put("number", Arrays.asList("2"));
+    expected.put("typeUrl", Arrays.asList(""));
+    Truth.assertThat(queryParamNames).isEqualTo(expected);
   }
 
   @Test
@@ -109,11 +115,19 @@ public class ProtoMessageRequestFormatterTest {
             + "  }]\n"
             + "}";
     Truth.assertThat(bodyJson).isEqualTo(expectedBodyJson);
+
+    // Test toBuilder() case
+    formatter.toBuilder().build().getRequestBody(field);
+    Truth.assertThat(bodyJson).isEqualTo(expectedBodyJson);
   }
 
   @Test
   public void getPath() {
     String path = formatter.getPath(field);
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+
+    // Test toBuilder() case
+    path = formatter.toBuilder().build().getPath(field);
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
   }
 
@@ -121,6 +135,15 @@ public class ProtoMessageRequestFormatterTest {
   public void getPathTemplate() {
     String path =
         formatter.getPathTemplate().instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+
+    // Test toBuilder() case
+    path =
+        formatter
+            .toBuilder()
+            .build()
+            .getPathTemplate()
+            .instantiate(Collections.singletonMap("name", "field_name1"));
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
   }
 
@@ -132,17 +155,21 @@ public class ProtoMessageRequestFormatterTest {
             .get(0)
             .instantiate(Collections.singletonMap("name", "field_name1"));
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/hello");
+
+    // Test toBuilder() case
+    path =
+        formatter
+            .toBuilder()
+            .build()
+            .getAdditionalPathTemplates()
+            .get(0)
+            .instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/hello");
   }
 
   @Test
-  public void toBuilder() {
-    Truth.assertThat(formatter.toBuilder().build()).isEqualTo(formatter);
-    Truth.assertThat(formatter.toBuilder().build().hashCode()).isEqualTo(formatter.hashCode());
-    Truth.assertThat(
-            formatter
-                .toBuilder()
-                .setAdditionalPaths("/api/v1/names/{name=field_name1/**}/hi")
-                .build())
-        .isNotEqualTo(formatter);
+  public void updateRawPath() {
+    String path = formatter.toBuilder().updateRawPath("/v1/", "/v1beta1/").build().getPath(field);
+    Truth.assertThat(path).isEqualTo("api/v1beta1/names/field_name1/aggregated");
   }
 }

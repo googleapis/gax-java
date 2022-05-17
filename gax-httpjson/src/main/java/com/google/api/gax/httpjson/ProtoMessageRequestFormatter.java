@@ -36,7 +36,6 @@ import com.google.protobuf.Message;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /** Creates parts of a HTTP request from a protobuf message. */
@@ -112,36 +111,6 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
   @Override
   public PathTemplate getPathTemplate() {
     return pathTemplate;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ProtoMessageRequestFormatter<?> that = (ProtoMessageRequestFormatter<?>) o;
-    return Objects.equals(requestBodyExtractor, that.requestBodyExtractor)
-        && Objects.equals(queryParamsExtractor, that.queryParamsExtractor)
-        && Objects.equals(rawPath, that.rawPath)
-        && Objects.equals(pathTemplate, that.pathTemplate)
-        && Objects.equals(pathVarsExtractor, that.pathVarsExtractor)
-        && Objects.equals(additionalRawPaths, that.additionalRawPaths)
-        && Objects.equals(additionalPathTemplates, that.additionalPathTemplates);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        requestBodyExtractor,
-        queryParamsExtractor,
-        rawPath,
-        pathTemplate,
-        pathVarsExtractor,
-        additionalRawPaths,
-        additionalPathTemplates);
   }
 
   // This has class has compound setter methods (multiple arguments in setters), that is why not
