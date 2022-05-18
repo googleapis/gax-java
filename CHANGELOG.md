@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.18.0](https://github.com/googleapis/gax-java/compare/v2.17.0...v2.18.0) (2022-05-18)
+
+
+### Features
+
+* [REGAPIC] Add support for additional bindings ([#1680](https://github.com/googleapis/gax-java/issues/1680)) ([59b3699](https://github.com/googleapis/gax-java/commit/59b3699b6acbc98c55dc043bf8665b457a0615a9))
+* upgrade graal-sdk to 22.1.0 ([#1683](https://github.com/googleapis/gax-java/issues/1683)) ([46f899d](https://github.com/googleapis/gax-java/commit/46f899de06e60a792f5a6c1dc617673f0f180c00))
+
+
+### Bug Fixes
+
+* **java:** remove conflicting reflection configuration to address UnsupportedFeatureException with GraalVM 22.1.0 ([#1682](https://github.com/googleapis/gax-java/issues/1682)) ([97c6c8b](https://github.com/googleapis/gax-java/commit/97c6c8bfa0d5397e30d3699e92f823e09ee283e6))
+* remove svm dependency ([#1679](https://github.com/googleapis/gax-java/issues/1679)) ([c1b88e3](https://github.com/googleapis/gax-java/commit/c1b88e3788ab866bcc1ba3db94c2998198a0b35e))
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to 2.2.0 ([#1685](https://github.com/googleapis/gax-java/issues/1685)) ([a5a316b](https://github.com/googleapis/gax-java/commit/a5a316bde322733eb5a80093206eb12b36945580))
+
 ## [2.17.0](https://github.com/googleapis/gax-java/compare/v2.16.0...v2.17.0) (2022-05-10)
 
 
