@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,4 +50,10 @@ public interface HttpRequestFormatter<MessageFormatT> {
 
   /** Path template for endpoint URL path. */
   PathTemplate getPathTemplate();
+
+  /** Additional (alternative) path templates for endpoint URL path. */
+  @BetaApi
+  default List<PathTemplate> getAdditionalPathTemplates() {
+    return Collections.emptyList();
+  }
 }
