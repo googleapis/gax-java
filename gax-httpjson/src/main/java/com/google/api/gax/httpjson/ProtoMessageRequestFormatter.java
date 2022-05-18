@@ -29,11 +29,14 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.protobuf.Message;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /** Creates parts of a HTTP request from a protobuf message. */
 public class ProtoMessageRequestFormatter<RequestT extends Message>
@@ -47,28 +50,35 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
   private final String rawPath;
   private final PathTemplate pathTemplate;
   private final FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
+  private final List<String> additionalRawPaths;
+  private final List<PathTemplate> additionalPathTemplates;
 
   private ProtoMessageRequestFormatter(
       FieldsExtractor<RequestT, String> requestBodyExtractor,
       FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor,
       String rawPath,
       PathTemplate pathTemplate,
-      FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor) {
+      FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor,
+      List<String> additionalRawPaths,
+      List<PathTemplate> additionalPathTemplates) {
     this.requestBodyExtractor = requestBodyExtractor;
     this.queryParamsExtractor = queryParamsExtractor;
     this.rawPath = rawPath;
     this.pathTemplate = pathTemplate;
     this.pathVarsExtractor = pathVarsExtractor;
+    this.additionalRawPaths = additionalRawPaths;
+    this.additionalPathTemplates = additionalPathTemplates;
   }
 
   public static <RequestT extends Message>
       ProtoMessageRequestFormatter.Builder<RequestT> newBuilder() {
-    return new Builder<>();
+    return new Builder<RequestT>().setAdditionalPaths();
   }
 
   public Builder<RequestT> toBuilder() {
     return new Builder<RequestT>()
         .setPath(rawPath, pathVarsExtractor)
+        .setAdditionalPaths(additionalRawPaths.toArray(new String[] {}))
         .setQueryParamsExtractor(queryParamsExtractor)
         .setRequestBodyExtractor(requestBodyExtractor);
   }
@@ -91,6 +101,12 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     return pathTemplate.instantiate(pathVarsExtractor.extract(apiMessage));
   }
 
+  @BetaApi
+  @Override
+  public List<PathTemplate> getAdditionalPathTemplates() {
+    return additionalPathTemplates;
+  }
+
   /* {@inheritDoc} */
   @Override
   public PathTemplate getPathTemplate() {
@@ -104,6 +120,7 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     private FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor;
     private String rawPath;
     private FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
+    private List<String> rawAdditionalPaths;
 
     public Builder<RequestT> setRequestBodyExtractor(
         FieldsExtractor<RequestT, String> requestBodyExtractor) {
@@ -124,6 +141,12 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
       return this;
     }
 
+    @BetaApi
+    public Builder<RequestT> setAdditionalPaths(String... rawAdditionalPaths) {
+      this.rawAdditionalPaths = Arrays.asList(rawAdditionalPaths);
+      return this;
+    }
+
     @InternalApi
     public Builder<RequestT> updateRawPath(String target, String replacement) {
       this.rawPath = this.rawPath.replace(target, replacement);
@@ -136,7 +159,9 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
           queryParamsExtractor,
           rawPath,
           PathTemplate.create(rawPath),
-          pathVarsExtractor);
+          pathVarsExtractor,
+          rawAdditionalPaths,
+          rawAdditionalPaths.stream().map(PathTemplate::create).collect(Collectors.toList()));
     }
   }
 }

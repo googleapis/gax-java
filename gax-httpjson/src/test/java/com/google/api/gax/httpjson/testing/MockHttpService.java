@@ -208,8 +208,11 @@ public final class MockHttpService extends MockHttpTransport {
         }
 
         PathTemplate pathTemplate = methodDescriptor.getRequestFormatter().getPathTemplate();
-        // Server figures out which RPC method is called based on the endpoint path pattern.
-        if (!pathTemplate.matches(relativePath)) {
+        List<PathTemplate> additionalPathTemplates =
+            methodDescriptor.getRequestFormatter().getAdditionalPathTemplates();
+        // Server figures out which RPC method is called based on the endpoint path pattern(s).
+        if (!pathTemplate.matches(relativePath)
+            && additionalPathTemplates.stream().noneMatch(pt -> pt.matches(relativePath))) {
           continue;
         }
 
