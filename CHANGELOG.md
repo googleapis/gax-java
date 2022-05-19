@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.18.1](https://github.com/googleapis/gax-java/compare/v2.18.0...v2.18.1) (2022-05-19)
+
+
+### Dependencies
+
+* upgrade grpc to 1.46.0 ([#1688](https://github.com/googleapis/gax-java/issues/1688)) ([18147a4](https://github.com/googleapis/gax-java/commit/18147a4f558635b27d30eb05468321b52321db13))
+
 ## [2.18.0](https://github.com/googleapis/gax-java/compare/v2.17.0...v2.18.0) (2022-05-18)
 
 
