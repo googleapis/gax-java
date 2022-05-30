@@ -44,7 +44,7 @@ import org.junit.Test;
 
 public class ProtoMessageRequestFormatterTest {
   private Field field;
-  private HttpRequestFormatter<Field> formatter;
+  private ProtoMessageRequestFormatter<Field> formatter;
 
   @Before
   public void setUp() {
@@ -60,36 +60,28 @@ public class ProtoMessageRequestFormatterTest {
     formatter =
         ProtoMessageRequestFormatter.<Field>newBuilder()
             .setPath(
-                "/api/v1/names/{name}/aggregated",
-                new FieldsExtractor<Field, Map<String, String>>() {
-                  @Override
-                  public Map<String, String> extract(Field request) {
-                    Map<String, String> fields = new HashMap<>();
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.putPathParam(fields, "name", request.getName());
-                    serializer.putPathParam(fields, "kindValue", request.getKindValue());
-                    return fields;
-                  }
+                "/api/v1/names/{name=field_name1/**}/aggregated",
+                request -> {
+                  Map<String, String> fields = new HashMap<>();
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  serializer.putPathParam(fields, "name", request.getName());
+                  serializer.putPathParam(fields, "kindValue", request.getKindValue());
+                  return fields;
                 })
             .setQueryParamsExtractor(
-                new FieldsExtractor<Field, Map<String, List<String>>>() {
-                  @Override
-                  public Map<String, List<String>> extract(Field request) {
-                    Map<String, List<String>> fields = new HashMap<>();
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.putQueryParam(fields, "number", request.getNumber());
-                    serializer.putQueryParam(fields, "typeUrl", request.getTypeUrl());
-                    return fields;
-                  }
+                request -> {
+                  Map<String, List<String>> fields = new HashMap<>();
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  serializer.putQueryParam(fields, "number", request.getNumber());
+                  serializer.putQueryParam(fields, "typeUrl", request.getTypeUrl());
+                  return fields;
                 })
             .setRequestBodyExtractor(
-                new FieldsExtractor<Field, String>() {
-                  @Override
-                  public String extract(Field request) {
-                    ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    return serializer.toBody("field", request);
-                  }
+                request -> {
+                  ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                  return serializer.toBody("field", request);
                 })
+            .setAdditionalPaths("/api/v1/names/{name=field_name1/**}/hello")
             .build();
   }
 
@@ -97,6 +89,12 @@ public class ProtoMessageRequestFormatterTest {
   public void getQueryParamNames() {
     Map<String, List<String>> queryParamNames = formatter.getQueryParamNames(field);
     Map<String, List<String>> expected = new HashMap<>();
+    expected.put("number", Arrays.asList("2"));
+    expected.put("typeUrl", Arrays.asList(""));
+    Truth.assertThat(queryParamNames).isEqualTo(expected);
+
+    // Test toBuilder() case
+    queryParamNames = formatter.toBuilder().build().getQueryParamNames(field);
     expected.put("number", Arrays.asList("2"));
     expected.put("typeUrl", Arrays.asList(""));
     Truth.assertThat(queryParamNames).isEqualTo(expected);
@@ -117,11 +115,19 @@ public class ProtoMessageRequestFormatterTest {
             + "  }]\n"
             + "}";
     Truth.assertThat(bodyJson).isEqualTo(expectedBodyJson);
+
+    // Test toBuilder() case
+    formatter.toBuilder().build().getRequestBody(field);
+    Truth.assertThat(bodyJson).isEqualTo(expectedBodyJson);
   }
 
   @Test
   public void getPath() {
     String path = formatter.getPath(field);
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+
+    // Test toBuilder() case
+    path = formatter.toBuilder().build().getPath(field);
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
   }
 
@@ -130,5 +136,40 @@ public class ProtoMessageRequestFormatterTest {
     String path =
         formatter.getPathTemplate().instantiate(Collections.singletonMap("name", "field_name1"));
     Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+
+    // Test toBuilder() case
+    path =
+        formatter
+            .toBuilder()
+            .build()
+            .getPathTemplate()
+            .instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/aggregated");
+  }
+
+  @Test
+  public void getPathTemplates() {
+    String path =
+        formatter
+            .getAdditionalPathTemplates()
+            .get(0)
+            .instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/hello");
+
+    // Test toBuilder() case
+    path =
+        formatter
+            .toBuilder()
+            .build()
+            .getAdditionalPathTemplates()
+            .get(0)
+            .instantiate(Collections.singletonMap("name", "field_name1"));
+    Truth.assertThat(path).isEqualTo("api/v1/names/field_name1/hello");
+  }
+
+  @Test
+  public void updateRawPath() {
+    String path = formatter.toBuilder().updateRawPath("/v1/", "/v1beta1/").build().getPath(field);
+    Truth.assertThat(path).isEqualTo("api/v1beta1/names/field_name1/aggregated");
   }
 }
