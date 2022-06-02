@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>gax</artifactId>
-  <version>2.11.1-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
+  <version>2.18.2-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
   <packaging>jar</packaging>
   <name>GAX (Google Api eXtensions) for Java (Core)</name>
   <description>Google Api eXtensions for Java (Core)</description>
@@ -11,7 +11,7 @@
   <parent>
     <groupId>com.google.api</groupId>
     <artifactId>gax-parent</artifactId>
-    <version>2.11.1-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
+    <version>2.18.2-SNAPSHOT</version><!-- {x-version-update:gax:current} -->
   </parent>
 
   <dependencies>
@@ -24,8 +24,24 @@
       <artifactId>google-auth-library-credentials</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>proto-google-common-protos</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.threeten</groupId>
       <artifactId>threetenbp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.auth</groupId>
@@ -37,16 +53,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.auto.value</groupId>
-      <artifactId>auto-value-annotations</artifactId>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
