@@ -217,6 +217,7 @@
               <version>${auto-value.version}</version>
             </path>
           </annotationProcessorPaths>
+          <release>8</release>
         </configuration>
       </plugin>
       <plugin>
