@@ -14,16 +14,16 @@ jobs:
       with:
         java-version: 8
         distribution: zulu
-        - run: echo "JAVA8_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-        - uses: actions/setup-java@v3
-          with:
-            java-version: 11
-            distribution: zulu
-        - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-        - run: printenv
-        - run: .kokoro/maven-build.sh
-          env:
-            JOB_TYPE: test
+    - run: echo "JAVA8_HOME=${JAVA_HOME}" >> $GITHUB_ENV
+    - uses: actions/setup-java@v3
+      with:
+        java-version: 11
+        distribution: zulu
+    - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
+    - run: printenv
+    - run: .kokoro/maven-build.sh
+      env:
+        JOB_TYPE: test
   maven-lint:
     name: "maven lint"
     runs-on: ubuntu-latest
