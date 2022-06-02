@@ -113,6 +113,14 @@ configure(javaProjects) {
   // Dependencies
   // ------------
 
+  dependencies {
+    implementation('io.perfmark:perfmark-api') {
+      version {
+        strictly '0.23.0'
+      }
+    }
+  }
+
   repositories {
     mavenLocal()
     mavenCentral()
