@@ -5,8 +5,8 @@
   <artifactId>gax-bom</artifactId>
   <version>2.18.2-SNAPSHOT</version><!-- {x-version-update:gax-bom:current} -->
   <packaging>pom</packaging>
-  <name>GAX (Google Api eXtensions) for Java</name>
-  <description>Google Api eXtensions for Java</description>
+  <name>GAX (Google Api eXtensions) for Java (BOM)</name>
+  <description>Google Api eXtensions for Java (BOM)</description>
   <url>https://github.com/googleapis/gax-java</url>
   <licenses>
     <license>
