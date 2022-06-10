@@ -37,7 +37,10 @@ fi
 echo "Compiling using Java:"
 java -version
 echo
-mvn clean install
+mvn clean install \
+-Dmaven.javadoc.skip=true \
+-Dgcloud.download.skip=true \
+-Denforcer.skip=true
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
