@@ -4,6 +4,7 @@ build
 .gradle
 tmp_docs
 bazel-*
+target
 
 # Eclipse
 .apt_generated*
@@ -21,5 +22,3 @@ out
 *.sw*
 *.vim
 
-# Auto-generated files.
-gax/src/main/resources/dependencies.properties
