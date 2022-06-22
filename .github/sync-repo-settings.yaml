@@ -6,7 +6,7 @@ branchProtectionRules:
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
-    requiresStrictStatusChecks: true
+    requiresStrictStatusChecks: false
     requiredStatusCheckContexts:
       - bazel
       - units (8)
