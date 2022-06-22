@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.18.2](https://github.com/googleapis/gax-java/compare/v2.18.1...v2.18.2) (2022-06-16)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.api:api-common to v2.2.1 ([#1699](https://github.com/googleapis/gax-java/issues/1699)) ([be79d10](https://github.com/googleapis/gax-java/commit/be79d108601290d533126e996600a5864a7e810f))
+* **deps:** update dependency com.google.auth:google-auth-library-credentials to v1.7.0 ([#1700](https://github.com/googleapis/gax-java/issues/1700)) ([640525e](https://github.com/googleapis/gax-java/commit/640525ea4d2df46c187f867f7c13325aebd819c6))
+* **deps:** update dependency com.google.auth:google-auth-library-oauth2-http to v1.7.0 ([#1701](https://github.com/googleapis/gax-java/issues/1701)) ([0f27ef7](https://github.com/googleapis/gax-java/commit/0f27ef7b63aa37fd7797e43803802a519d710658))
+* **deps:** update dependency com.google.http-client:google-http-client-bom to v1.42.0 ([#1702](https://github.com/googleapis/gax-java/issues/1702)) ([96c4fa8](https://github.com/googleapis/gax-java/commit/96c4fa8b76e485fb6e19b183c11d660bd949c6c2))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.1 ([#1703](https://github.com/googleapis/gax-java/issues/1703)) ([3e07036](https://github.com/googleapis/gax-java/commit/3e07036bba7c6945c76a76cd623726c71d74ade2))
+* **deps:** update dependency io.grpc:grpc-bom to v1.47.0 ([#1704](https://github.com/googleapis/gax-java/issues/1704)) ([0317926](https://github.com/googleapis/gax-java/commit/0317926ea97940df73738d1617e0b154e70b7e32))
+* **deps:** update dependency io.opencensus:opencensus-api to v0.31.1 ([#1697](https://github.com/googleapis/gax-java/issues/1697)) ([f9f9e1e](https://github.com/googleapis/gax-java/commit/f9f9e1e2a16532c3051595138bc2e99c71268f3a))
+* **deps:** update dependency org.graalvm.sdk:graal-sdk to v22.1.0.1 ([#1698](https://github.com/googleapis/gax-java/issues/1698)) ([59fbff9](https://github.com/googleapis/gax-java/commit/59fbff938981be18134c1410c02d86dbf801f4a7))
+
+
+### Dependencies
+
+* update dependency com.google.api.grpc:proto-google-common-protos to v2.9.0 ([#1713](https://github.com/googleapis/gax-java/issues/1713)) ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update dependency io.grpc:grpc-bom to v1.47.0 ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update dependency io.opencensus:opencensus-api to v0.31.1 ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update dependency org.mockito:mockito-core to v4.6.1 ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update dependency org.threeten:threetenbp to v1.6.0 ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update io.netty dependencies to v4.1.72.Final ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+* update plugin org.sonarqube to v3.4.0.2513 ([c5eb06e](https://github.com/googleapis/gax-java/commit/c5eb06eec5d2cde85d37b096418e873c1bd83470))
+
 ### [2.18.1](https://github.com/googleapis/gax-java/compare/v2.18.0...v2.18.1) (2022-05-19)
 
 
