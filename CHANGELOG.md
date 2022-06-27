@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.18.3](https://github.com/googleapis/gax-java/compare/v2.18.2...v2.18.3) (2022-06-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.0 ([#1706](https://github.com/googleapis/gax-java/issues/1706)) ([eb195c0](https://github.com/googleapis/gax-java/commit/eb195c000b19472fc15a2586320f4421b6ee92a3))
+* **deps:** update dependency com.google.api.grpc:proto-google-common-protos to v2.9.0 ([#1708](https://github.com/googleapis/gax-java/issues/1708)) ([0a606f5](https://github.com/googleapis/gax-java/commit/0a606f5d6f40a44b153f186d824e3a731586bb49))
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.0 ([#1711](https://github.com/googleapis/gax-java/issues/1711)) ([eb11bb0](https://github.com/googleapis/gax-java/commit/eb11bb027cde3e4abc8049a04056907de79386ab))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.2 ([#1720](https://github.com/googleapis/gax-java/issues/1720)) ([19a38cf](https://github.com/googleapis/gax-java/commit/19a38cffd13fbaa547a9992f61689d70239b6ee4))
+* **deps:** update dependency org.mockito:mockito-core to v4.6.1 ([#1705](https://github.com/googleapis/gax-java/issues/1705)) ([7befaa4](https://github.com/googleapis/gax-java/commit/7befaa4a2525f9b09091225b2f74a3e2fbfa3175))
+* **deps:** update dependency org.threeten:threetenbp to v1.6.0 ([#1709](https://github.com/googleapis/gax-java/issues/1709)) ([42cdcaa](https://github.com/googleapis/gax-java/commit/42cdcaa5a5d2362e86f94a13870f3c9c48f8b7f7))
+
 ## [2.18.2](https://github.com/googleapis/gax-java/compare/v2.18.1...v2.18.2) (2022-06-16)
 
 
