@@ -51,42 +51,61 @@ public class RequestParamsBuilderTest {
 
   @Test
   public void add_happyPath() {
-    String headerKey = "table_location";
     Map<String, String> actual =
         getRoutingHeaders(
-            headerKey,
             "projects/**/{table_location=instances/*}",
             "projects/my_cozy_home/instances/living_room");
-    assertThat(actual).containsExactly(headerKey, "instances/living_room");
+    assertThat(actual).containsExactly("table_location", "instances/living_room");
+  }
+
+  @Test
+  public void build_shouldKeepLastEntryIfMultipleEntriesHaveTheSameKeyRatherThanErrorOut() {
+    requestParamsBuilder.add(
+        "projects/my_cozy_home/instances/living_room",
+        "table_location",
+        PathTemplate.create("projects/**/{table_location=instances/*}"));
+    requestParamsBuilder.add(
+        "projects/my_cozy_home/instances/living_room",
+        "table_location",
+        PathTemplate.create("{table_location=**}"));
+    requestParamsBuilder.add(
+        "projects/my_cozy_home/instances/living_room",
+        "routing_id",
+        PathTemplate.create("{routing_id=**}"));
+    Map<String, String> actual = requestParamsBuilder.build();
+
+    // Should contain two entries instead of three, also should only keep the last entry if there
+    // are multiple entries with the same key
+    assertThat(actual)
+        .containsExactly(
+            "table_location",
+            "projects/my_cozy_home/instances/living_room",
+            "routing_id",
+            "projects/my_cozy_home/instances/living_room");
   }
 
   @Test
   public void add_matchedValuesWithNoRoutingHeaderKey() {
-    Map<String, String> actual =
-        getRoutingHeaders("table_location", "projects/**", "projects/my_cozy_home/");
+    Map<String, String> actual = getRoutingHeaders("projects/**", "projects/my_cozy_home/");
     assertThat(actual).isEmpty();
   }
 
   @Test
   public void add_emptyMatchedValues() {
     Map<String, String> actual =
-        getRoutingHeaders(
-            "table_location",
-            "projects/**/{table_location=instances/*}",
-            "projects/does_not_matter");
+        getRoutingHeaders("projects/**/{table_location=instances/*}", "projects/does_not_matter");
     assertThat(actual).isEmpty();
   }
 
   @Test
   public void add_nullFieldValue() {
-    Map<String, String> actual = getRoutingHeaders("table_location", "projects/**", null);
+    Map<String, String> actual = getRoutingHeaders("projects/**", null);
     assertThat(actual).isEmpty();
   }
 
-  private Map<String, String> getRoutingHeaders(
-      String headerKey, String patternString, String fieldValue) {
+  private Map<String, String> getRoutingHeaders(String patternString, String fieldValue) {
     PathTemplate pathTemplate = PathTemplate.create(patternString);
-    requestParamsBuilder.add(fieldValue, headerKey, pathTemplate);
+    requestParamsBuilder.add(fieldValue, "table_location", pathTemplate);
     return requestParamsBuilder.build();
   }
 }
