@@ -73,6 +73,6 @@ public class RequestParamsBuilder {
   }
 
   public Map<String, String> build() {
-    return paramsBuilder.build();
+    return paramsBuilder.buildKeepingLast();
   }
 }
