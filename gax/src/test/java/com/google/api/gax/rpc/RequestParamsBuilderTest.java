@@ -68,11 +68,20 @@ public class RequestParamsBuilderTest {
         "projects/my_cozy_home/instances/living_room",
         "table_location",
         PathTemplate.create("{table_location=**}"));
+    requestParamsBuilder.add(
+        "projects/my_cozy_home/instances/living_room",
+        "routing_id",
+        PathTemplate.create("{routing_id=**}"));
     Map<String, String> actual = requestParamsBuilder.build();
-    // Should only contain one entry, and the value should be the whole field value because the last
-    // match is a wild card
+
+    // Should contain two entries instead of three, also should only keep the last entry if there
+    // are multiple entries with the same key
     assertThat(actual)
-        .containsExactly("table_location", "projects/my_cozy_home/instances/living_room");
+        .containsExactly(
+            "table_location",
+            "projects/my_cozy_home/instances/living_room",
+            "routing_id",
+            "projects/my_cozy_home/instances/living_room");
   }
 
   @Test
