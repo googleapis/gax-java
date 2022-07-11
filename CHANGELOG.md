@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.18.4](https://github.com/googleapis/gax-java/compare/v2.18.3...v2.18.4) (2022-07-11)
+
+
+### Bug Fixes
+
+* Build routing header params map with the last entry if multiple entries have the same key. ([#1729](https://github.com/googleapis/gax-java/issues/1729)) ([878bcf2](https://github.com/googleapis/gax-java/commit/878bcf2da215e14d9e3bcb4717b85d867f149cee))
+* **deps:** update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.1 ([#1721](https://github.com/googleapis/gax-java/issues/1721)) ([bef0af7](https://github.com/googleapis/gax-java/commit/bef0af71b4d1923980fe7a64cf1ac4435463e2db))
+* **deps:** update dependency com.google.api.grpc:proto-google-common-protos to v2.9.1 ([#1722](https://github.com/googleapis/gax-java/issues/1722)) ([7034ead](https://github.com/googleapis/gax-java/commit/7034ead57d990b8e2382ff015ba47fc97cdf271b))
+* **deps:** update dependency com.google.auth:google-auth-library-credentials to v1.8.0 ([#1723](https://github.com/googleapis/gax-java/issues/1723)) ([b062d6d](https://github.com/googleapis/gax-java/commit/b062d6d861fa7162f0f9e8287c988802e4a194c5))
+* **deps:** update dependency com.google.auth:google-auth-library-oauth2-http to v1.8.0 ([#1724](https://github.com/googleapis/gax-java/issues/1724)) ([bd8ee04](https://github.com/googleapis/gax-java/commit/bd8ee04f202b7faa7f13ccb868e574055ffb3c88))
+
 ## [2.18.3](https://github.com/googleapis/gax-java/compare/v2.18.2...v2.18.3) (2022-06-27)
 
 
