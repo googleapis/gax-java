@@ -92,7 +92,7 @@ public class HttpJsonDirectServerStreamingCallableTest {
                   .setRequestBodyExtractor(
                       request ->
                           ProtoRestSerializer.create()
-                              .toBody("*", request.toBuilder().clearBlue().clearRed().build()))
+                              .toBody(request.toBuilder().clearBlue().clearRed().build(), false))
                   .build())
           .setResponseParser(
               ProtoMessageResponseParser.<Money>newBuilder()

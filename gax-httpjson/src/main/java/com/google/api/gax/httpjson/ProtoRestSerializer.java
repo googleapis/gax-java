@@ -35,6 +35,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
+import com.google.protobuf.util.JsonFormat.Printer;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
@@ -69,12 +70,19 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * protobuf native JSON formatter.
    *
    * @param message a message to serialize
+   * @param numericEnum a boolean flag that determine if enum values should be serialized to number
+   *     or not
    * @throws InvalidProtocolBufferException if failed to serialize the protobuf message to JSON
    *     format
    */
-  String toJson(RequestT message) {
+  String toJson(RequestT message, boolean numericEnum) {
     try {
-      return JsonFormat.printer().usingTypeRegistry(registry).print(message);
+      Printer printer = JsonFormat.printer().usingTypeRegistry(registry);
+      if (numericEnum) {
+        return printer.printingEnumsAsInts().print(message);
+      } else {
+        return printer.print(message);
+      }
     } catch (InvalidProtocolBufferException e) {
       throw new RestSerializationException("Failed to serialize message to JSON", e);
     }
@@ -134,10 +142,11 @@ public class ProtoRestSerializer<RequestT extends Message> {
   /**
    * Serializes a message to a request body in a form of JSON-encoded string.
    *
-   * @param fieldName a name of a request message field this message belongs to
    * @param fieldValue a field value to serialize
+   * @param numericEnum a boolean flag that determine if enum values should be serialized to number
+   *     or not
    */
-  public String toBody(String fieldName, RequestT fieldValue) {
-    return toJson(fieldValue);
+  public String toBody(RequestT fieldValue, boolean numericEnum) {
+    return toJson(fieldValue, numericEnum);
   }
 }
