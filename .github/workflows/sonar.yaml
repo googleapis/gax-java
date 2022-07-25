@@ -1,4 +1,4 @@
-name: Build
+name: Sonar
 on:
   push:
     branches:
@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   build:
-    name: Build
+    name: Java 11 Gradle Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
