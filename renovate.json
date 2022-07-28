@@ -1,5 +1,30 @@
 {
   "extends": [
     "config:base"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^dependencies\\.properties$"],
+      "matchStrings": ["=(?<depName>.*?):(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "maven"
+    },
+    {
+      "fileMatch": ["^dependencies\\.properties$"],
+      "matchStrings": ["version\\.com_google_protobuf=(?<currentValue>.*?)\\n"],
+      "depNameTemplate": "com.google.protobuf:protobuf-java",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "fileMatch": ["^dependencies\\.properties$"],
+      "matchStrings": ["version\\.google_java_format=(?<currentValue>.*?)\\n"],
+      "depNameTemplate": "com.google.googlejavaformat:google-java-format",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "fileMatch": ["^dependencies\\.properties$"],
+      "matchStrings": ["version\\.io_grpc=(?<currentValue>.*?)\\n"],
+      "depNameTemplate": "io.grpc:grpc-core",
+      "datasourceTemplate": "maven"
+    }
   ]
 }
