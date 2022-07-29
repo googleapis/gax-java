@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.18.6](https://github.com/googleapis/gax-java/compare/v2.18.5...v2.18.6) (2022-07-29)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.2 ([#1746](https://github.com/googleapis/gax-java/issues/1746)) ([8163f8a](https://github.com/googleapis/gax-java/commit/8163f8aa822881d8cd6f1f72aca66b50fbd2e66a))
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.3 ([#1748](https://github.com/googleapis/gax-java/issues/1748)) ([f2b7cb2](https://github.com/googleapis/gax-java/commit/f2b7cb2b6b783095547b798da054b6879d3764f1))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.4 ([#1747](https://github.com/googleapis/gax-java/issues/1747)) ([0b2b1ef](https://github.com/googleapis/gax-java/commit/0b2b1efcf38ff9f253e426af8c21722d646c8627))
+* Exclude error_prone_annotations from guava. ([#1750](https://github.com/googleapis/gax-java/issues/1750)) ([e1c91a4](https://github.com/googleapis/gax-java/commit/e1c91a40bcf413af5210da1d43e409d44dcf13bd))
+
 ## [2.18.5](https://github.com/googleapis/gax-java/compare/v2.18.4...v2.18.5) (2022-07-25)
 
 
