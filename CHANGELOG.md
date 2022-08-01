@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.7](https://github.com/googleapis/gax-java/compare/v2.18.6...v2.18.7) (2022-08-01)
+
+
+### Bug Fixes
+
+* **java:** initialize netty class at run time ([#1758](https://github.com/googleapis/gax-java/issues/1758)) ([e1d6eb9](https://github.com/googleapis/gax-java/commit/e1d6eb979da21e9795b3c3d2fffb9200ee43ed15))
+
 ## [2.18.6](https://github.com/googleapis/gax-java/compare/v2.18.5...v2.18.6) (2022-07-29)
 
 
