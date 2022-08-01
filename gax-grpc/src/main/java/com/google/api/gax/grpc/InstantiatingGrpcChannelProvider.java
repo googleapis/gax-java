@@ -141,11 +141,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
             : builder.directPathServiceConfig;
   }
 
-  /**
-   * @deprecated If executor is not set, this channel provider will create channels with default
-   *     grpc executor.
-   */
-  @Deprecated
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -172,6 +167,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         .toString();
   }
 
+  /**
+   * @deprecated If executor is not set, this channel provider will create channels with default
+   *     grpc executor.
+   */
+  @Deprecated
   @Override
   public boolean needsExecutor() {
     return executor == null;
