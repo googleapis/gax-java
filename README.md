@@ -58,9 +58,13 @@ Java Versions
 
 Java 8 or above is required for using this library.
 
-To build this project, JDK 11 or above, Bazel 4, basic UNIX commands (e.g., `cat`)
-are required.
+To build this project, JDK 11 or above is required.
 The build produces Java bytecode targeted for Java 8.
+
+The project uses Gradle to build while it also provides Bazel build.
+
+If you build this project in Bazel, it requires Bazel 4 and basic UNIX commands
+(e.g., `cat`).
 
 Contributing
 ------------
