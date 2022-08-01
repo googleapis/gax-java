@@ -31,69 +31,46 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /** Implementation of HttpJsonChannel which can issue http-json calls. */
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
-  private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+
+  private static final ExecutorService DEFAULT_EXECUTOR =
+      InstantiatingExecutorProvider.newBuilder().build().getExecutor();
 
   private final Executor executor;
   private final String endpoint;
-  private final JsonFactory jsonFactory;
-  private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
   private final HttpTransport httpTransport;
 
   private boolean isTransportShutdown;
 
+  protected ManagedHttpJsonChannel() {
+    this(null, null, null);
+  }
+
   private ManagedHttpJsonChannel(
-      Executor executor,
-      String endpoint,
-      JsonFactory jsonFactory,
-      List<HttpJsonHeaderEnhancer> headerEnhancers,
-      @Nullable HttpTransport httpTransport) {
+      Executor executor, String endpoint, @Nullable HttpTransport httpTransport) {
     this.executor = executor;
     this.endpoint = endpoint;
-    this.jsonFactory = jsonFactory;
-    this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
   @Override
-  public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
+  public <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions) {
 
-    HttpRequestRunnable<RequestT, ResponseT> runnable =
-        HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
-            .setResponseFuture(responseFuture)
-            .setApiMethodDescriptor(methodDescriptor)
-            .setHeaderEnhancers(headerEnhancers)
-            .setHttpJsonCallOptions(callOptions)
-            .setHttpTransport(httpTransport)
-            .setJsonFactory(jsonFactory)
-            .setRequest(request)
-            .setEndpoint(endpoint)
-            .build();
-
-    executor.execute(runnable);
-
-    return responseFuture;
+    return new HttpJsonClientCallImpl<>(
+        methodDescriptor, endpoint, callOptions, httpTransport, executor);
   }
 
   @Override
@@ -134,30 +111,24 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public void close() {}
 
   public static Builder newBuilder() {
-    return new Builder().setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
+    return new Builder().setExecutor(DEFAULT_EXECUTOR);
   }
 
   public static class Builder {
+
     private Executor executor;
     private String endpoint;
-    private JsonFactory jsonFactory = JSON_FACTORY;
-    private List<HttpJsonHeaderEnhancer> headerEnhancers;
     private HttpTransport httpTransport;
 
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
-      this.executor = executor;
+      this.executor = executor == null ? DEFAULT_EXECUTOR : executor;
       return this;
     }
 
     public Builder setEndpoint(String endpoint) {
       this.endpoint = endpoint;
-      return this;
-    }
-
-    public Builder setHeaderEnhancers(List<HttpJsonHeaderEnhancer> headerEnhancers) {
-      this.headerEnhancers = headerEnhancers;
       return this;
     }
 
@@ -167,10 +138,10 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     }
 
     public ManagedHttpJsonChannel build() {
-      Preconditions.checkNotNull(executor);
       Preconditions.checkNotNull(endpoint);
+
       return new ManagedHttpJsonChannel(
-          executor, endpoint, jsonFactory, headerEnhancers, httpTransport);
+          executor, endpoint, httpTransport == null ? new NetHttpTransport() : httpTransport);
     }
   }
 }

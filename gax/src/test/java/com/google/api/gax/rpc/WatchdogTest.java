@@ -129,6 +129,31 @@ public class WatchdogTest {
   }
 
   @Test
+  public void testTimedOutBeforeStart() throws InterruptedException {
+    MockServerStreamingCallable<String, String> callable1 = new MockServerStreamingCallable<>();
+    AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
+    ResponseObserver observer = watchdog.watch(downstreamObserver1, waitTime, idleTime);
+    clock.incrementNanoTime(idleTime.toNanos() + 1);
+    // This should not remove callable1 from watched list
+    watchdog.run();
+    assertThat(downstreamObserver1.done.isDone()).isFalse();
+
+    callable1.call("request", observer);
+    // This should cancel callable1
+    watchdog.run();
+    MockServerStreamingCall<String, String> call1 = callable1.popLastCall();
+    assertThat(call1.getController().isCancelled()).isTrue();
+    call1.getController().getObserver().onError(new CancellationException("User cancelled"));
+    Throwable error = null;
+    try {
+      downstreamObserver1.done.get();
+    } catch (ExecutionException t) {
+      error = t.getCause();
+    }
+    assertThat(error).isInstanceOf(WatchdogTimeoutException.class);
+  }
+
+  @Test
   public void testMultiple() throws Exception {
     // Start stream1
     AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();

@@ -129,7 +129,7 @@ public class GrpcDirectServerStreamingCallableTest {
   }
 
   @Test
-  public void testServerStreamingStart() throws Exception {
+  public void testServerStreamingStart() {
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(true, latch);
 
@@ -145,7 +145,7 @@ public class GrpcDirectServerStreamingCallableTest {
 
     streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
 
-    latch.await(20, TimeUnit.SECONDS);
+    Truth.assertThat(latch.await(20, TimeUnit.SECONDS)).isTrue();
     Truth.assertThat(moneyObserver.error).isNull();
     Truth.assertThat(moneyObserver.response).isEqualTo(DEFAULT_RESPONSE);
   }
@@ -157,13 +157,13 @@ public class GrpcDirectServerStreamingCallableTest {
 
     streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
 
-    latch.await(500, TimeUnit.MILLISECONDS);
+    Truth.assertThat(latch.await(500, TimeUnit.MILLISECONDS)).isFalse();
     Truth.assertWithMessage("Received response before requesting it")
         .that(moneyObserver.response)
         .isNull();
 
     moneyObserver.controller.request(1);
-    latch.await(500, TimeUnit.MILLISECONDS);
+    Truth.assertThat(latch.await(500, TimeUnit.MILLISECONDS)).isTrue();
 
     Truth.assertThat(moneyObserver.response).isEqualTo(DEFAULT_RESPONSE);
     Truth.assertThat(moneyObserver.completed).isTrue();
@@ -178,7 +178,7 @@ public class GrpcDirectServerStreamingCallableTest {
 
     moneyObserver.controller.cancel();
     moneyObserver.controller.request(1);
-    latch.await(500, TimeUnit.MILLISECONDS);
+    Truth.assertThat(latch.await(500, TimeUnit.MILLISECONDS)).isTrue();
 
     Truth.assertThat(moneyObserver.error).isInstanceOf(CancellationException.class);
     Truth.assertThat(moneyObserver.error).hasMessageThat().isEqualTo("User cancelled stream");
@@ -190,7 +190,7 @@ public class GrpcDirectServerStreamingCallableTest {
     MoneyObserver moneyObserver = new MoneyObserver(true, latch);
 
     streamingCallable.call(ERROR_REQUEST, moneyObserver);
-    latch.await(500, TimeUnit.MILLISECONDS);
+    Truth.assertThat(latch.await(500, TimeUnit.MILLISECONDS)).isTrue();
 
     Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
     Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
@@ -240,7 +240,7 @@ public class GrpcDirectServerStreamingCallableTest {
   }
 
   @Test
-  public void testBlockingServerStreaming() throws Exception {
+  public void testBlockingServerStreaming() {
     Color request = Color.newBuilder().setRed(0.5f).build();
     ServerStream<Money> response = streamingCallable.call(request);
     List<Money> responseData = Lists.newArrayList(response);

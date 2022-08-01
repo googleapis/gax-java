@@ -2,13 +2,15 @@ load("//:gax_java.bzl", "google_java_format", "google_java_format_verification",
 
 _JAVA_COPTS = [
     "-source",
-    "1.7",
+    "1.8",
     "-target",
-    "1.7",
+    "1.8",
 ]
 
 _COMPILE_DEPS = [
     "@com_google_api_api_common//jar",
+    "@com_google_api_grpc_proto_google_common_protos//jar",
+    "@com_google_protobuf_java//jar",
     "@com_google_auth_google_auth_library_credentials//jar",
     "@com_google_auth_google_auth_library_oauth2_http//jar",
     "@com_google_auto_value_auto_value//jar",
@@ -20,10 +22,11 @@ _COMPILE_DEPS = [
     "@io_grpc_grpc_java//context:context",
     "@org_threeten_threetenbp//jar",
     "@com_google_http_client_google_http_client//jar",
-    "@com_google_http_client_google_http_client_jackson2//jar",
-    "@com_fasterxml_jackson_core_jackson_core//jar",
+    "@com_google_http_client_google_http_client_gson//jar",
+    "@com_google_code_gson_gson//jar",
     "@com_google_guava_failureaccess//jar",
     "@javax_annotation_javax_annotation_api//jar",
+    "@org_graalvm_sdk//jar"
 ]
 
 _TEST_COMPILE_DEPS = [
@@ -51,6 +54,10 @@ java_library(
     srcs = glob(["src/test/java/**/*.java"]),
     javacopts = _JAVA_COPTS,
     plugins = ["//:auto_value_plugin"],
+    resources = glob([
+        "src/test/resources/com/google/api/gax/rpc/mtls/mtls_context_aware_metadata.json",
+        "src/test/resources/com/google/api/gax/rpc/mtls/mtlsCertAndKey.pem",
+    ]),
     visibility = ["//visibility:public"],
     deps = [":gax"] + _COMPILE_DEPS + _TEST_COMPILE_DEPS,
 )

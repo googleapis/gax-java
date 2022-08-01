@@ -29,7 +29,6 @@
  */
 package com.google.longrunning.stub;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.grpc.GrpcStubCallableFactory;
@@ -46,16 +45,12 @@ import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /**
  * gRPC callable factory implementation for Google Long Running Operations API.
  *
  * <p>This class is for advanced usage.
  */
-@Generated("by GAPIC v0.0.5")
-@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcOperationsCallableFactory implements GrpcStubCallableFactory {
   @Override
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(

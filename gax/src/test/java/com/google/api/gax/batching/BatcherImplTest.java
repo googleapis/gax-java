@@ -33,16 +33,20 @@ import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_D
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
+import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
@@ -67,9 +71,13 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -90,7 +98,12 @@ public class BatcherImplTest {
   @After
   public void tearDown() throws InterruptedException {
     if (underTest != null) {
-      underTest.close();
+      try {
+        // Close the batcher to avoid warnings of orphaned batchers
+        underTest.close();
+      } catch (BatchingException ignored) {
+        // Some tests intentionally inject failures into mutations
+      }
     }
   }
 
@@ -102,13 +115,7 @@ public class BatcherImplTest {
   /** The accumulated results in the test are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            callLabeledIntSquarer,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
+    underTest = createDefaultBatcherImpl(batchingSettings, null);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     underTest.flush();
@@ -128,9 +135,10 @@ public class BatcherImplTest {
             SQUARER_BATCHING_DESC_V2,
             new LabeledIntSquarerCallable() {
               @Override
-              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+              public ApiFuture<List<Integer>> futureCall(
+                  LabeledIntList request, ApiCallContext context) {
                 callableCounter.incrementAndGet();
-                return super.futureCall(request);
+                return super.futureCall(request, context);
               }
             },
             labeledIntList,
@@ -152,13 +160,7 @@ public class BatcherImplTest {
   @Test
   public void testWhenBatcherIsClose() throws Exception {
     Future<Integer> result;
-    try (Batcher<Integer, Integer> batcher =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            callLabeledIntSquarer,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR)) {
+    try (Batcher<Integer, Integer> batcher = createDefaultBatcherImpl(batchingSettings, null)) {
       result = batcher.add(5);
     }
     assertThat(result.isDone()).isTrue();
@@ -168,13 +170,7 @@ public class BatcherImplTest {
   /** Validates exception when batch is called after {@link Batcher#close()}. */
   @Test
   public void testNoElementAdditionAfterClose() throws Exception {
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            callLabeledIntSquarer,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
+    underTest = createDefaultBatcherImpl(batchingSettings, null);
     underTest.close();
     Throwable addOnClosedError = null;
     try {
@@ -186,6 +182,55 @@ public class BatcherImplTest {
     assertThat(addOnClosedError)
         .hasMessageThat()
         .matches("Cannot add elements on a closed batcher");
+  }
+
+  /** Validates exception when batch is called after {@link Batcher#close()}. */
+  @Test
+  public void testNoElementAdditionAfterCloseAsync() throws Exception {
+    underTest = createDefaultBatcherImpl(batchingSettings, null);
+    underTest.add(1);
+    underTest.closeAsync();
+
+    IllegalStateException e =
+        Assert.assertThrows(
+            IllegalStateException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                underTest.add(1);
+              }
+            });
+
+    assertThat(e).hasMessageThat().matches("Cannot add elements on a closed batcher");
+  }
+
+  @Test
+  public void testCloseAsyncNonblocking() throws ExecutionException, InterruptedException {
+    final SettableApiFuture<List<Integer>> innerFuture = SettableApiFuture.create();
+
+    UnaryCallable<LabeledIntList, List<Integer>> unaryCallable =
+        new UnaryCallable<LabeledIntList, List<Integer>>() {
+          @Override
+          public ApiFuture<List<Integer>> futureCall(
+              LabeledIntList request, ApiCallContext context) {
+            return innerFuture;
+          }
+        };
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
+
+    ApiFuture<Integer> elementFuture = underTest.add(1);
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    ApiFuture<Void> closeFuture = underTest.closeAsync();
+    assertThat(stopwatch.elapsed(TimeUnit.MILLISECONDS)).isAtMost(100);
+
+    assertThat(closeFuture.isDone()).isFalse();
+    assertThat(elementFuture.isDone()).isFalse();
+
+    innerFuture.set(ImmutableList.of(1));
+    closeFuture.get();
   }
 
   /** Verifies exception occurred at RPC is propagated to element results */
@@ -328,9 +373,7 @@ public class BatcherImplTest {
             .setRequestByteThreshold(null)
             .setDelayThreshold(null)
             .build();
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
+    underTest = createDefaultBatcherImpl(settings, null);
     Future<Integer> result = underTest.add(2);
     assertThat(result.isDone()).isTrue();
     assertThat(result.get()).isEqualTo(4);
@@ -340,9 +383,7 @@ public class BatcherImplTest {
   public void testWhenDelayThresholdExceeds() throws Exception {
     BatchingSettings settings =
         batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(100)).build();
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
+    underTest = createDefaultBatcherImpl(settings, null);
     Future<Integer> result = underTest.add(6);
     assertThat(result.isDone()).isFalse();
     assertThat(result.get()).isEqualTo(36);
@@ -418,8 +459,7 @@ public class BatcherImplTest {
     BatchingSettings settings =
         batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(DELAY_TIME)).build();
     BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> batcher =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
+        createDefaultBatcherImpl(settings, null);
 
     BatcherImpl.PushCurrentBatchRunnable<Integer, Integer, LabeledIntList, List<Integer>>
         pushBatchRunnable = new BatcherImpl.PushCurrentBatchRunnable<>(batcher);
@@ -582,20 +622,8 @@ public class BatcherImplTest {
       Thread.sleep(DELAY_TIME * (1L << retry));
     }
     assertThat(actualRemaining).isAtMost(0);
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            callLabeledIntSquarer,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
-    Batcher<Integer, Integer> extraBatcher =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            callLabeledIntSquarer,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
+    underTest = createDefaultBatcherImpl(batchingSettings, null);
+    Batcher<Integer, Integer> extraBatcher = createDefaultBatcherImpl(batchingSettings, null);
 
     // Try to capture the log output but without causing terminal noise.  Adding the filter must
     // be done before clearing the ref or else it might be missed.
@@ -647,10 +675,76 @@ public class BatcherImplTest {
     }
   }
 
+  /**
+   * Validates the absence of warning in case {@link BatcherImpl} is garbage collected after being
+   * closed.
+   *
+   * <p>Note:This test cannot run concurrently with other tests that use Batchers.
+   */
+  @Test
+  public void testClosedBatchersAreNotLogged() throws Exception {
+    // Clean out the existing instances
+    final long DELAY_TIME = 30L;
+    int actualRemaining = 0;
+    for (int retry = 0; retry < 3; retry++) {
+      System.gc();
+      System.runFinalization();
+      actualRemaining = BatcherReference.cleanQueue();
+      if (actualRemaining == 0) {
+        break;
+      }
+      Thread.sleep(DELAY_TIME * (1L << retry));
+    }
+    assertThat(actualRemaining).isAtMost(0);
+
+    // Capture logs
+    final List<LogRecord> records = new ArrayList<>(1);
+    Logger batcherLogger = Logger.getLogger(BatcherImpl.class.getName());
+    Filter oldFilter = batcherLogger.getFilter();
+    batcherLogger.setFilter(
+        new Filter() {
+          @Override
+          public boolean isLoggable(LogRecord record) {
+            synchronized (records) {
+              records.add(record);
+            }
+            return false;
+          }
+        });
+
+    try {
+      // Create a bunch of batchers that will garbage collected after being closed
+      for (int i = 0; i < 1_000; i++) {
+        BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> batcher =
+            createDefaultBatcherImpl(batchingSettings, null);
+        batcher.add(1);
+
+        if (i % 2 == 0) {
+          batcher.close();
+        } else {
+          batcher.closeAsync();
+        }
+      }
+      // Run GC a few times to give the batchers a chance to be collected
+      for (int retry = 0; retry < 100; retry++) {
+        System.gc();
+        System.runFinalization();
+        BatcherReference.cleanQueue();
+        Thread.sleep(10);
+      }
+
+      synchronized (records) {
+        assertThat(records).isEmpty();
+      }
+    } finally {
+      // reset logging
+      batcherLogger.setFilter(oldFilter);
+    }
+  }
+
   @Test
   public void testCloseRace() throws ExecutionException, InterruptedException, TimeoutException {
     int iterations = 1_000_000;
-
     ExecutorService executor = Executors.newFixedThreadPool(100);
 
     try {
@@ -711,10 +805,129 @@ public class BatcherImplTest {
     }
   }
 
-  private void testElementTriggers(BatchingSettings settings) throws Exception {
-    underTest =
+  @Test
+  public void testConstructors() throws InterruptedException {
+    try (BatcherImpl batcher1 = createDefaultBatcherImpl(batchingSettings, null)) {
+      assertThat(batcher1.getFlowController()).isNotNull();
+      assertThat(batcher1.getFlowController().getLimitExceededBehavior())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
+      assertThat(batcher1.getFlowController().getMaxElementCountLimit())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
+      assertThat(batcher1.getFlowController().getMaxRequestBytesLimit())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
+    }
+
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setMaxOutstandingRequestBytes(6000L)
+                .build());
+    try (BatcherImpl batcher2 = createDefaultBatcherImpl(batchingSettings, flowController)) {
+      assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
+    }
+  }
+
+  @Test
+  public void testThrottlingBlocking() throws Exception {
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(1L)
+                .build());
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    ApiCallContext callContext = Mockito.mock(ApiCallContext.class);
+    ArgumentCaptor<ApiCallContext.Key<Long>> key =
+        ArgumentCaptor.forClass(ApiCallContext.Key.class);
+    ArgumentCaptor<Long> value = ArgumentCaptor.forClass(Long.class);
+    when(callContext.withOption(key.capture(), value.capture())).thenReturn(callContext);
+    long throttledTime = 50;
+
+    try (final Batcher<Integer, Integer> batcher =
         new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            settings,
+            EXECUTOR,
+            flowController,
+            callContext)) {
+      flowController.reserve(1, 1);
+      Future future =
+          executor.submit(
+              new Runnable() {
+                @Override
+                public void run() {
+                  batcher.add(1);
+                }
+              });
+      // Add a little delay ensuring that the next step starts after batcher.add(1)
+      Thread.sleep(10);
+      executor.submit(
+          () -> {
+            try {
+              Thread.sleep(throttledTime);
+              flowController.release(1, 1);
+            } catch (InterruptedException e) {
+            }
+          });
+
+      try {
+        future.get(10, TimeUnit.MILLISECONDS);
+        assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
+      } catch (TimeoutException e) {
+        // expected
+      }
+
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        assertWithMessage("adding elements to batcher should not be blocked").fail();
+      }
+      // Verify that throttled time is recorded in ApiCallContext
+      assertThat(key.getValue()).isSameInstanceAs(Batcher.THROTTLED_TIME_KEY);
+      assertThat(value.getValue()).isAtLeast(throttledTime);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testThrottlingNonBlocking() throws Exception {
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setMaxOutstandingElementCount(1L)
+                .build());
+    try (final Batcher<Integer, Integer> batcher =
+        createDefaultBatcherImpl(settings, flowController)) {
+      flowController.reserve(1, 1);
+      try {
+        batcher.add(1);
+        assertWithMessage("Should throw exception because it exceeded FlowController limit").fail();
+      } catch (FlowControlRuntimeException e) {
+        assertThat(e.getMessage()).contains("The maximum number of batch elements");
+      }
+      flowController.release(1, 1);
+      batcher.add(1);
+    }
+  }
+
+  private void testElementTriggers(BatchingSettings settings) throws Exception {
+    underTest = createDefaultBatcherImpl(settings, null);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     // After this element is added, the batch triggers sendOutstanding().
@@ -723,5 +936,16 @@ public class BatcherImplTest {
     assertThat(result.isDone()).isTrue();
     assertThat(result.get()).isEqualTo(16);
     assertThat(anotherResult.isDone()).isTrue();
+  }
+
+  private BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> createDefaultBatcherImpl(
+      BatchingSettings settings, FlowController flowController) {
+    return new BatcherImpl<>(
+        SQUARER_BATCHING_DESC_V2,
+        callLabeledIntSquarer,
+        labeledIntList,
+        settings,
+        EXECUTOR,
+        flowController);
   }
 }

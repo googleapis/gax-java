@@ -34,9 +34,8 @@ import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
 import com.google.protobuf.Option;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -84,21 +83,14 @@ public class ProtoRestSerializerTest {
   @Test
   public void fromJson() {
     Field fieldFromJson =
-        requestSerializer.fromJson(
-            new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)),
-            StandardCharsets.UTF_8,
-            Field.newBuilder());
-
+        requestSerializer.fromJson(new StringReader(fieldJson), Field.newBuilder());
     Truth.assertThat(fieldFromJson).isEqualTo(field);
   }
 
   @Test
   public void fromJsonInvalidJson() {
     try {
-      requestSerializer.fromJson(
-          new ByteArrayInputStream("heh".getBytes(StandardCharsets.UTF_8)),
-          StandardCharsets.UTF_8,
-          Field.newBuilder());
+      requestSerializer.fromJson(new StringReader("heh"), Field.newBuilder());
       Assert.fail();
     } catch (RestSerializationException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);
@@ -115,7 +107,9 @@ public class ProtoRestSerializerTest {
 
     Map<String, String> expectedFields = new HashMap<>();
     expectedFields.put("optName1", "1");
+    expectedFields.put("optName2", "0");
     expectedFields.put("optName3", "three");
+    expectedFields.put("optName4", "");
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }
@@ -131,7 +125,9 @@ public class ProtoRestSerializerTest {
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
+    expectedFields.put("optName2", Arrays.asList("0"));
     expectedFields.put("optName3", Arrays.asList("three"));
+    expectedFields.put("optName4", Arrays.asList(""));
     expectedFields.put("optName5", Arrays.asList("four", "five"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);

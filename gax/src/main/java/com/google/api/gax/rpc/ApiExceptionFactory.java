@@ -38,43 +38,7 @@ public class ApiExceptionFactory {
 
   public static ApiException createException(
       Throwable cause, StatusCode statusCode, boolean retryable) {
-    switch (statusCode.getCode()) {
-      case CANCELLED:
-        return new CancelledException(cause, statusCode, retryable);
-      case NOT_FOUND:
-        return new NotFoundException(cause, statusCode, retryable);
-      case UNKNOWN:
-        return new UnknownException(cause, statusCode, retryable);
-      case INVALID_ARGUMENT:
-        return new InvalidArgumentException(cause, statusCode, retryable);
-      case DEADLINE_EXCEEDED:
-        return new DeadlineExceededException(cause, statusCode, retryable);
-      case ALREADY_EXISTS:
-        return new AlreadyExistsException(cause, statusCode, retryable);
-      case PERMISSION_DENIED:
-        return new PermissionDeniedException(cause, statusCode, retryable);
-      case RESOURCE_EXHAUSTED:
-        return new ResourceExhaustedException(cause, statusCode, retryable);
-      case FAILED_PRECONDITION:
-        return new FailedPreconditionException(cause, statusCode, retryable);
-      case ABORTED:
-        return new AbortedException(cause, statusCode, retryable);
-      case OUT_OF_RANGE:
-        return new OutOfRangeException(cause, statusCode, retryable);
-      case UNIMPLEMENTED:
-        return new UnimplementedException(cause, statusCode, retryable);
-      case INTERNAL:
-        return new InternalException(cause, statusCode, retryable);
-      case UNAVAILABLE:
-        return new UnavailableException(cause, statusCode, retryable);
-      case DATA_LOSS:
-        return new DataLossException(cause, statusCode, retryable);
-      case UNAUTHENTICATED:
-        return new UnauthenticatedException(cause, statusCode, retryable);
-
-      default:
-        return new UnknownException(cause, statusCode, retryable);
-    }
+    return createException(cause, statusCode, retryable, null);
   }
 
   public static ApiException createException(
@@ -84,8 +48,6 @@ public class ApiExceptionFactory {
         return new CancelledException(message, cause, statusCode, retryable);
       case NOT_FOUND:
         return new NotFoundException(message, cause, statusCode, retryable);
-      case UNKNOWN:
-        return new UnknownException(message, cause, statusCode, retryable);
       case INVALID_ARGUMENT:
         return new InvalidArgumentException(message, cause, statusCode, retryable);
       case DEADLINE_EXCEEDED:
@@ -113,8 +75,48 @@ public class ApiExceptionFactory {
       case UNAUTHENTICATED:
         return new UnauthenticatedException(message, cause, statusCode, retryable);
 
+      case UNKNOWN: // Fall through.
       default:
-        return new UnknownException(cause, statusCode, retryable);
+        return new UnknownException(message, cause, statusCode, retryable);
+    }
+  }
+
+  public static ApiException createException(
+      Throwable cause, StatusCode statusCode, boolean retryable, ErrorDetails errorDetails) {
+    switch (statusCode.getCode()) {
+      case CANCELLED:
+        return new CancelledException(cause, statusCode, retryable, errorDetails);
+      case NOT_FOUND:
+        return new NotFoundException(cause, statusCode, retryable, errorDetails);
+      case INVALID_ARGUMENT:
+        return new InvalidArgumentException(cause, statusCode, retryable, errorDetails);
+      case DEADLINE_EXCEEDED:
+        return new DeadlineExceededException(cause, statusCode, retryable, errorDetails);
+      case ALREADY_EXISTS:
+        return new AlreadyExistsException(cause, statusCode, retryable, errorDetails);
+      case PERMISSION_DENIED:
+        return new PermissionDeniedException(cause, statusCode, retryable, errorDetails);
+      case RESOURCE_EXHAUSTED:
+        return new ResourceExhaustedException(cause, statusCode, retryable, errorDetails);
+      case FAILED_PRECONDITION:
+        return new FailedPreconditionException(cause, statusCode, retryable, errorDetails);
+      case ABORTED:
+        return new AbortedException(cause, statusCode, retryable, errorDetails);
+      case OUT_OF_RANGE:
+        return new OutOfRangeException(cause, statusCode, retryable, errorDetails);
+      case UNIMPLEMENTED:
+        return new UnimplementedException(cause, statusCode, retryable, errorDetails);
+      case INTERNAL:
+        return new InternalException(cause, statusCode, retryable, errorDetails);
+      case UNAVAILABLE:
+        return new UnavailableException(cause, statusCode, retryable, errorDetails);
+      case DATA_LOSS:
+        return new DataLossException(cause, statusCode, retryable, errorDetails);
+      case UNAUTHENTICATED:
+        return new UnauthenticatedException(cause, statusCode, retryable, errorDetails);
+      case UNKNOWN: // Fall through.
+      default:
+        return new UnknownException(cause, statusCode, retryable, errorDetails);
     }
   }
 }

@@ -80,7 +80,7 @@ public class OpencensusTracerFactoryTest {
         new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
 
     factory.newTracer(
-        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
+        BaseApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(internalTracer)
         .spanBuilderWithExplicitParent(eq("FakeClient.FakeMethod"), nullable(Span.class));
@@ -96,7 +96,7 @@ public class OpencensusTracerFactoryTest {
 
     try {
       factory.newTracer(
-          NoopApiTracer.getInstance(),
+          BaseApiTracer.getInstance(),
           SpanName.of("FakeClient", "FakeMethod"),
           OperationType.Unary);
     } finally {
@@ -146,7 +146,7 @@ public class OpencensusTracerFactoryTest {
         new OpencensusTracerFactory(internalTracer, ImmutableMap.of("gax.version", "1.2.3"));
 
     factory.newTracer(
-        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
+        BaseApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(span, times(1))
         .putAttributes(

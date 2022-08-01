@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A functional interface to be implemented for each request message to extract specific fields from
  * it. For advanced usage only.
  */
-@BetaApi
 public interface FieldsExtractor<RequestT, ParamsT> {
   ParamsT extract(RequestT request);
 }

@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public class FlowController {
   /** Base exception that signals a flow control state. */
   public abstract static class FlowControlException extends Exception {
@@ -45,7 +47,6 @@ public class FlowController {
    * Runtime exception that can be used in place of FlowControlException when an unchecked exception
    * is required.
    */
-  @BetaApi
   public static class FlowControlRuntimeException extends RuntimeException {
     private FlowControlRuntimeException(FlowControlException e) {
       super(e);
@@ -60,7 +61,6 @@ public class FlowController {
    * Exception thrown when client-side flow control is enforced based on the maximum number of
    * outstanding in-memory elements.
    */
-  @BetaApi
   public static final class MaxOutstandingElementCountReachedException
       extends FlowControlException {
     private final long currentMaxElementCount;
@@ -84,7 +84,6 @@ public class FlowController {
    * Exception thrown when client-side flow control is enforced based on the maximum number of
    * unacknowledged in-memory bytes.
    */
-  @BetaApi
   public static final class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {
     private final long currentMaxBytes;
@@ -108,7 +107,6 @@ public class FlowController {
    * Enumeration of behaviors that FlowController can use in case the flow control limits are
    * exceeded.
    */
-  @BetaApi
   public enum LimitExceededBehavior {
     /**
      * Throws {@link MaxOutstandingElementCountReachedException} or {@link
@@ -141,18 +139,40 @@ public class FlowController {
 
   @Nullable private final Semaphore64 outstandingElementCount;
   @Nullable private final Semaphore64 outstandingByteCount;
-  @Nullable private final Long maxOutstandingElementCount;
-  @Nullable private final Long maxOutstandingRequestBytes;
+  @Nullable private final Long maxElementCountLimit;
+  @Nullable private final Long maxRequestBytesLimit;
+  @Nullable private final Long minElementCountLimit;
+  @Nullable private final Long minRequestBytesLimit;
+  private final LimitExceededBehavior limitExceededBehavior;
+  private final Object updateLimitLock;
+
+  // Threshold to record throttling events. If reserve() takes longer than this threshold, it will
+  // be recorded as a throttling event.
+  private static final long RESERVE_FLOW_CONTROL_THRESHOLD_MS = 1;
+  private final FlowControlEventStats flowControlEventStats;
 
   public FlowController(FlowControlSettings settings) {
-    boolean failOnLimits;
+    // When the FlowController is initialized with FlowControlSettings, flow control limits can't be
+    // adjusted. min, current, max element count and request bytes are initialized with the max
+    // values in FlowControlSettings.
+    this(convertFlowControlSettings(settings));
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  public FlowController(DynamicFlowControlSettings settings) {
+    this.limitExceededBehavior = settings.getLimitExceededBehavior();
+    this.updateLimitLock = new Object();
+    this.flowControlEventStats = new FlowControlEventStats();
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
       case Block:
         break;
       case Ignore:
-        this.maxOutstandingElementCount = null;
-        this.maxOutstandingRequestBytes = null;
+        this.maxElementCountLimit = null;
+        this.maxRequestBytesLimit = null;
+        this.minElementCountLimit = null;
+        this.minRequestBytesLimit = null;
+
         this.outstandingElementCount = null;
         this.outstandingByteCount = null;
         return;
@@ -160,23 +180,26 @@ public class FlowController {
         throw new IllegalArgumentException(
             "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
-
-    this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
-    if (maxOutstandingElementCount == null) {
+    this.maxElementCountLimit = settings.getMaxOutstandingElementCount();
+    this.minElementCountLimit = settings.getMinOutstandingElementCount();
+    Long initialElementCountLimit = settings.getInitialOutstandingElementCount();
+    if (initialElementCountLimit == null) {
       outstandingElementCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingElementCount = new BlockingSemaphore(maxOutstandingElementCount);
+      outstandingElementCount = new BlockingSemaphore(initialElementCountLimit);
     } else {
-      outstandingElementCount = new NonBlockingSemaphore(maxOutstandingElementCount);
+      outstandingElementCount = new NonBlockingSemaphore(initialElementCountLimit);
     }
 
-    this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
-    if (maxOutstandingRequestBytes == null) {
+    this.maxRequestBytesLimit = settings.getMaxOutstandingRequestBytes();
+    this.minRequestBytesLimit = settings.getMinOutstandingRequestBytes();
+    Long initialRequestBytesLimit = settings.getInitialOutstandingRequestBytes();
+    if (initialRequestBytesLimit == null) {
       outstandingByteCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
+      outstandingByteCount = new BlockingSemaphore(initialRequestBytesLimit);
     } else {
-      outstandingByteCount = new NonBlockingSemaphore(maxOutstandingRequestBytes);
+      outstandingByteCount = new NonBlockingSemaphore(initialRequestBytesLimit);
     }
   }
 
@@ -184,22 +207,35 @@ public class FlowController {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
+    Stopwatch stopwatch = Stopwatch.createStarted();
     if (outstandingElementCount != null) {
       if (!outstandingElementCount.acquire(elements)) {
-        throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
+        MaxOutstandingElementCountReachedException exception =
+            new MaxOutstandingElementCountReachedException(
+                outstandingElementCount.getPermitLimit());
+        flowControlEventStats.recordFlowControlEvent(
+            FlowControlEvent.createReserveDenied(exception));
+        throw exception;
       }
     }
 
-    // Will always allow to send a request even if it is larger than the flow control limit,
+    // Always allows to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      long permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
-      if (!outstandingByteCount.acquire(permitsToDraw)) {
+      if (!outstandingByteCount.acquirePartial(bytes)) {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }
-        throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes);
+        MaxOutstandingRequestBytesReachedException exception =
+            new MaxOutstandingRequestBytesReachedException(outstandingByteCount.getPermitLimit());
+        flowControlEventStats.recordFlowControlEvent(
+            FlowControlEvent.createReserveDenied(exception));
+        throw exception;
       }
+    }
+    long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    if (elapsed >= RESERVE_FLOW_CONTROL_THRESHOLD_MS) {
+      flowControlEventStats.recordFlowControlEvent(FlowControlEvent.createReserveDelayed(elapsed));
     }
   }
 
@@ -211,9 +247,111 @@ public class FlowController {
       outstandingElementCount.release(elements);
     }
     if (outstandingByteCount != null) {
-      // Need to return at most as much bytes as it can be drawn.
-      long permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
-      outstandingByteCount.release(permitsToReturn);
+      outstandingByteCount.release(bytes);
     }
+  }
+
+  /**
+   * Increase flow control limits to allow extra elementSteps elements and byteSteps request bytes
+   * before enforcing flow control.
+   */
+  @InternalApi("For google-cloud-java client use only")
+  public void increaseThresholds(long elementSteps, long byteSteps) {
+    Preconditions.checkArgument(elementSteps >= 0);
+    Preconditions.checkArgument(byteSteps >= 0);
+    synchronized (updateLimitLock) {
+      if (outstandingElementCount != null) {
+        long actualStep =
+            Math.min(elementSteps, maxElementCountLimit - outstandingElementCount.getPermitLimit());
+        outstandingElementCount.increasePermitLimit(actualStep);
+      }
+
+      if (outstandingByteCount != null) {
+        long actualStep =
+            Math.min(byteSteps, maxRequestBytesLimit - outstandingByteCount.getPermitLimit());
+        outstandingByteCount.increasePermitLimit(actualStep);
+      }
+    }
+  }
+
+  /**
+   * Decrease flow control limits to allow elementSteps fewer elements and byteSteps fewer request
+   * bytes before enforcing flow control.
+   */
+  @InternalApi("For google-cloud-java client use only")
+  public void decreaseThresholds(long elementSteps, long byteSteps) {
+    Preconditions.checkArgument(elementSteps >= 0);
+    Preconditions.checkArgument(byteSteps >= 0);
+    synchronized (updateLimitLock) {
+      if (outstandingElementCount != null) {
+        long actualStep =
+            Math.min(elementSteps, outstandingElementCount.getPermitLimit() - minElementCountLimit);
+        outstandingElementCount.reducePermitLimit(actualStep);
+      }
+
+      if (outstandingByteCount != null) {
+        long actualStep =
+            Math.min(byteSteps, outstandingByteCount.getPermitLimit() - minRequestBytesLimit);
+        outstandingByteCount.reducePermitLimit(actualStep);
+      }
+    }
+  }
+
+  private static DynamicFlowControlSettings convertFlowControlSettings(
+      FlowControlSettings settings) {
+    return DynamicFlowControlSettings.newBuilder()
+        .setInitialOutstandingElementCount(settings.getMaxOutstandingElementCount())
+        .setMinOutstandingElementCount(settings.getMaxOutstandingElementCount())
+        .setMaxOutstandingElementCount(settings.getMaxOutstandingElementCount())
+        .setInitialOutstandingRequestBytes(settings.getMaxOutstandingRequestBytes())
+        .setMinOutstandingRequestBytes(settings.getMaxOutstandingRequestBytes())
+        .setMaxOutstandingRequestBytes(settings.getMaxOutstandingRequestBytes())
+        .setLimitExceededBehavior(settings.getLimitExceededBehavior())
+        .build();
+  }
+
+  LimitExceededBehavior getLimitExceededBehavior() {
+    return limitExceededBehavior;
+  }
+
+  @InternalApi("For internal use by google-cloud-java clients only")
+  @Nullable
+  public Long getMaxElementCountLimit() {
+    return maxElementCountLimit;
+  }
+
+  @InternalApi("For internal use by google-cloud-java clients only")
+  @Nullable
+  public Long getMaxRequestBytesLimit() {
+    return maxRequestBytesLimit;
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  @Nullable
+  public Long getMinElementCountLimit() {
+    return minElementCountLimit;
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  @Nullable
+  public Long getMinRequestBytesLimit() {
+    return minRequestBytesLimit;
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  @Nullable
+  public Long getCurrentElementCountLimit() {
+    return outstandingElementCount == null ? null : outstandingElementCount.getPermitLimit();
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  @Nullable
+  public Long getCurrentRequestBytesLimit() {
+    return outstandingByteCount == null ? null : outstandingByteCount.getPermitLimit();
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  public FlowControlEventStats getFlowControlEventStats() {
+    return flowControlEventStats;
   }
 }

@@ -33,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
@@ -81,7 +80,6 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
    * @param callable the actual callable, which should be executed in a retriable context
    * @return retrying future facade
    */
-  @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
       Callable<ResponseT> callable, RetryingContext context) {

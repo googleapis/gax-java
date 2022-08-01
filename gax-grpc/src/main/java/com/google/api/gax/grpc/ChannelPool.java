@@ -29,100 +29,100 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.threeten.bp.Duration;
 
 /**
- * A {@link ManagedChannel} that will send requests round robin via a set of channels.
+ * A {@link ManagedChannel} that will send requests round-robin via a set of channels.
+ *
+ * <p>In addition to spreading requests over a set of child connections, the pool will also actively
+ * manage the lifecycle of the channels. Currently lifecycle management is limited to pre-emptively
+ * replacing channels every hour. In the future it will dynamically size the pool based on number of
+ * outstanding requests.
  *
  * <p>Package-private for internal use.
  */
 class ChannelPool extends ManagedChannel {
-  // size greater than 1 to allow multiple channel to refresh at the same time
-  // size not too large so refreshing channels doesn't use too many threads
-  private static final int CHANNEL_REFRESH_EXECUTOR_SIZE = 2;
-  private final ImmutableList<ManagedChannel> channels;
+  private static final Logger LOG = Logger.getLogger(ChannelPool.class.getName());
+  private static final Duration REFRESH_PERIOD = Duration.ofMinutes(50);
+
+  private final ChannelPoolSettings settings;
+  private final ChannelFactory channelFactory;
+  private final ScheduledExecutorService executor;
+
+  private final Object entryWriteLock = new Object();
+  @VisibleForTesting final AtomicReference<ImmutableList<Entry>> entries = new AtomicReference<>();
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
-  // if set, ChannelPool will manage the life cycle of channelRefreshExecutorService
-  @Nullable private ScheduledExecutorService channelRefreshExecutorService;
 
-  /**
-   * Factory method to create a non-refreshing channel pool
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @return ChannelPool of non refreshing channels
-   */
-  static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
-    List<ManagedChannel> channels = new ArrayList<>();
-    for (int i = 0; i < poolSize; i++) {
-      channels.add(channelFactory.createSingleChannel());
-    }
-    return new ChannelPool(channels, null);
-  }
-
-  /**
-   * Factory method to create a refreshing channel pool
-   *
-   * <p>Package-private for testing purposes only
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @param channelRefreshExecutorService periodically refreshes the channels; its life cycle will
-   *     be managed by ChannelPool
-   * @return ChannelPool of refreshing channels
-   */
-  @VisibleForTesting
-  static ChannelPool createRefreshing(
-      int poolSize,
-      final ChannelFactory channelFactory,
-      ScheduledExecutorService channelRefreshExecutorService)
+  static ChannelPool create(ChannelPoolSettings settings, ChannelFactory channelFactory)
       throws IOException {
-    List<ManagedChannel> channels = new ArrayList<>();
-    for (int i = 0; i < poolSize; i++) {
-      channels.add(new RefreshingManagedChannel(channelFactory, channelRefreshExecutorService));
-    }
-    return new ChannelPool(channels, channelRefreshExecutorService);
-  }
-
-  /**
-   * Factory method to create a refreshing channel pool
-   *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @return ChannelPool of refreshing channels
-   */
-  static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
-      throws IOException {
-    return createRefreshing(
-        poolSize, channelFactory, Executors.newScheduledThreadPool(CHANNEL_REFRESH_EXECUTOR_SIZE));
+    return new ChannelPool(settings, channelFactory, Executors.newSingleThreadScheduledExecutor());
   }
 
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
-   * @param channels a List of channels to pool.
-   * @param channelRefreshExecutorService periodically refreshes the channels
+   * @param settings options for controling the ChannelPool sizing behavior
+   * @param channelFactory method to create the channels
+   * @param executor periodically refreshes the channels
    */
-  private ChannelPool(
-      List<ManagedChannel> channels,
-      @Nullable ScheduledExecutorService channelRefreshExecutorService) {
-    this.channels = ImmutableList.copyOf(channels);
-    authority = channels.get(0).authority();
-    this.channelRefreshExecutorService = channelRefreshExecutorService;
+  @VisibleForTesting
+  ChannelPool(
+      ChannelPoolSettings settings,
+      ChannelFactory channelFactory,
+      ScheduledExecutorService executor)
+      throws IOException {
+    this.settings = settings;
+    this.channelFactory = channelFactory;
+
+    ImmutableList.Builder<Entry> initialListBuilder = ImmutableList.builder();
+
+    for (int i = 0; i < settings.getInitialChannelCount(); i++) {
+      initialListBuilder.add(new Entry(channelFactory.createSingleChannel()));
+    }
+
+    entries.set(initialListBuilder.build());
+    authority = entries.get().get(0).channel.authority();
+    this.executor = executor;
+
+    if (!settings.isStaticSize()) {
+      executor.scheduleAtFixedRate(
+          this::resizeSafely,
+          ChannelPoolSettings.RESIZE_INTERVAL.getSeconds(),
+          ChannelPoolSettings.RESIZE_INTERVAL.getSeconds(),
+          TimeUnit.SECONDS);
+    }
+    if (settings.isPreemptiveRefreshEnabled()) {
+      executor.scheduleAtFixedRate(
+          this::refreshSafely,
+          REFRESH_PERIOD.getSeconds(),
+          REFRESH_PERIOD.getSeconds(),
+          TimeUnit.SECONDS);
+    }
   }
 
   /** {@inheritDoc} */
@@ -140,17 +140,23 @@ class ChannelPool extends ManagedChannel {
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
-    return getNextChannel().newCall(methodDescriptor, callOptions);
+    return getChannel(indexTicker.getAndIncrement()).newCall(methodDescriptor, callOptions);
+  }
+
+  Channel getChannel(int affinity) {
+    return new AffinityChannel(affinity);
   }
 
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdown() {
-    for (ManagedChannel channelWrapper : channels) {
-      channelWrapper.shutdown();
+    List<Entry> localEntries = entries.get();
+    for (Entry entry : localEntries) {
+      entry.channel.shutdown();
     }
-    if (channelRefreshExecutorService != null) {
-      channelRefreshExecutorService.shutdown();
+    if (executor != null) {
+      // shutdownNow will cancel scheduled tasks
+      executor.shutdownNow();
     }
     return this;
   }
@@ -158,39 +164,37 @@ class ChannelPool extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public boolean isShutdown() {
-    for (ManagedChannel channel : channels) {
-      if (!channel.isShutdown()) {
+    List<Entry> localEntries = entries.get();
+    for (Entry entry : localEntries) {
+      if (!entry.channel.isShutdown()) {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isShutdown()) {
-      return false;
-    }
-    return true;
+    return executor == null || executor.isShutdown();
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean isTerminated() {
-    for (ManagedChannel channel : channels) {
-      if (!channel.isTerminated()) {
+    List<Entry> localEntries = entries.get();
+    for (Entry entry : localEntries) {
+      if (!entry.channel.isTerminated()) {
         return false;
       }
     }
-    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isTerminated()) {
-      return false;
-    }
-    return true;
+
+    return executor == null || executor.isTerminated();
   }
 
   /** {@inheritDoc} */
   @Override
   public ManagedChannel shutdownNow() {
-    for (ManagedChannel channel : channels) {
-      channel.shutdownNow();
+    List<Entry> localEntries = entries.get();
+    for (Entry entry : localEntries) {
+      entry.channel.shutdownNow();
     }
-    if (channelRefreshExecutorService != null) {
-      channelRefreshExecutorService.shutdownNow();
+    if (executor != null) {
+      executor.shutdownNow();
     }
     return this;
   }
@@ -199,45 +203,346 @@ class ChannelPool extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
-    for (ManagedChannel channel : channels) {
+    List<Entry> localEntries = entries.get();
+    for (Entry entry : localEntries) {
       long awaitTimeNanos = endTimeNanos - System.nanoTime();
       if (awaitTimeNanos <= 0) {
         break;
       }
-      channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+      entry.channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
-    if (channelRefreshExecutorService != null) {
+    if (executor != null) {
       long awaitTimeNanos = endTimeNanos - System.nanoTime();
-      channelRefreshExecutorService.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+      executor.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
     return isTerminated();
   }
 
+  private void resizeSafely() {
+    try {
+      synchronized (entryWriteLock) {
+        resize();
+      }
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to resize channel pool", e);
+    }
+  }
+
   /**
-   * Performs a simple round robin on the list of {@link ManagedChannel}s in the {@code channels}
-   * list.
+   * Resize the number of channels based on the number of outstanding RPCs.
    *
-   * @return A {@link ManagedChannel} that can be used for a single RPC call.
+   * <p>This method is expected to be called on a fixed interval. On every invocation it will:
+   *
+   * <ul>
+   *   <li>Get the maximum number of outstanding RPCs since last invocation
+   *   <li>Determine a valid range of number of channels to handle that many outstanding RPCs
+   *   <li>If the current number of channel falls outside of that range, add or remove at most
+   *       {@link ChannelPoolSettings#MAX_RESIZE_DELTA} to get closer to middle of that range.
+   * </ul>
+   *
+   * <p>Not threadsafe, must be called under the entryWriteLock monitor
    */
-  private ManagedChannel getNextChannel() {
-    return getChannel(indexTicker.getAndIncrement());
+  @VisibleForTesting
+  void resize() {
+    List<Entry> localEntries = entries.get();
+    // Estimate the peak of RPCs in the last interval by summing the peak of RPCs per channel
+    int actualOutstandingRpcs =
+        localEntries.stream().mapToInt(Entry::getAndResetMaxOutstanding).sum();
+
+    // Number of channels if each channel operated at max capacity
+    int minChannels =
+        (int) Math.ceil(actualOutstandingRpcs / (double) settings.getMaxRpcsPerChannel());
+    // Limit the threshold to absolute range
+    if (minChannels < settings.getMinChannelCount()) {
+      minChannels = settings.getMinChannelCount();
+    }
+
+    // Number of channels if each channel operated at minimum capacity
+    // Note: getMinRpcsPerChannel() can return 0, but division by 0 shouldn't cause a problem.
+    int maxChannels =
+        (int) Math.ceil(actualOutstandingRpcs / (double) settings.getMinRpcsPerChannel());
+    // Limit the threshold to absolute range
+    if (maxChannels > settings.getMaxChannelCount()) {
+      maxChannels = settings.getMaxChannelCount();
+    }
+    if (maxChannels < minChannels) {
+      maxChannels = minChannels;
+    }
+
+    // If the pool were to be resized, try to aim for the middle of the bound, but limit rate of
+    // change.
+    int tentativeTarget = (maxChannels + minChannels) / 2;
+    int currentSize = localEntries.size();
+    int delta = tentativeTarget - currentSize;
+    int dampenedTarget = tentativeTarget;
+    if (Math.abs(delta) > ChannelPoolSettings.MAX_RESIZE_DELTA) {
+      dampenedTarget =
+          currentSize + (int) Math.copySign(ChannelPoolSettings.MAX_RESIZE_DELTA, delta);
+    }
+
+    // Only resize the pool when thresholds are crossed
+    if (localEntries.size() < minChannels) {
+      LOG.fine(
+          String.format(
+              "Detected throughput peak of %d, expanding channel pool size: %d -> %d.",
+              actualOutstandingRpcs, currentSize, dampenedTarget));
+
+      expand(dampenedTarget);
+    } else if (localEntries.size() > maxChannels) {
+      LOG.fine(
+          String.format(
+              "Detected throughput drop to %d, shrinking channel pool size: %d -> %d.",
+              actualOutstandingRpcs, currentSize, dampenedTarget));
+
+      shrink(dampenedTarget);
+    }
+  }
+
+  /** Not threadsafe, must be called under the entryWriteLock monitor */
+  private void shrink(int desiredSize) {
+    ImmutableList<Entry> localEntries = entries.get();
+    Preconditions.checkState(
+        localEntries.size() >= desiredSize, "current size is already smaller than the desired");
+
+    // Set the new list
+    entries.set(localEntries.subList(0, desiredSize));
+    // clean up removed entries
+    List<Entry> removed = localEntries.subList(desiredSize, localEntries.size());
+    removed.forEach(Entry::requestShutdown);
+  }
+
+  /** Not threadsafe, must be called under the entryWriteLock monitor */
+  private void expand(int desiredSize) {
+    List<Entry> localEntries = entries.get();
+    Preconditions.checkState(
+        localEntries.size() <= desiredSize, "current size is already bigger than the desired");
+
+    ImmutableList.Builder<Entry> newEntries = ImmutableList.<Entry>builder().addAll(localEntries);
+
+    for (int i = 0; i < desiredSize - localEntries.size(); i++) {
+      try {
+        newEntries.add(new Entry(channelFactory.createSingleChannel()));
+      } catch (IOException e) {
+        LOG.log(Level.WARNING, "Failed to add channel", e);
+      }
+    }
+
+    entries.set(newEntries.build());
+  }
+
+  private void refreshSafely() {
+    try {
+      refresh();
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to pre-emptively refresh channnels", e);
+    }
+  }
+
+  /**
+   * Replace all of the channels in the channel pool with fresh ones. This is meant to mitigate the
+   * hourly GFE disconnects by giving clients the ability to prime the channel on reconnect.
+   *
+   * <p>This is done on a best effort basis. If the replacement channel fails to construct, the old
+   * channel will continue to be used.
+   */
+  @InternalApi("Visible for testing")
+  void refresh() {
+    // Note: synchronization is necessary in case refresh is called concurrently:
+    // - thread1 fails to replace a single entry
+    // - thread2 succeeds replacing an entry
+    // - thread1 loses the race to replace the list
+    // - then thread2 will shut down channel that thread1 will put back into circulation (after it
+    //   replaces the list)
+    synchronized (entryWriteLock) {
+      ArrayList<Entry> newEntries = new ArrayList<>(entries.get());
+
+      for (int i = 0; i < newEntries.size(); i++) {
+        try {
+          newEntries.set(i, new Entry(channelFactory.createSingleChannel()));
+        } catch (IOException e) {
+          LOG.log(Level.WARNING, "Failed to refresh channel, leaving old channel", e);
+        }
+      }
+
+      ImmutableList<Entry> replacedEntries = entries.getAndSet(ImmutableList.copyOf(newEntries));
+
+      // Shutdown the channels that were cycled out.
+      for (Entry e : replacedEntries) {
+        if (!newEntries.contains(e)) {
+          e.requestShutdown();
+        }
+      }
+    }
+  }
+
+  /**
+   * Get and retain a Channel Entry. The returned Entry will have its rpc count incremented,
+   * preventing it from getting recycled.
+   */
+  Entry getRetainedEntry(int affinity) {
+    // The maximum number of concurrent calls to this method for any given time span is at most 2,
+    // so the loop can actually be 2 times. But going for 5 times for a safety margin for potential
+    // code evolving
+    for (int i = 0; i < 5; i++) {
+      Entry entry = getEntry(affinity);
+      if (entry.retain()) {
+        return entry;
+      }
+    }
+    // It is unlikely to reach here unless the pool code evolves to increase the maximum possible
+    // concurrent calls to this method. If it does, this is a bug in the channel pool implementation
+    // the number of retries above should be greater than the number of contending maintenance
+    // tasks.
+    throw new IllegalStateException("Bug: failed to retain a channel");
   }
 
   /**
    * Returns one of the channels managed by this pool. The pool continues to "own" the channel, and
    * the caller should not shut it down.
    *
-   * @param affinity Two calls to this method with the same affinity returns the same channel. The
-   *     reverse is not true: Two calls with different affinities might return the same channel.
-   *     However, the implementation should attempt to spread load evenly.
+   * @param affinity Two calls to this method with the same affinity returns the same channel most
+   *     of the time, if the channel pool was refreshed since the last call, a new channel will be
+   *     returned. The reverse is not true: Two calls with different affinities might return the
+   *     same channel. However, the implementation should attempt to spread load evenly.
    */
-  ManagedChannel getChannel(int affinity) {
-    int index = affinity % channels.size();
-    index = Math.abs(index);
-    // If index is the most negative int, abs(index) is still negative.
-    if (index < 0) {
-      index = 0;
+  private Entry getEntry(int affinity) {
+    List<Entry> localEntries = entries.get();
+
+    int index = Math.abs(affinity % localEntries.size());
+
+    return localEntries.get(index);
+  }
+
+  /** Bundles a gRPC {@link ManagedChannel} with some usage accounting. */
+  private static class Entry {
+    private final ManagedChannel channel;
+    private final AtomicInteger outstandingRpcs = new AtomicInteger(0);
+    private final AtomicInteger maxOutstanding = new AtomicInteger();
+
+    // Flag that the channel should be closed once all of the outstanding RPC complete.
+    private final AtomicBoolean shutdownRequested = new AtomicBoolean();
+    // Flag that the channel has been closed.
+    private final AtomicBoolean shutdownInitiated = new AtomicBoolean();
+
+    private Entry(ManagedChannel channel) {
+      this.channel = channel;
     }
-    return channels.get(index);
+
+    int getAndResetMaxOutstanding() {
+      return maxOutstanding.getAndSet(outstandingRpcs.get());
+    }
+
+    /**
+     * Try to increment the outstanding RPC count. The method will return false if the channel is
+     * closing and the caller should pick a different channel. If the method returned true, the
+     * channel has been successfully retained and it is the responsibility of the caller to release
+     * it.
+     */
+    private boolean retain() {
+      // register desire to start RPC
+      int currentOutstanding = outstandingRpcs.incrementAndGet();
+
+      // Rough book keeping
+      int prevMax = maxOutstanding.get();
+      if (currentOutstanding > prevMax) {
+        maxOutstanding.incrementAndGet();
+      }
+
+      // abort if the channel is closing
+      if (shutdownRequested.get()) {
+        release();
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Notify the channel that the number of outstanding RPCs has decreased. If shutdown has been
+     * previously requested, this method will shutdown the channel if its the last outstanding RPC.
+     */
+    private void release() {
+      int newCount = outstandingRpcs.decrementAndGet();
+      if (newCount < 0) {
+        throw new IllegalStateException("Bug: reference count is negative!: " + newCount);
+      }
+
+      // Must check outstandingRpcs after shutdownRequested (in reverse order of retain()) to ensure
+      // mutual exclusion.
+      if (shutdownRequested.get() && outstandingRpcs.get() == 0) {
+        shutdown();
+      }
+    }
+
+    /**
+     * Request a shutdown. The actual shutdown will be delayed until there are no more outstanding
+     * RPCs.
+     */
+    private void requestShutdown() {
+      shutdownRequested.set(true);
+      if (outstandingRpcs.get() == 0) {
+        shutdown();
+      }
+    }
+
+    /** Ensure that shutdown is only called once. */
+    private void shutdown() {
+      if (shutdownInitiated.compareAndSet(false, true)) {
+        channel.shutdown();
+      }
+    }
+  }
+
+  /** Thin wrapper to ensure that new calls are properly reference counted. */
+  private class AffinityChannel extends Channel {
+    private final int affinity;
+
+    public AffinityChannel(int affinity) {
+      this.affinity = affinity;
+    }
+
+    @Override
+    public String authority() {
+      return authority;
+    }
+
+    @Override
+    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+        MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
+
+      Entry entry = getRetainedEntry(affinity);
+
+      return new ReleasingClientCall<>(entry.channel.newCall(methodDescriptor, callOptions), entry);
+    }
+  }
+
+  /** ClientCall wrapper that makes sure to decrement the outstanding RPC count on completion. */
+  static class ReleasingClientCall<ReqT, RespT> extends SimpleForwardingClientCall<ReqT, RespT> {
+    final Entry entry;
+
+    public ReleasingClientCall(ClientCall<ReqT, RespT> delegate, Entry entry) {
+      super(delegate);
+      this.entry = entry;
+    }
+
+    @Override
+    public void start(Listener<RespT> responseListener, Metadata headers) {
+      try {
+        super.start(
+            new SimpleForwardingClientCallListener<RespT>(responseListener) {
+              @Override
+              public void onClose(Status status, Metadata trailers) {
+                try {
+                  super.onClose(status, trailers);
+                } finally {
+                  entry.release();
+                }
+              }
+            },
+            headers);
+      } catch (Exception e) {
+        // In case start failed, make sure to release
+        entry.release();
+      }
+    }
   }
 }

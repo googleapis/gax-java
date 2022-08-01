@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode.Code;
@@ -39,7 +38,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 /** Public for technical reasons; intended for use by generated code. */
-@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class ProtoOperationTransformers {
   private ProtoOperationTransformers() {}
 
@@ -65,6 +63,11 @@ public class ProtoOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
+
+      if (!(operationSnapshot.getResponse() instanceof Any)) {
+        return (ResponseT) operationSnapshot.getResponse();
+      }
+
       try {
         return transformer.apply((Any) operationSnapshot.getResponse());
       } catch (RuntimeException e) {
@@ -94,9 +97,11 @@ public class ProtoOperationTransformers {
 
     @Override
     public MetadataT apply(OperationSnapshot operationSnapshot) {
+      if (!(operationSnapshot.getMetadata() instanceof Any)) {
+        return (MetadataT) operationSnapshot.getMetadata();
+      }
       try {
-        return transformer.apply(
-            operationSnapshot.getMetadata() != null ? (Any) operationSnapshot.getMetadata() : null);
+        return transformer.apply((Any) operationSnapshot.getMetadata());
       } catch (RuntimeException e) {
         throw ApiExceptionFactory.createException(
             "Polling operation with name \""

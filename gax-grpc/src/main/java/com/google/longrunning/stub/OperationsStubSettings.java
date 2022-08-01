@@ -33,7 +33,6 @@ import static com.google.longrunning.OperationsClient.ListOperationsPagedRespons
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -61,15 +60,12 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
+import com.google.longrunning.WaitOperationRequest;
 import com.google.protobuf.Empty;
 import java.io.IOException;
-import javax.annotation.Generated;
 import org.threeten.bp.Duration;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsStub}. */
-@Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
 
   private final UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings;
@@ -78,6 +74,7 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
       listOperationsSettings;
   private final UnaryCallSettings<CancelOperationRequest, Empty> cancelOperationSettings;
   private final UnaryCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings;
+  private final UnaryCallSettings<WaitOperationRequest, Operation> waitOperationSettings;
 
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
@@ -101,7 +98,11 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return deleteOperationSettings;
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
+  /** Returns the object with the settings used for calls to waitOperation. */
+  public UnaryCallSettings<WaitOperationRequest, Operation> waitOperationSettings() {
+    return waitOperationSettings;
+  }
+
   public OperationsStub createStub() throws IOException {
     if (getTransportChannelProvider()
         .getTransportName()
@@ -123,7 +124,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     return GoogleCredentialsProvider.newBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratedLibToken(
@@ -154,6 +154,7 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     listOperationsSettings = settingsBuilder.listOperationsSettings().build();
     cancelOperationSettings = settingsBuilder.cancelOperationSettings().build();
     deleteOperationSettings = settingsBuilder.deleteOperationSettings().build();
+    waitOperationSettings = settingsBuilder.waitOperationSettings().build();
   }
 
   private static final PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
@@ -218,6 +219,7 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
         listOperationsSettings;
     private final UnaryCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
     private final UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
+    private final UnaryCallSettings.Builder<WaitOperationRequest, Operation> waitOperationSettings;
 
     private static final ImmutableMap<String, ImmutableSet<StatusCode.Code>>
         RETRYABLE_CODE_DEFINITIONS;
@@ -268,6 +270,8 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
 
       deleteOperationSettings = UnaryCallSettings.newUnaryCallSettingsBuilder();
 
+      waitOperationSettings = UnaryCallSettings.newUnaryCallSettingsBuilder();
+
       unaryMethodSettingsBuilders =
           ImmutableList.<UnaryCallSettings.Builder<?, ?>>of(
               getOperationSettings,
@@ -305,6 +309,11 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
           .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
           .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
+      builder
+          .waitOperationSettings()
+          .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
+          .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
+
       return builder;
     }
 
@@ -315,13 +324,15 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
       listOperationsSettings = settings.listOperationsSettings.toBuilder();
       cancelOperationSettings = settings.cancelOperationSettings.toBuilder();
       deleteOperationSettings = settings.deleteOperationSettings.toBuilder();
+      waitOperationSettings = settings.waitOperationSettings.toBuilder();
 
       unaryMethodSettingsBuilders =
           ImmutableList.<UnaryCallSettings.Builder<?, ?>>of(
               getOperationSettings,
               listOperationsSettings,
               cancelOperationSettings,
-              deleteOperationSettings);
+              deleteOperationSettings,
+              waitOperationSettings);
     }
 
     /**
@@ -359,6 +370,11 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     /** Returns the builder for the settings used for calls to deleteOperation. */
     public UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return deleteOperationSettings;
+    }
+
+    /** Returns the builder for the settings used for calls to waitOperation. */
+    public UnaryCallSettings.Builder<WaitOperationRequest, Operation> waitOperationSettings() {
+      return waitOperationSettings;
     }
 
     @Override

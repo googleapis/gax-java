@@ -31,11 +31,15 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -63,9 +67,13 @@ public interface ApiCallContext extends RetryingContext {
    * Returns a new ApiCallContext with the given timeout set.
    *
    * <p>This sets the maximum amount of time a single unary RPC attempt can take. If retries are
-   * enabled, then this can take much longer. Unlike a deadline, timeouts are relative durations
-   * that are measure from the beginning of each RPC attempt. Please note that this will limit the
-   * duration of a server streaming RPC as well.
+   * enabled, then this can take much longer, as each RPC attempt will have the same constant
+   * timeout. Unlike a deadline, timeouts are relative durations that are measure from the beginning
+   * of each RPC attempt. Please note that this limits the duration of a server streaming RPC as
+   * well.
+   *
+   * <p>If a method has default {@link com.google.api.gax.retrying.RetrySettings}, the max attempts
+   * and/or total timeout is still respected when scheduling each RPC attempt.
    */
   ApiCallContext withTimeout(@Nullable Duration timeout);
 
@@ -90,7 +98,6 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
 
   /**
@@ -98,7 +105,6 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamWaitTimeout();
 
@@ -120,7 +126,6 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);
 
   /**
@@ -128,7 +133,6 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamIdleTimeout();
 
@@ -153,6 +157,72 @@ public interface ApiCallContext extends RetryingContext {
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
 
+  /**
+   * Returns a new ApiCallContext with the given {@link RetrySettings} set.
+   *
+   * <p>This sets the {@link RetrySettings} to use for the RPC. These settings will work in
+   * combination with either the default retryable codes for the RPC, or the retryable codes
+   * supplied through {@link #withRetryableCodes(Set)}. Calling {@link
+   * #withRetrySettings(RetrySettings)} on an RPC that does not include {@link
+   * Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without calling {@link
+   * #withRetryableCodes(Set)} with a set that includes at least {@link Code#DEADLINE_EXCEEDED})
+   * will effectively only set a single timeout that is equal to {@link
+   * RetrySettings#getInitialRpcTimeout()}. If this timeout is exceeded, the RPC will not be retried
+   * and will fail with {@link Code#DEADLINE_EXCEEDED}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ApiCallContext context = GrpcCallContext.createDefault()
+   *   .withRetrySettings(RetrySettings.newBuilder()
+   *     .setInitialRetryDelay(Duration.ofMillis(10L))
+   *     .setInitialRpcTimeout(Duration.ofMillis(100L))
+   *     .setMaxAttempts(10)
+   *     .setMaxRetryDelay(Duration.ofSeconds(10L))
+   *     .setMaxRpcTimeout(Duration.ofSeconds(30L))
+   *     .setRetryDelayMultiplier(1.4)
+   *     .setRpcTimeoutMultiplier(1.5)
+   *     .setTotalTimeout(Duration.ofMinutes(10L))
+   *     .build())
+   *   .withRetryableCodes(Sets.newSet(
+   *     StatusCode.Code.UNAVAILABLE,
+   *     StatusCode.Code.DEADLINE_EXCEEDED));
+   * }</pre>
+   *
+   * Setting a logical call timeout for the context can be done similarly with {@link
+   * RetrySettings.Builder#setLogicalTimeout(Duration timeout)}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ApiCallContext context = GrpcCallContext.createDefault()
+   *   .withRetrySettings(RetrySettings.newBuilder()
+   *     .setInitialRetryDelay(Duration.ofMillis(10L))
+   *     .setMaxRetryDelay(Duration.ofSeconds(10L))
+   *     .setRetryDelayMultiplier(1.4)
+   *     .setMaxAttempts(10)
+   *     .setLogicalTimeout(Duration.ofSeconds(30L))
+   *     .build());
+   * }</pre>
+   */
+  @BetaApi
+  ApiCallContext withRetrySettings(RetrySettings retrySettings);
+
+  /**
+   * Returns a new ApiCallContext with the given retryable codes set.
+   *
+   * <p>This sets the retryable codes to use for the RPC. These settings will work in combination
+   * with either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings}
+   * supplied through {@link #withRetrySettings(RetrySettings)}.
+   *
+   * <p>Setting a non-empty set of retryable codes for an RPC that is not already retryable by
+   * default, will not have any effect and the RPC will NOT be retried. This option can only be used
+   * to change which codes are considered retryable for an RPC that already has at least one
+   * retryable code in its default settings.
+   */
+  @BetaApi
+  ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
+
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);
 
@@ -169,4 +239,31 @@ public interface ApiCallContext extends RetryingContext {
   /** Return the extra headers set for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   Map<String, List<String>> getExtraHeaders();
+
+  /**
+   * Return a new ApiCallContext with additional option merged into the present instance. Any
+   * existing value of the key is overwritten.
+   */
+  @BetaApi("The surface for call context options is not stable yet and may change in the future.")
+  <T> ApiCallContext withOption(Key<T> key, T value);
+
+  /** Return the api call context option set for this context. */
+  @SuppressWarnings("unchecked")
+  @BetaApi("The surface for call context options is not stable yet and may change in the future.")
+  <T> T getOption(Key<T> key);
+
+  /** Key for api call context options key-value pair. */
+  final class Key<T> {
+    private final String name;
+
+    private Key(String name) {
+      this.name = name;
+    }
+
+    /** Factory method for creating instances of {@link Key}. */
+    public static <T> Key<T> create(String name) {
+      Preconditions.checkNotNull(name, "Key name cannot be null.");
+      return new Key<>(name);
+    }
+  }
 }

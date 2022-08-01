@@ -29,12 +29,26 @@
  */
 package com.google.api.gax.httpjson;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,9 +75,9 @@ public class HttpJsonCallContextTest {
   public void testWithCredentials() {
     Credentials credentials = Mockito.mock(Credentials.class);
     HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
-    Truth.assertThat(emptyContext.getCredentials()).isNull();
+    assertNull(emptyContext.getCredentials());
     HttpJsonCallContext context = emptyContext.withCredentials(credentials);
-    Truth.assertThat(context.getCredentials()).isNotNull();
+    assertNotNull(context.getCredentials());
   }
 
   @Test
@@ -103,21 +117,19 @@ public class HttpJsonCallContextTest {
 
   @Test
   public void testWithTimeout() {
-    Truth.assertThat(HttpJsonCallContext.createDefault().withTimeout(null).getTimeout()).isNull();
+    assertNull(HttpJsonCallContext.createDefault().withTimeout(null).getTimeout());
   }
 
   @Test
   public void testWithNegativeTimeout() {
-    Truth.assertThat(
-            HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout())
-        .isNull();
+    assertNull(
+        HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout());
   }
 
   @Test
   public void testWithZeroTimeout() {
-    Truth.assertThat(
-            HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout())
-        .isNull();
+    assertNull(
+        HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout());
   }
 
   @Test
@@ -189,5 +201,74 @@ public class HttpJsonCallContextTest {
     // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(HttpJsonCallContext.createDefault()).getTracer())
         .isSameInstanceAs(defaultTracer);
+  }
+
+  @Test
+  public void testWithRetrySettings() {
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+    HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
+    assertNull(emptyContext.getRetrySettings());
+    HttpJsonCallContext context = emptyContext.withRetrySettings(retrySettings);
+    assertNotNull(context.getRetrySettings());
+  }
+
+  @Test
+  public void testWithRetryableCodes() {
+    Set<StatusCode.Code> codes = Collections.singleton(StatusCode.Code.UNAVAILABLE);
+    HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
+    assertNull(emptyContext.getRetryableCodes());
+    HttpJsonCallContext context = emptyContext.withRetryableCodes(codes);
+    assertNotNull(context.getRetryableCodes());
+  }
+
+  @Test
+  public void testWithExtraHeaders() {
+    Map<String, List<String>> headers = ImmutableMap.of("k", Arrays.asList("v"));
+    ApiCallContext emptyContext = HttpJsonCallContext.createDefault();
+    assertTrue(emptyContext.getExtraHeaders().isEmpty());
+    ApiCallContext context = emptyContext.withExtraHeaders(headers);
+    assertEquals(headers, context.getExtraHeaders());
+  }
+
+  @Test
+  public void testWithOptions() {
+    ApiCallContext emptyCallContext = HttpJsonCallContext.createDefault();
+    ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
+    ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
+    String testContext1 = "test1";
+    String testContext2 = "test2";
+    String testContextOverwrite = "test1Overwrite";
+    ApiCallContext context =
+        emptyCallContext
+            .withOption(contextKey1, testContext1)
+            .withOption(contextKey2, testContext2);
+    assertEquals(testContext1, context.getOption(contextKey1));
+    assertEquals(testContext2, context.getOption(contextKey2));
+    ApiCallContext newContext = context.withOption(contextKey1, testContextOverwrite);
+    assertEquals(testContextOverwrite, newContext.getOption(contextKey1));
+  }
+
+  @Test
+  public void testMergeOptions() {
+    ApiCallContext emptyCallContext = HttpJsonCallContext.createDefault();
+    ApiCallContext.Key<String> contextKey1 = ApiCallContext.Key.create("testKey1");
+    ApiCallContext.Key<String> contextKey2 = ApiCallContext.Key.create("testKey2");
+    ApiCallContext.Key<String> contextKey3 = ApiCallContext.Key.create("testKey3");
+    String testContext1 = "test1";
+    String testContext2 = "test2";
+    String testContext3 = "test3";
+    String testContextOverwrite = "test1Overwrite";
+    ApiCallContext context1 =
+        emptyCallContext
+            .withOption(contextKey1, testContext1)
+            .withOption(contextKey2, testContext2);
+    ApiCallContext context2 =
+        emptyCallContext
+            .withOption(contextKey1, testContextOverwrite)
+            .withOption(contextKey3, testContext3);
+    ApiCallContext mergedContext = context1.merge(context2);
+    assertEquals(testContextOverwrite, mergedContext.getOption(contextKey1));
+    assertEquals(testContext2, mergedContext.getOption(contextKey2));
+    assertEquals(testContext3, mergedContext.getOption(contextKey3));
   }
 }

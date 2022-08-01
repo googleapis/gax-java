@@ -141,7 +141,6 @@ public class GrpcDirectStreamingCallableTest {
     GrpcDirectServerStreamingCallableTest.MoneyObserver moneyObserver =
         new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
-    Color request = Color.newBuilder().setRed(0.5f).build();
     ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
     Throwable clientError = new StatusRuntimeException(Status.CANCELLED);
     stream.closeSendWithError(clientError);

@@ -109,7 +109,7 @@ public class RequestUrlParamsEncoder<RequestT> implements RequestParamsEncoder<R
   // Not sure if we need this at all.
   private boolean isValid(String name, String value) {
     try {
-      // hoping that encode/decode do not loose information in the middle
+      // hoping that encode/decode do not lose information in the middle
       // (at least for practical use cases)
       return !validateExtractedParameters
           || name.equals(URLEncoder.encode(URLDecoder.decode(name, STR_ENCODING), STR_ENCODING))

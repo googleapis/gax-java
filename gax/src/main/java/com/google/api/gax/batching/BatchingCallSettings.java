@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode;
@@ -64,7 +63,6 @@ import java.util.Set;
  * @param <RequestT> The type of the request that will contain the accumulated elements.
  * @param <ResponseT> The type of the response that will unpack into individual element results.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class BatchingCallSettings<ElementT, ElementResultT, RequestT, ResponseT>
     extends UnaryCallSettings<RequestT, ResponseT> {
   private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>

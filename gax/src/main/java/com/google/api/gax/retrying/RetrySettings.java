@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
 import org.threeten.bp.Duration;
 
@@ -112,7 +114,11 @@ public abstract class RetrySettings implements Serializable {
    * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, delay))}</pre>
    *
    * The default value is {@code true}.
+   *
+   * @deprecated Retries always jitter.
    */
+  @Deprecated
+  @VisibleForTesting
   public abstract boolean isJittered();
 
   /**
@@ -194,13 +200,17 @@ public abstract class RetrySettings implements Serializable {
     public abstract Builder setMaxAttempts(int maxAttempts);
 
     /**
-     * Jitter determines if the delay time should be randomized. In most cases, if jitter is set to
-     * {@code true} the actual delay time is calculated in the following way:
+     * Jitter determines if the delay time should be randomized. If jitter is set to {@code true}
+     * the actual delay time is calculated in the following way:
      *
      * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, exponentialDelay))}</pre>
      *
-     * The default value is {@code true}.
+     * The default value is {@code true}, and this method will be a no-op soon.
+     *
+     * @deprecated Retries always jitter.
      */
+    @Deprecated
+    @VisibleForTesting
     public abstract Builder setJittered(boolean jittered);
 
     /**
@@ -286,6 +296,23 @@ public abstract class RetrySettings implements Serializable {
      * can't increase the RPC timeout higher than this amount.
      */
     public abstract Duration getMaxRpcTimeout();
+
+    /**
+     * Configures the timeout settings with the given timeout such that the logical call will take
+     * no longer than the given timeout and each RPC attempt will use only the time remaining in the
+     * logical call as a timeout.
+     *
+     * <p>Using this method in conjunction with individual {@link RetrySettings} timeout field
+     * setters is not advised, because only the order in which they are invoked determines which
+     * setter is respected.
+     */
+    @BetaApi
+    public Builder setLogicalTimeout(Duration timeout) {
+      return setRpcTimeoutMultiplier(1)
+          .setInitialRpcTimeout(timeout)
+          .setMaxRpcTimeout(timeout)
+          .setTotalTimeout(timeout);
+    }
 
     abstract RetrySettings autoBuild();
 

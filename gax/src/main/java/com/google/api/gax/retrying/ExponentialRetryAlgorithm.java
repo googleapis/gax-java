@@ -41,7 +41,7 @@ import org.threeten.bp.Duration;
  *
  * <p>This class is thread-safe.
  */
-public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
+public class ExponentialRetryAlgorithm implements TimedRetryAlgorithmWithContext {
 
   private final RetrySettings globalSettings;
   private final ApiClock clock;
@@ -78,16 +78,45 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   }
 
   /**
+   * Creates a first attempt {@link TimedAttemptSettings}. The first attempt is configured to be
+   * executed immediately.
+   *
+   * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
+   *     retryable codes
+   * @return first attempt settings
+   */
+  @Override
+  public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
+    if (context.getRetrySettings() == null) {
+      return createFirstAttempt();
+    }
+
+    RetrySettings retrySettings = context.getRetrySettings();
+    return TimedAttemptSettings.newBuilder()
+        // Use the given retrySettings rather than the settings this was created with.
+        // Attempts created using the TimedAttemptSettings built here will use these
+        // retrySettings, but a new call will not (unless overridden again).
+        .setGlobalSettings(retrySettings)
+        .setRpcTimeout(retrySettings.getInitialRpcTimeout())
+        .setRetryDelay(Duration.ZERO)
+        .setRandomizedRetryDelay(Duration.ZERO)
+        .setAttemptCount(0)
+        .setOverallAttemptCount(0)
+        .setFirstAttemptStartTimeNanos(clock.nanoTime())
+        .build();
+  }
+
+  /**
    * Creates a next attempt {@link TimedAttemptSettings}. The implementation increments the current
    * attempt count and uses randomized exponential backoff factor for calculating next attempt
    * execution time.
    *
-   * @param prevSettings previous attempt settings
+   * @param previousSettings previous attempt settings
    * @return next attempt settings
    */
   @Override
-  public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
-    RetrySettings settings = prevSettings.getGlobalSettings();
+  public TimedAttemptSettings createNextAttempt(TimedAttemptSettings previousSettings) {
+    RetrySettings settings = previousSettings.getGlobalSettings();
 
     // The retry delay is determined as follows:
     //     attempt #0  - not used (initial attempt is always made immediately);
@@ -95,9 +124,9 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     //     attempt #2+ - use the calculated value (i.e. the following if statement is true only
     //                   if we are about to calculate the value for the upcoming 2nd+ attempt).
     long newRetryDelay = settings.getInitialRetryDelay().toMillis();
-    if (prevSettings.getAttemptCount() > 0) {
+    if (previousSettings.getAttemptCount() > 0) {
       newRetryDelay =
-          (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
+          (long) (settings.getRetryDelayMultiplier() * previousSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
     Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
@@ -107,7 +136,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     //     attempt #1+ - use the calculated value, or the time remaining in totalTimeout if the
     //                   calculated value would exceed the totalTimeout.
     long newRpcTimeout =
-        (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
+        (long) (settings.getRpcTimeoutMultiplier() * previousSettings.getRpcTimeout().toMillis());
     newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
 
     // The totalTimeout could be zero if a callable is only using maxAttempts to limit retries.
@@ -116,8 +145,8 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     if (!settings.getTotalTimeout().isZero()) {
       Duration timeElapsed =
           Duration.ofNanos(clock.nanoTime())
-              .minus(Duration.ofNanos(prevSettings.getFirstAttemptStartTimeNanos()));
-      Duration timeLeft = globalSettings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
+              .minus(Duration.ofNanos(previousSettings.getFirstAttemptStartTimeNanos()));
+      Duration timeLeft = settings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
 
       // If timeLeft at this point is < 0, the shouldRetry logic will prevent
       // the attempt from being made as it would exceed the totalTimeout. A negative RPC timeout
@@ -127,14 +156,32 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     }
 
     return TimedAttemptSettings.newBuilder()
-        .setGlobalSettings(prevSettings.getGlobalSettings())
+        .setGlobalSettings(previousSettings.getGlobalSettings())
         .setRetryDelay(Duration.ofMillis(newRetryDelay))
         .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
         .setRandomizedRetryDelay(randomDelay)
-        .setAttemptCount(prevSettings.getAttemptCount() + 1)
-        .setOverallAttemptCount(prevSettings.getOverallAttemptCount() + 1)
-        .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+        .setAttemptCount(previousSettings.getAttemptCount() + 1)
+        .setOverallAttemptCount(previousSettings.getOverallAttemptCount() + 1)
+        .setFirstAttemptStartTimeNanos(previousSettings.getFirstAttemptStartTimeNanos())
         .build();
+  }
+
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}. The implementation increments the current
+   * attempt count and uses randomized exponential backoff factor for calculating next attempt
+   * execution time.
+   *
+   * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
+   *     retryable codes
+   * @param previousSettings previous attempt settings
+   * @return next attempt settings
+   */
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context, TimedAttemptSettings previousSettings) {
+    // The RetrySettings from the context are not used here, as they have already been set as the
+    // global settings during the creation of the initial attempt.
+    return createNextAttempt(previousSettings);
   }
 
   /**
@@ -185,9 +232,26 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     return true;
   }
 
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
+   *     retryable codes. Ignored by this implementation.
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   *     accepted
+   * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
+   *     totalTimeout limit, or {@code false} otherwise
+   */
+  @Override
+  public boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
+    // The RetrySettings from the context are not used here, as they have already been set as the
+    // global settings during the creation of the initial attempt.
+    return shouldRetry(nextAttemptSettings);
+  }
+
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
   protected long nextRandomLong(long bound) {
-    return bound > 0 && globalSettings.isJittered()
+    return bound > 0 && globalSettings.isJittered() // Jitter check needed for testing purposes.
         ? ThreadLocalRandom.current().nextLong(bound)
         : bound;
   }

@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
@@ -53,7 +52,6 @@ import io.grpc.Metadata;
  * </code>
  * </pre>
  */
-@BetaApi("The surface for response metadata is not stable yet and may change in the future.")
 public class GrpcResponseMetadata implements ResponseMetadataHandler {
 
   private volatile Metadata responseMetadata;

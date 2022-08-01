@@ -41,7 +41,7 @@ import com.google.api.gax.rpc.testing.FakeApiException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import java.util.concurrent.BlockingDeque;
@@ -90,7 +90,7 @@ public class ServerStreamingAttemptCallableTest {
   @Test
   public void testUserProvidedContextTimeout() {
     // Mock up the ApiCallContext as if the user provided a timeout and streamWaitTimeout.
-    Mockito.doReturn(NoopApiTracer.getInstance()).when(mockedCallContext).getTracer();
+    Mockito.doReturn(BaseApiTracer.getInstance()).when(mockedCallContext).getTracer();
     Mockito.doReturn(Duration.ofHours(5)).when(mockedCallContext).getTimeout();
     Mockito.doReturn(Duration.ofHours(5)).when(mockedCallContext).getStreamWaitTimeout();
 
@@ -125,7 +125,7 @@ public class ServerStreamingAttemptCallableTest {
   @Test
   public void testNoUserProvidedContextTimeout() {
     // Mock up the ApiCallContext as if the user did not provide custom timeouts.
-    Mockito.doReturn(NoopApiTracer.getInstance()).when(mockedCallContext).getTracer();
+    Mockito.doReturn(BaseApiTracer.getInstance()).when(mockedCallContext).getTracer();
     Mockito.doReturn(null).when(mockedCallContext).getTimeout();
     Mockito.doReturn(null).when(mockedCallContext).getStreamWaitTimeout();
     Mockito.doReturn(mockedCallContext).when(mockedCallContext).withTimeout(totalTimeout);

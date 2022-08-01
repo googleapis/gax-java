@@ -31,18 +31,15 @@ package com.google.api.gax.httpjson;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
@@ -53,12 +50,12 @@ import java.util.concurrent.CancellationException;
  */
 class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final ImmutableSet<StatusCode.Code> retryableCodes;
+  private final HttpJsonApiExceptionFactory exceptionFactory;
 
   HttpJsonExceptionCallable(
       UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
+    this.exceptionFactory = new HttpJsonApiExceptionFactory(retryableCodes);
   }
 
   @Override
@@ -73,7 +70,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
   private class ExceptionTransformingFuture extends AbstractApiFuture<ResponseT>
       implements ApiFutureCallback<ResponseT> {
-    private ApiFuture<ResponseT> innerCallFuture;
+    private final ApiFuture<ResponseT> innerCallFuture;
     private volatile boolean cancelled = false;
 
     public ExceptionTransformingFuture(ApiFuture<ResponseT> innerCallFuture) {
@@ -93,30 +90,11 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
     @Override
     public void onFailure(Throwable throwable) {
-      if (throwable instanceof HttpResponseException) {
-        HttpResponseException e = (HttpResponseException) throwable;
-        StatusCode.Code statusCode =
-            HttpJsonStatusCode.httpStatusToStatusCode(e.getStatusCode(), e.getMessage());
-        boolean canRetry = retryableCodes.contains(statusCode);
-        String message = e.getStatusMessage();
-        ApiException newException =
-            message == null
-                ? ApiExceptionFactory.createException(
-                    throwable, HttpJsonStatusCode.of(statusCode), canRetry)
-                : ApiExceptionFactory.createException(
-                    message, throwable, HttpJsonStatusCode.of(statusCode), canRetry);
-        super.setException(newException);
-      } else if (throwable instanceof CancellationException && cancelled) {
+      if (throwable instanceof CancellationException && cancelled) {
         // this just circled around, so ignore.
         return;
-      } else if (throwable instanceof ApiException) {
-        super.setException(throwable);
-      } else {
-        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        setException(
-            ApiExceptionFactory.createException(
-                throwable, HttpJsonStatusCode.of(StatusCode.Code.UNKNOWN), false));
       }
+      setException(exceptionFactory.create(throwable));
     }
   }
 }

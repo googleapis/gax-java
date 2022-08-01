@@ -2,12 +2,12 @@
 bin
 build
 .gradle
-tmp_gh-pages
 tmp_docs
 bazel-*
+target
 
 # Eclipse
-.apt_generated
+.apt_generated*
 .classpath
 .factorypath
 .project
@@ -15,11 +15,10 @@ bazel-*
 
 # IntelliJ
 .idea
+*.iml
 out
 
 # Vim.
 *.sw*
 *.vim
 
-# Auto-generated files.
-gax/src/main/resources/dependencies.properties

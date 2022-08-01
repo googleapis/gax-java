@@ -32,39 +32,27 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.CancellationException;
 
 /**
- * A result retry algorithm is responsible for the following operations (based on the response
- * returned by the previous attempt or on the thrown exception):
- *
- * <ol>
- *   <li>Accepting a task for retry so another attempt will be made.
- *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
- *       canceled.
- *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
- * </ol>
- *
- * Implementations of this interface must be thread-safe.
- *
- * @param <ResponseT> response type
+ * Same as {@link ResultRetryAlgorithmWithContext}, but without methods that accept a {@link
+ * RetryingContext}. Use {@link ResultRetryAlgorithmWithContext} instead of this interface when
+ * possible.
  */
 public interface ResultRetryAlgorithm<ResponseT> {
   /**
-   * Creates a next attempt {@link TimedAttemptSettings}.
+   * Same as {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
+   * Object, TimedAttemptSettings)}, but without a {@link RetryingContext}.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @param prevSettings previous attempt settings
-   * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
-   *     specific settings for the next attempt
+   * <p>Use {@link ResultRetryAlgorithmWithContext#createNextAttempt(RetryingContext, Throwable,
+   * Object, TimedAttemptSettings)} instead of this method when possible.
    */
   TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings);
 
   /**
-   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   * Same as {@link ResultRetryAlgorithmWithContext#shouldRetry(Throwable, Object)}, but without a
+   * {@link RetryingContext}.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @throws CancellationException if the retrying process should be canceled
+   * <p>Use {@link ResultRetryAlgorithmWithContext#shouldRetry(RetryingContext, Throwable, Object)}
+   * instead of this method when possible.
    */
   boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) throws CancellationException;
 }

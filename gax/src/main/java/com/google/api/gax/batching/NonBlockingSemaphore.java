@@ -35,7 +35,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /** A {@link Semaphore64} that immediately returns with failure if permits are not available. */
 class NonBlockingSemaphore implements Semaphore64 {
-  private final AtomicLong currentPermits;
+  private AtomicLong acquiredPermits;
+  private AtomicLong limit;
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -43,25 +44,75 @@ class NonBlockingSemaphore implements Semaphore64 {
 
   NonBlockingSemaphore(long permits) {
     checkNotNegative(permits);
-    this.currentPermits = new AtomicLong(permits);
+    this.acquiredPermits = new AtomicLong(0);
+    this.limit = new AtomicLong(permits);
   }
 
+  @Override
   public void release(long permits) {
     checkNotNegative(permits);
-    currentPermits.addAndGet(permits);
+    while (true) {
+      long old = acquiredPermits.get();
+      // TODO: throw exceptions when the permits overflow
+      long newAcquired = Math.max(0, old - permits);
+      if (acquiredPermits.compareAndSet(old, newAcquired)) {
+        return;
+      }
+    }
   }
 
+  @Override
   public boolean acquire(long permits) {
     checkNotNegative(permits);
-
-    for (; ; ) {
-      long old = currentPermits.get();
-      if (old < permits) {
+    while (true) {
+      long old = acquiredPermits.get();
+      if (old + permits > limit.get()) {
         return false;
       }
-      if (currentPermits.compareAndSet(old, old - permits)) {
+      if (acquiredPermits.compareAndSet(old, old + permits)) {
         return true;
       }
     }
+  }
+
+  @Override
+  public boolean acquirePartial(long permits) {
+    checkNotNegative(permits);
+    // To allow individual oversized requests to be sent, clamp the requested permits to the maximum
+    // limit. This will allow individual large requests to be sent. Please note that this behavior
+    // will result in acquiredPermits going over limit.
+    while (true) {
+      long old = acquiredPermits.get();
+      if (old + permits > limit.get() && old > 0) {
+        return false;
+      }
+      if (acquiredPermits.compareAndSet(old, old + permits)) {
+        return true;
+      }
+    }
+  }
+
+  @Override
+  public void increasePermitLimit(long permits) {
+    checkNotNegative(permits);
+    limit.addAndGet(permits);
+  }
+
+  @Override
+  public void reducePermitLimit(long reduction) {
+    checkNotNegative(reduction);
+
+    while (true) {
+      long oldLimit = limit.get();
+      Preconditions.checkState(oldLimit - reduction > 0, "permit limit underflow");
+      if (limit.compareAndSet(oldLimit, oldLimit - reduction)) {
+        return;
+      }
+    }
+  }
+
+  @Override
+  public long getPermitLimit() {
+    return limit.get();
   }
 }

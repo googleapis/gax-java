@@ -31,171 +31,192 @@ package com.google.api.gax.httpjson;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.core.SettableApiFuture;
-import com.google.api.pathtemplate.PathTemplate;
-import com.google.common.collect.ImmutableMap;
-import java.io.InputStream;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.gax.httpjson.testing.MockHttpService;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.protobuf.Field;
+import com.google.protobuf.Field.Cardinality;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
-import org.threeten.bp.Instant;
 
+@RunWith(JUnit4.class)
 public class HttpJsonDirectCallableTest {
-  private final ApiMethodDescriptor<String, String> API_DESCRIPTOR =
-      ApiMethodDescriptor.<String, String>newBuilder()
-          .setFullMethodName("fakeMethod")
-          .setHttpMethod("GET")
-          .setRequestFormatter(new FakeRequestFormatter())
-          .setResponseParser(new FakeResponseParser())
+
+  private static final ApiMethodDescriptor<Field, Field> FAKE_METHOD_DESCRIPTOR =
+      ApiMethodDescriptor.<Field, Field>newBuilder()
+          .setFullMethodName("google.cloud.v1.Fake/FakeMethod")
+          .setHttpMethod("POST")
+          .setRequestFormatter(
+              ProtoMessageRequestFormatter.<Field>newBuilder()
+                  .setPath(
+                      "/fake/v1/name/{name=bob/*}",
+                      request -> {
+                        Map<String, String> fields = new HashMap<>();
+                        ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                        serializer.putPathParam(fields, "name", request.getName());
+                        return fields;
+                      })
+                  .setAdditionalPaths("/fake/v1/name/{name=john/*}")
+                  .setQueryParamsExtractor(
+                      request -> {
+                        Map<String, List<String>> fields = new HashMap<>();
+                        ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
+                        serializer.putQueryParam(fields, "number", request.getNumber());
+                        return fields;
+                      })
+                  .setRequestBodyExtractor(
+                      request ->
+                          ProtoRestSerializer.create()
+                              .toBody("*", request.toBuilder().clearName().build()))
+                  .build())
+          .setResponseParser(
+              ProtoMessageResponseParser.<Field>newBuilder()
+                  .setDefaultInstance(Field.getDefaultInstance())
+                  .build())
           .build();
 
-  @SuppressWarnings("unchecked")
-  @Test
-  public void testTimeout() {
-    HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);
+  private static final MockHttpService MOCK_SERVICE =
+      new MockHttpService(Collections.singletonList(FAKE_METHOD_DESCRIPTOR), "google.com:443");
 
-    String expectedRequest = "fake";
+  private final ManagedHttpJsonChannel channel =
+      new ManagedHttpJsonInterceptorChannel(
+          ManagedHttpJsonChannel.newBuilder()
+              .setEndpoint("google.com:443")
+              .setExecutor(executorService)
+              .setHttpTransport(MOCK_SERVICE)
+              .build(),
+          new HttpJsonHeaderInterceptor(Collections.singletonMap("header-key", "headerValue")));
 
-    HttpJsonDirectCallable<String, String> callable = new HttpJsonDirectCallable<>(API_DESCRIPTOR);
+  private static ExecutorService executorService;
 
-    // Mock the channel that captures the call options
-    ArgumentCaptor<HttpJsonCallOptions> capturedCallOptions =
-        ArgumentCaptor.forClass(HttpJsonCallOptions.class);
-
-    Mockito.when(
-            mockChannel.issueFutureUnaryCall(
-                capturedCallOptions.capture(),
-                Mockito.anyString(),
-                Mockito.any(ApiMethodDescriptor.class)))
-        .thenReturn(SettableApiFuture.create());
-
-    // Compose the call context
-    Duration timeout = Duration.ofSeconds(10);
-    Instant minExpectedDeadline = Instant.now().plus(timeout);
-
-    HttpJsonCallContext callContext =
-        HttpJsonCallContext.createDefault().withChannel(mockChannel).withTimeout(timeout);
-
-    callable.futureCall(expectedRequest, callContext);
-
-    Instant maxExpectedDeadline = Instant.now().plus(timeout);
-
-    // Verify that the timeout was converted into a deadline
-    assertThat(capturedCallOptions.getValue().getDeadline()).isAtLeast(minExpectedDeadline);
-    assertThat(capturedCallOptions.getValue().getDeadline()).isAtMost(maxExpectedDeadline);
+  @BeforeClass
+  public static void initialize() {
+    executorService =
+        Executors.newFixedThreadPool(
+            2,
+            r -> {
+              Thread t = Executors.defaultThreadFactory().newThread(r);
+              t.setDaemon(true);
+              return t;
+            });
   }
 
-  @SuppressWarnings("unchecked")
+  @AfterClass
+  public static void destroy() {
+    executorService.shutdownNow();
+  }
+
+  @After
+  public void tearDown() {
+    MOCK_SERVICE.reset();
+  }
+
   @Test
-  public void testTimeoutAfterDeadline() {
-    HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);
-
-    String expectedRequest = "fake";
-
-    HttpJsonDirectCallable<String, String> callable = new HttpJsonDirectCallable<>(API_DESCRIPTOR);
-
-    // Mock the channel that captures the call options
-    ArgumentCaptor<HttpJsonCallOptions> capturedCallOptions =
-        ArgumentCaptor.forClass(HttpJsonCallOptions.class);
-
-    Mockito.when(
-            mockChannel.issueFutureUnaryCall(
-                capturedCallOptions.capture(),
-                Mockito.anyString(),
-                Mockito.any(ApiMethodDescriptor.class)))
-        .thenReturn(SettableApiFuture.create());
-
-    // Compose the call context
-    Instant priorDeadline = Instant.now().plusSeconds(5);
-    Duration timeout = Duration.ofSeconds(10);
+  public void testSuccessfulUnaryResponse() throws ExecutionException, InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
     HttpJsonCallContext callContext =
         HttpJsonCallContext.createDefault()
-            .withChannel(mockChannel)
-            .withDeadline(priorDeadline)
-            .withTimeout(timeout);
+            .withChannel(channel)
+            .withTimeout(Duration.ofSeconds(30));
 
-    callable.futureCall(expectedRequest, callContext);
+    Field request;
+    Field expectedResponse;
+    request = expectedResponse = createTestMessage();
 
-    // Verify that the timeout was ignored
-    assertThat(capturedCallOptions.getValue().getDeadline()).isEqualTo(priorDeadline);
+    MOCK_SERVICE.addResponse(expectedResponse);
+
+    Field actualResponse = callable.futureCall(request, callContext).get();
+
+    assertThat(actualResponse).isEqualTo(expectedResponse);
+    assertThat(MOCK_SERVICE.getRequestPaths().size()).isEqualTo(1);
+    String headerValue = MOCK_SERVICE.getRequestHeaders().get("header-key").iterator().next();
+    assertThat(headerValue).isEqualTo("headerValue");
   }
 
-  @SuppressWarnings("unchecked")
   @Test
-  public void testTimeoutBeforeDeadline() {
-    HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);
+  public void testErrorUnaryResponse() throws InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
-    String expectedRequest = "fake";
+    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
-    HttpJsonDirectCallable<String, String> callable = new HttpJsonDirectCallable<>(API_DESCRIPTOR);
+    ApiException exception =
+        ApiExceptionFactory.createException(
+            new Exception(), FakeStatusCode.of(Code.NOT_FOUND), false);
+    MOCK_SERVICE.addException(exception);
 
-    // Mock the channel that captures the call options
-    ArgumentCaptor<HttpJsonCallOptions> capturedCallOptions =
-        ArgumentCaptor.forClass(HttpJsonCallOptions.class);
-
-    Mockito.when(
-            mockChannel.issueFutureUnaryCall(
-                capturedCallOptions.capture(),
-                Mockito.anyString(),
-                Mockito.any(ApiMethodDescriptor.class)))
-        .thenReturn(SettableApiFuture.create());
-
-    // Compose the call context
-    Duration timeout = Duration.ofSeconds(10);
-    Instant subsequentDeadline = Instant.now().plusSeconds(15);
-
-    Instant minExpectedDeadline = Instant.now().plus(timeout);
-
-    HttpJsonCallContext callContext =
-        HttpJsonCallContext.createDefault()
-            .withChannel(mockChannel)
-            .withDeadline(subsequentDeadline)
-            .withTimeout(timeout);
-
-    callable.futureCall(expectedRequest, callContext);
-
-    Instant maxExpectedDeadline = Instant.now().plus(timeout);
-
-    // Verify that the timeout was converted into a deadline
-    assertThat(capturedCallOptions.getValue().getDeadline()).isAtLeast(minExpectedDeadline);
-    assertThat(capturedCallOptions.getValue().getDeadline()).isAtMost(maxExpectedDeadline);
-  }
-
-  private static final class FakeRequestFormatter implements HttpRequestFormatter<String> {
-    @Override
-    public Map<String, List<String>> getQueryParamNames(String apiMessage) {
-      return ImmutableMap.of();
-    }
-
-    @Override
-    public String getRequestBody(String apiMessage) {
-      return "fake";
-    }
-
-    @Override
-    public String getPath(String apiMessage) {
-      return "/fake/path";
-    }
-
-    @Override
-    public PathTemplate getPathTemplate() {
-      return PathTemplate.create("/fake/path");
+    try {
+      callable.futureCall(createTestMessage(), callContext).get();
+      Assert.fail("No exception raised");
+    } catch (ExecutionException e) {
+      HttpResponseException respExp = (HttpResponseException) e.getCause();
+      assertThat(respExp.getStatusCode()).isEqualTo(400);
+      assertThat(respExp.getContent()).isEqualTo(exception.toString());
     }
   }
 
-  private static final class FakeResponseParser implements HttpResponseParser<String> {
-    @Override
-    public String parse(InputStream httpContent) {
-      return "fake";
-    }
+  @Test
+  public void testErrorNullContentSuccessfulResponse() throws InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
-    @Override
-    public String serialize(String response) {
-      return response;
+    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
+
+    MOCK_SERVICE.addNullResponse();
+
+    try {
+      callable.futureCall(createTestMessage(), callContext).get();
+      Assert.fail("No exception raised");
+    } catch (ExecutionException e) {
+      HttpJsonStatusRuntimeException respExp = (HttpJsonStatusRuntimeException) e.getCause();
+      assertThat(respExp.getStatusCode()).isEqualTo(200);
+      assertThat(respExp.getCause().getMessage())
+          .isEqualTo("Both response message and response exception were null");
     }
+  }
+
+  @Test
+  public void testErrorNullContentFailedResponse() throws InterruptedException {
+    HttpJsonDirectCallable<Field, Field> callable =
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+
+    HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
+    MOCK_SERVICE.addNullResponse(400);
+
+    try {
+      callable.futureCall(createTestMessage(), callContext).get();
+      Assert.fail("No exception raised");
+    } catch (ExecutionException e) {
+      HttpResponseException respExp = (HttpResponseException) e.getCause();
+      assertThat(respExp.getStatusCode()).isEqualTo(400);
+      assertThat(respExp.getContent()).isNull();
+    }
+  }
+
+  private Field createTestMessage() {
+    return Field.newBuilder() // "echo" service
+        .setName("john/imTheBestField")
+        .setNumber(2)
+        .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
+        .setDefaultValue("blah")
+        .build();
   }
 }

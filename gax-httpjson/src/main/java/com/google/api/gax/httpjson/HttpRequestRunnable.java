@@ -33,68 +33,145 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.GenericData;
-import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
+import org.threeten.bp.Instant;
 
 /** A runnable object that creates and executes an HTTP request. */
-@AutoValue
-abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
-  abstract HttpJsonCallOptions getHttpJsonCallOptions();
+class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
+  private final RequestT request;
+  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+  private final String endpoint;
+  private final HttpJsonCallOptions httpJsonCallOptions;
+  private final HttpTransport httpTransport;
+  private final HttpJsonMetadata headers;
+  private final ResultListener resultListener;
 
-  abstract RequestT getRequest();
+  private volatile boolean cancelled = false;
 
-  abstract ApiMethodDescriptor<RequestT, ResponseT> getApiMethodDescriptor();
+  HttpRequestRunnable(
+      RequestT request,
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      String endpoint,
+      HttpJsonCallOptions httpJsonCallOptions,
+      HttpTransport httpTransport,
+      HttpJsonMetadata headers,
+      ResultListener resultListener) {
+    this.request = request;
+    this.methodDescriptor = methodDescriptor;
+    this.endpoint = endpoint;
+    this.httpJsonCallOptions = httpJsonCallOptions;
+    this.httpTransport = httpTransport;
+    this.headers = headers;
+    this.resultListener = resultListener;
+  }
 
-  abstract HttpTransport getHttpTransport();
+  // Best effort cancellation without guarantees.
+  // It will check if the task cancelled before each three sequential potentially time-consuming
+  // operations:
+  //   - request construction;
+  //   - request execution (the most time consuming, taking);
+  //   - response construction.
+  void cancel() {
+    cancelled = true;
+  }
 
-  abstract String getEndpoint();
+  @Override
+  public void run() {
+    HttpResponse httpResponse = null;
+    RunnableResult.Builder result = RunnableResult.builder();
+    HttpJsonMetadata.Builder trailers = HttpJsonMetadata.newBuilder();
+    HttpRequest httpRequest = null;
+    try {
+      // Check if already cancelled before even creating a request
+      if (cancelled) {
+        return;
+      }
+      httpRequest = createHttpRequest();
+      // Check if already cancelled before sending the request;
+      if (cancelled) {
+        return;
+      }
 
-  abstract JsonFactory getJsonFactory();
+      httpResponse = httpRequest.execute();
 
-  abstract ImmutableList<HttpJsonHeaderEnhancer> getHeaderEnhancers();
-
-  abstract SettableApiFuture<ResponseT> getResponseFuture();
+      // Check if already cancelled before sending the request;
+      if (cancelled) {
+        httpResponse.disconnect();
+        return;
+      }
+      result.setResponseHeaders(
+          HttpJsonMetadata.newBuilder().setHeaders(httpResponse.getHeaders()).build());
+      result.setStatusCode(httpResponse.getStatusCode());
+      result.setResponseContent(httpResponse.getContent());
+      trailers.setStatusMessage(httpResponse.getStatusMessage());
+    } catch (HttpResponseException e) {
+      result.setStatusCode(e.getStatusCode());
+      result.setResponseHeaders(HttpJsonMetadata.newBuilder().setHeaders(e.getHeaders()).build());
+      result.setResponseContent(
+          e.getContent() != null
+              ? new ByteArrayInputStream(e.getContent().getBytes(StandardCharsets.UTF_8))
+              : null);
+      trailers.setStatusMessage(e.getStatusMessage());
+      trailers.setException(e);
+    } catch (Throwable e) {
+      if (httpResponse != null) {
+        trailers.setStatusMessage(httpResponse.getStatusMessage());
+        result.setStatusCode(httpResponse.getStatusCode());
+      } else {
+        result.setStatusCode(400);
+      }
+      trailers.setException(e);
+    } finally {
+      if (!cancelled) {
+        resultListener.setResult(result.setTrailers(trailers.build()).build());
+      }
+    }
+  }
 
   HttpRequest createHttpRequest() throws IOException {
     GenericData tokenRequest = new GenericData();
 
-    HttpRequestFormatter<RequestT> requestFormatter =
-        getApiMethodDescriptor().getRequestFormatter();
+    HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
 
     HttpRequestFactory requestFactory;
-    Credentials credentials = getHttpJsonCallOptions().getCredentials();
+    Credentials credentials = httpJsonCallOptions.getCredentials();
     if (credentials != null) {
-      requestFactory =
-          getHttpTransport().createRequestFactory(new HttpCredentialsAdapter(credentials));
+      requestFactory = httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
     } else {
-      requestFactory = getHttpTransport().createRequestFactory();
+      requestFactory = httpTransport.createRequestFactory();
     }
 
+    JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
     // Create HTTP request body.
-    String requestBody = requestFormatter.getRequestBody(getRequest());
+    String requestBody = requestFormatter.getRequestBody(request);
     HttpContent jsonHttpContent;
     if (!Strings.isNullOrEmpty(requestBody)) {
-      getJsonFactory().createJsonParser(requestBody).parse(tokenRequest);
+      jsonFactory.createJsonParser(requestBody).parse(tokenRequest);
       jsonHttpContent =
-          new JsonHttpContent(getJsonFactory(), tokenRequest)
+          new JsonHttpContent(jsonFactory, tokenRequest)
               .setMediaType((new HttpMediaType("application/json")));
     } else {
       // Force underlying HTTP lib to set Content-Length header to avoid 411s.
@@ -103,27 +180,75 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     // Populate URL path and query parameters.
-    String endpoint = normalizeEndpoint(getEndpoint());
-    GenericUrl url = new GenericUrl(endpoint + requestFormatter.getPath(getRequest()));
-    Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(getRequest());
+    String normalizedEndpoint = normalizeEndpoint(endpoint);
+    GenericUrl url = new GenericUrl(normalizedEndpoint + requestFormatter.getPath(request));
+    Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(request);
     for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
       if (queryParam.getValue() != null) {
         url.set(queryParam.getKey(), queryParam.getValue());
       }
     }
 
-    HttpRequest httpRequest =
-        requestFactory.buildRequest(getApiMethodDescriptor().getHttpMethod(), url, jsonHttpContent);
-    for (HttpJsonHeaderEnhancer enhancer : getHeaderEnhancers()) {
-      enhancer.enhance(httpRequest.getHeaders());
+    HttpRequest httpRequest = buildRequest(requestFactory, url, jsonHttpContent);
+
+    Instant deadline = httpJsonCallOptions.getDeadline();
+    if (deadline != null) {
+      long readTimeout = Duration.between(Instant.now(), deadline).toMillis();
+      if (httpRequest.getReadTimeout() > 0
+          && httpRequest.getReadTimeout() < readTimeout
+          && readTimeout < Integer.MAX_VALUE) {
+        httpRequest.setReadTimeout((int) readTimeout);
+      }
     }
-    httpRequest.setParser(new JsonObjectParser(getJsonFactory()));
+
+    for (Map.Entry<String, Object> entry : headers.getHeaders().entrySet()) {
+      HttpHeadersUtils.setHeader(
+          httpRequest.getHeaders(), entry.getKey(), (String) entry.getValue());
+    }
+
+    httpRequest.setParser(new JsonObjectParser(jsonFactory));
+
+    return httpRequest;
+  }
+
+  private HttpRequest buildRequest(
+      HttpRequestFactory requestFactory, GenericUrl url, HttpContent jsonHttpContent)
+      throws IOException {
+    // A workaround to support PATCH request. This assumes support of "X-HTTP-Method-Override"
+    // header on the server side, which GCP services usually do.
+    //
+    // Long story short, the problems is as follows: gax-httpjson depends on NetHttpTransport class
+    // from google-http-client, which depends on JDK standard java.net.HttpUrlConnection, which does
+    // not support PATCH http method.
+    //
+    // It is a won't fix for JDK8: https://bugs.openjdk.java.net/browse/JDK-8207840.
+    // A corresponding google-http-client issue:
+    // https://github.com/googleapis/google-http-java-client/issues/167
+    //
+    // In JDK11 there is java.net.http.HttpRequest with PATCH method support but, gax-httpjson must
+    // remain compatible with Java 8.
+    //
+    // Using "X-HTTP-Method-Override" header is probably the cleanest way to fix it. Other options
+    // would be: hideous reflection hacks (not a safe option in a generic library, which
+    // gax-httpjson is), writing own implementation of HttpUrlConnection (fragile and a lot of
+    // work), depending on v2.ApacheHttpTransport (it has many extra dependencies, does not support
+    // mtls etc).
+    String actualHttpMethod = methodDescriptor.getHttpMethod();
+    String originalHttpMethod = actualHttpMethod;
+    if (HttpMethods.PATCH.equals(actualHttpMethod)) {
+      actualHttpMethod = HttpMethods.POST;
+    }
+    HttpRequest httpRequest = requestFactory.buildRequest(actualHttpMethod, url, jsonHttpContent);
+    if (originalHttpMethod != null && !originalHttpMethod.equals(actualHttpMethod)) {
+      HttpHeadersUtils.setHeader(
+          httpRequest.getHeaders(), "X-HTTP-Method-Override", originalHttpMethod);
+    }
     return httpRequest;
   }
 
   // This will be frequently executed, so avoiding using regexps if not necessary.
-  private String normalizeEndpoint(String endpoint) {
-    String normalized = endpoint;
+  private String normalizeEndpoint(String rawEndpoint) {
+    String normalized = rawEndpoint;
     // Set protocol as https by default if not set explicitly
     if (!normalized.contains("://")) {
       normalized = "https://" + normalized;
@@ -136,55 +261,39 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     return normalized;
   }
 
-  @Override
-  public void run() {
-    try {
-      HttpRequest httpRequest = createHttpRequest();
-      HttpResponse httpResponse = httpRequest.execute();
-      if (!httpResponse.isSuccessStatusCode()) {
-        ApiExceptionFactory.createException(
-            null,
-            HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
-            false);
-      }
-      if (getApiMethodDescriptor().getResponseParser() != null) {
-        ResponseT response =
-            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
-        getResponseFuture().set(response);
-      } else {
-        getResponseFuture().set(null);
-      }
-    } catch (Exception e) {
-      getResponseFuture().setException(e);
+  @FunctionalInterface
+  interface ResultListener {
+    void setResult(RunnableResult result);
+  }
+
+  @AutoValue
+  abstract static class RunnableResult {
+    @Nullable
+    abstract HttpJsonMetadata getResponseHeaders();
+
+    abstract int getStatusCode();
+
+    @Nullable
+    abstract InputStream getResponseContent();
+
+    abstract HttpJsonMetadata getTrailers();
+
+    public static Builder builder() {
+      return new AutoValue_HttpRequestRunnable_RunnableResult.Builder();
     }
-  }
 
-  static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new AutoValue_HttpRequestRunnable.Builder<RequestT, ResponseT>()
-        .setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
-  }
+    @AutoValue.Builder
+    public abstract static class Builder {
 
-  @AutoValue.Builder
-  abstract static class Builder<RequestT, ResponseT> {
-    abstract Builder<RequestT, ResponseT> setHttpJsonCallOptions(HttpJsonCallOptions callOptions);
+      public abstract Builder setResponseHeaders(HttpJsonMetadata newResponseHeaders);
 
-    abstract Builder<RequestT, ResponseT> setRequest(RequestT request);
+      public abstract Builder setStatusCode(int newStatusCode);
 
-    abstract Builder<RequestT, ResponseT> setApiMethodDescriptor(
-        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+      public abstract Builder setResponseContent(InputStream newResponseContent);
 
-    abstract Builder<RequestT, ResponseT> setHttpTransport(HttpTransport httpTransport);
+      public abstract Builder setTrailers(HttpJsonMetadata newTrailers);
 
-    abstract Builder<RequestT, ResponseT> setEndpoint(String endpoint);
-
-    abstract Builder<RequestT, ResponseT> setJsonFactory(JsonFactory jsonFactory);
-
-    abstract Builder<RequestT, ResponseT> setHeaderEnhancers(
-        List<HttpJsonHeaderEnhancer> headerEnhancers);
-
-    abstract Builder<RequestT, ResponseT> setResponseFuture(
-        SettableApiFuture<ResponseT> responseFuture);
-
-    abstract HttpRequestRunnable<RequestT, ResponseT> build();
+      public abstract RunnableResult build();
+    }
   }
 }

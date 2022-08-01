@@ -29,11 +29,19 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.auth.Credentials;
-import com.google.common.truth.Truth;
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -48,10 +56,10 @@ public class UnaryCallableTest {
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
     Integer response = stashCallable.call(2, FakeCallContext.createDefault());
-    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    assertEquals(Integer.valueOf(1), response);
     FakeCallContext callContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(callContext.getChannel()).isNull();
-    Truth.assertThat(callContext.getCredentials()).isNull();
+    assertNull(callContext.getChannel());
+    assertNull(callContext.getCredentials());
   }
 
   @Test
@@ -62,25 +70,37 @@ public class UnaryCallableTest {
         stashCallable.withDefaultCallContext(defaultCallContext);
 
     Integer response = callable.call(2);
-    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stashCallable.getContext()).isNotNull();
-    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
+    assertEquals(Integer.valueOf(1), response);
+    assertNotNull(stashCallable.getContext());
+    assertSame(defaultCallContext, stashCallable.getContext());
   }
 
   @Test
   public void callWithContext() throws Exception {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+    Set<StatusCode.Code> retryableCodes =
+        ImmutableSet.of(
+            StatusCode.Code.INTERNAL,
+            StatusCode.Code.UNAVAILABLE,
+            StatusCode.Code.DEADLINE_EXCEEDED);
     ApiCallContext context =
-        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
+        FakeCallContext.createDefault()
+            .withChannel(channel)
+            .withCredentials(credentials)
+            .withRetrySettings(retrySettings)
+            .withRetryableCodes(retryableCodes);
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
 
     Integer response = callable.call(2, context);
-    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    assertEquals(Integer.valueOf(1), response);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
+    assertSame(channel, actualContext.getChannel());
+    assertSame(credentials, actualContext.getCredentials());
+    assertSame(retrySettings, actualContext.getRetrySettings());
+    assertThat(actualContext.getRetryableCodes()).containsExactlyElementsIn(retryableCodes);
   }
 }

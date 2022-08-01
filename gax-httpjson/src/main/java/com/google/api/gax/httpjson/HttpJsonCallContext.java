@@ -30,18 +30,22 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.ApiCallContextOptions;
 import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -55,35 +59,70 @@ import org.threeten.bp.Instant;
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */
-@BetaApi
-@InternalExtensionOnly
+@BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
-  private final Duration timeout;
-  private final Instant deadline;
-  private final Credentials credentials;
+  private final HttpJsonCallOptions callOptions;
+  @Nullable private final Duration timeout;
+  @Nullable private final Duration streamWaitTimeout;
+  @Nullable private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
+  private final ApiCallContextOptions options;
   private final ApiTracer tracer;
+  @Nullable private final RetrySettings retrySettings;
+  @Nullable private final ImmutableSet<StatusCode.Code> retryableCodes;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
     return new HttpJsonCallContext(
-        null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
+        null,
+        HttpJsonCallOptions.newBuilder().build(),
+        null,
+        null,
+        null,
+        ImmutableMap.of(),
+        ApiCallContextOptions.getDefaultOptions(),
+        null,
+        null,
+        null);
+  }
+
+  public static HttpJsonCallContext of(HttpJsonChannel channel, HttpJsonCallOptions options) {
+    return new HttpJsonCallContext(
+        channel,
+        options,
+        null,
+        null,
+        null,
+        ImmutableMap.of(),
+        ApiCallContextOptions.getDefaultOptions(),
+        null,
+        null,
+        null);
   }
 
   private HttpJsonCallContext(
       HttpJsonChannel channel,
+      HttpJsonCallOptions callOptions,
       Duration timeout,
-      Instant deadline,
-      Credentials credentials,
+      Duration streamWaitTimeout,
+      Duration streamIdleTimeout,
       ImmutableMap<String, List<String>> extraHeaders,
-      ApiTracer tracer) {
+      ApiCallContextOptions options,
+      ApiTracer tracer,
+      RetrySettings defaultRetrySettings,
+      Set<StatusCode.Code> defaultRetryableCodes) {
     this.channel = channel;
+    this.callOptions = callOptions;
     this.timeout = timeout;
-    this.deadline = deadline;
-    this.credentials = credentials;
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
+    this.options = options;
     this.tracer = tracer;
+    this.retrySettings = defaultRetrySettings;
+    this.retryableCodes =
+        defaultRetryableCodes == null ? null : ImmutableSet.copyOf(defaultRetryableCodes);
   }
 
   /**
@@ -125,37 +164,62 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newChannel = this.channel;
     }
 
+    // Do deep merge of callOptions
+    HttpJsonCallOptions newCallOptions = callOptions.merge(httpJsonCallContext.callOptions);
+
     Duration newTimeout = httpJsonCallContext.timeout;
     if (newTimeout == null) {
       newTimeout = this.timeout;
     }
 
-    Instant newDeadline = httpJsonCallContext.deadline;
-    if (newDeadline == null) {
-      newDeadline = this.deadline;
+    Duration newStreamWaitTimeout = httpJsonCallContext.streamWaitTimeout;
+    if (newStreamWaitTimeout == null) {
+      newStreamWaitTimeout = streamWaitTimeout;
     }
 
-    Credentials newCredentials = httpJsonCallContext.credentials;
-    if (newCredentials == null) {
-      newCredentials = this.credentials;
+    Duration newStreamIdleTimeout = httpJsonCallContext.streamIdleTimeout;
+    if (newStreamIdleTimeout == null) {
+      newStreamIdleTimeout = streamIdleTimeout;
     }
 
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
+
+    ApiCallContextOptions newOptions = options.merge(httpJsonCallContext.options);
 
     ApiTracer newTracer = httpJsonCallContext.tracer;
     if (newTracer == null) {
       newTracer = this.tracer;
     }
 
+    RetrySettings newRetrySettings = httpJsonCallContext.retrySettings;
+    if (newRetrySettings == null) {
+      newRetrySettings = this.retrySettings;
+    }
+
+    Set<StatusCode.Code> newRetryableCodes = httpJsonCallContext.retryableCodes;
+    if (newRetryableCodes == null) {
+      newRetryableCodes = this.retryableCodes;
+    }
+
     return new HttpJsonCallContext(
-        newChannel, newTimeout, newDeadline, newCredentials, newExtraHeaders, newTracer);
+        newChannel,
+        newCallOptions,
+        newTimeout,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
+        newExtraHeaders,
+        newOptions,
+        newTracer,
+        newRetrySettings,
+        newRetryableCodes);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
-    return new HttpJsonCallContext(
-        this.channel, this.timeout, this.deadline, newCredentials, this.extraHeaders, this.tracer);
+    HttpJsonCallOptions.Builder builder =
+        callOptions != null ? callOptions.toBuilder() : HttpJsonCallOptions.newBuilder();
+    return withCallOptions(builder.setCredentials(newCredentials).build());
   }
 
   @Override
@@ -182,7 +246,16 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     return new HttpJsonCallContext(
-        this.channel, timeout, this.deadline, this.credentials, this.extraHeaders, this.tracer);
+        this.channel,
+        this.callOptions,
+        timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
   @Nullable
@@ -192,25 +265,65 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   @Override
-  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  public HttpJsonCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
+    if (streamWaitTimeout != null) {
+      Preconditions.checkArgument(
+          streamWaitTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
-  @Nullable
+  /**
+   * The stream wait timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamWaitTimeout(Duration)
+   */
   @Override
+  @Nullable
   public Duration getStreamWaitTimeout() {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+    return streamWaitTimeout;
   }
 
   @Override
-  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  public HttpJsonCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
+    if (streamIdleTimeout != null) {
+      Preconditions.checkArgument(
+          streamIdleTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
+  /**
+   * The stream idle timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamIdleTimeout(Duration)
+   */
+  @Override
   @Nullable
-  @Override
   public Duration getStreamIdleTimeout() {
-    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+    return streamIdleTimeout;
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -220,42 +333,147 @@ public final class HttpJsonCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(this.extraHeaders, extraHeaders);
     return new HttpJsonCallContext(
-        channel, timeout, deadline, credentials, newExtraHeaders, this.tracer);
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        newExtraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public Map<String, List<String>> getExtraHeaders() {
-    return this.extraHeaders;
+    return extraHeaders;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public <T> ApiCallContext withOption(Key<T> key, T value) {
+    ApiCallContextOptions newOptions = options.withOption(key, value);
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        newOptions,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public <T> T getOption(Key<T> key) {
+    return options.getOption(key);
   }
 
   public HttpJsonChannel getChannel() {
     return channel;
   }
 
-  public Instant getDeadline() {
-    return deadline;
+  public HttpJsonCallOptions getCallOptions() {
+    return callOptions;
   }
 
+  @Deprecated
+  @Nullable
+  public Instant getDeadline() {
+    return getCallOptions() != null ? getCallOptions().getDeadline() : null;
+  }
+
+  @Deprecated
+  @Nullable
   public Credentials getCredentials() {
-    return credentials;
+    return getCallOptions() != null ? getCallOptions().getCredentials() : null;
+  }
+
+  @Override
+  public RetrySettings getRetrySettings() {
+    return retrySettings;
+  }
+
+  @Override
+  public HttpJsonCallContext withRetrySettings(RetrySettings retrySettings) {
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        retrySettings,
+        this.retryableCodes);
+  }
+
+  @Override
+  public Set<StatusCode.Code> getRetryableCodes() {
+    return retryableCodes;
+  }
+
+  @Override
+  public HttpJsonCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes) {
+    return new HttpJsonCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        retryableCodes);
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
     return new HttpJsonCallContext(
-        newChannel, timeout, deadline, credentials, extraHeaders, this.tracer);
+        newChannel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
-  public HttpJsonCallContext withDeadline(Instant newDeadline) {
+  public HttpJsonCallContext withCallOptions(HttpJsonCallOptions newCallOptions) {
     return new HttpJsonCallContext(
-        channel, timeout, newDeadline, credentials, extraHeaders, this.tracer);
+        this.channel,
+        newCallOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        this.tracer,
+        this.retrySettings,
+        this.retryableCodes);
+  }
+
+  @Deprecated
+  public HttpJsonCallContext withDeadline(Instant newDeadline) {
+    HttpJsonCallOptions.Builder builder =
+        callOptions != null ? callOptions.toBuilder() : HttpJsonCallOptions.newBuilder();
+    return withCallOptions(builder.setDeadline(newDeadline).build());
   }
 
   @Nonnull
   @Override
   public ApiTracer getTracer() {
     if (tracer == null) {
-      return NoopApiTracer.getInstance();
+      return BaseApiTracer.getInstance();
     }
     return tracer;
   }
@@ -266,7 +484,16 @@ public final class HttpJsonCallContext implements ApiCallContext {
     Preconditions.checkNotNull(newTracer);
 
     return new HttpJsonCallContext(
-        channel, timeout, deadline, credentials, extraHeaders, newTracer);
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.options,
+        newTracer,
+        this.retrySettings,
+        this.retryableCodes);
   }
 
   @Override
@@ -278,16 +505,26 @@ public final class HttpJsonCallContext implements ApiCallContext {
       return false;
     }
     HttpJsonCallContext that = (HttpJsonCallContext) o;
-    return Objects.equals(channel, that.channel)
-        && Objects.equals(timeout, that.timeout)
-        && Objects.equals(deadline, that.deadline)
-        && Objects.equals(credentials, that.credentials)
-        && Objects.equals(extraHeaders, that.extraHeaders)
-        && Objects.equals(tracer, that.tracer);
+    return Objects.equals(this.channel, that.channel)
+        && Objects.equals(this.callOptions, that.callOptions)
+        && Objects.equals(this.timeout, that.timeout)
+        && Objects.equals(this.extraHeaders, that.extraHeaders)
+        && Objects.equals(this.options, that.options)
+        && Objects.equals(this.tracer, that.tracer)
+        && Objects.equals(this.retrySettings, that.retrySettings)
+        && Objects.equals(this.retryableCodes, that.retryableCodes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(channel, timeout, deadline, credentials, extraHeaders, tracer);
+    return Objects.hash(
+        channel,
+        callOptions,
+        timeout,
+        extraHeaders,
+        options,
+        tracer,
+        retrySettings,
+        retryableCodes);
   }
 }

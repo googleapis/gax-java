@@ -30,6 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Preconditions;
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.tracing.ApiTracer.Scope;
 import io.grpc.CallOptions;
@@ -38,9 +41,13 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.Deadline;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import io.grpc.stub.MetadataUtils;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * {@code GrpcClientCalls} creates a new {@code ClientCall} from the given call context.
@@ -48,6 +55,8 @@ import java.util.concurrent.TimeUnit;
  * <p>Package-private for internal use.
  */
 class GrpcClientCalls {
+  private static final Logger LOGGER = Logger.getLogger(GrpcDirectCallable.class.getName());
+
   private GrpcClientCalls() {};
 
   public static <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
@@ -88,6 +97,103 @@ class GrpcClientCalls {
 
     try (Scope ignored = grpcContext.getTracer().inScope()) {
       return channel.newCall(descriptor, callOptions);
+    }
+  }
+
+  /**
+   * A work-alike of {@link io.grpc.stub.ClientCalls#futureUnaryCall(ClientCall, Object)}.
+   *
+   * <p>The only difference is that unlike grpc-stub's implementation. This implementation doesn't
+   * wait for trailers to resolve a unary RPC. This can save milliseconds when the server is
+   * overloaded.
+   */
+  @BetaApi
+  static <RequestT, ResponseT> ApiFuture<ResponseT> eagerFutureUnaryCall(
+      ClientCall<RequestT, ResponseT> clientCall, RequestT request) {
+    // Start the call
+    GrpcFuture<ResponseT> future = new GrpcFuture<>(clientCall);
+    clientCall.start(new EagerFutureListener<>(future), new Metadata());
+
+    // Send the request
+    try {
+      clientCall.sendMessage(request);
+      clientCall.halfClose();
+      // Request an extra message to detect misconfigured servers
+      clientCall.request(2);
+    } catch (Throwable sendError) {
+      // Cancel if anything goes wrong
+      try {
+        clientCall.cancel(null, sendError);
+      } catch (Throwable cancelError) {
+        LOGGER.log(Level.SEVERE, "Error encountered while closing it", sendError);
+      }
+
+      throw sendError;
+    }
+
+    return future;
+  }
+
+  /** Thin wrapper around an ApiFuture that will cancel the underlying ClientCall. */
+  private static class GrpcFuture<T> extends AbstractApiFuture<T> {
+    private final ClientCall<?, T> call;
+
+    private GrpcFuture(ClientCall<?, T> call) {
+      this.call = call;
+    }
+
+    @Override
+    protected void interruptTask() {
+      call.cancel("GrpcFuture was cancelled", null);
+    }
+
+    @Override
+    public boolean set(T value) {
+      return super.set(value);
+    }
+
+    @Override
+    public boolean setException(Throwable throwable) {
+      return super.setException(throwable);
+    }
+  }
+
+  /**
+   * A bridge between gRPC's ClientCall.Listener to an ApiFuture.
+   *
+   * <p>The Listener will eagerly resolve the future when the first message is received and will not
+   * wait for the trailers. This should cut down on the latency at the expense of safety. If the
+   * server is misconfigured and sends a second response for a unary call, the error will be logged,
+   * but the future will still be successful.
+   */
+  private static class EagerFutureListener<T> extends ClientCall.Listener<T> {
+    private final GrpcFuture<T> future;
+
+    private EagerFutureListener(GrpcFuture<T> future) {
+      this.future = future;
+    }
+
+    @Override
+    public void onMessage(T message) {
+      if (!future.set(message)) {
+        throw Status.INTERNAL
+            .withDescription("More than one value received for unary call")
+            .asRuntimeException();
+      }
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (!future.isDone()) {
+        future.setException(
+            Status.INTERNAL
+                .withDescription("No value received for unary call")
+                .asException(trailers));
+      }
+      if (!status.isOk()) {
+        LOGGER.log(
+            Level.WARNING, "Received error for unary call after receiving a successful response");
+      }
     }
   }
 }

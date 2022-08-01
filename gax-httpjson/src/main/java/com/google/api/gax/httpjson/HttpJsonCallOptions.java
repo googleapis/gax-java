@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
+import com.google.protobuf.TypeRegistry;
 import javax.annotation.Nullable;
 import org.threeten.bp.Instant;
 
@@ -39,14 +40,46 @@ import org.threeten.bp.Instant;
 @BetaApi
 @AutoValue
 public abstract class HttpJsonCallOptions {
+  public static final HttpJsonCallOptions DEFAULT = newBuilder().build();
+
   @Nullable
   public abstract Instant getDeadline();
 
   @Nullable
   public abstract Credentials getCredentials();
 
+  @Nullable
+  public abstract TypeRegistry getTypeRegistry();
+
+  public abstract Builder toBuilder();
+
   public static Builder newBuilder() {
     return new AutoValue_HttpJsonCallOptions.Builder();
+  }
+
+  public HttpJsonCallOptions merge(HttpJsonCallOptions inputOptions) {
+    if (inputOptions == null) {
+      return this;
+    }
+
+    Builder builder = this.toBuilder();
+
+    Instant newDeadline = inputOptions.getDeadline();
+    if (newDeadline != null) {
+      builder.setDeadline(newDeadline);
+    }
+
+    Credentials newCredentials = inputOptions.getCredentials();
+    if (newCredentials != null) {
+      builder.setCredentials(newCredentials);
+    }
+
+    TypeRegistry newTypeRegistry = inputOptions.getTypeRegistry();
+    if (newTypeRegistry != null) {
+      builder.setTypeRegistry(newTypeRegistry);
+    }
+
+    return builder.build();
   }
 
   @AutoValue.Builder
@@ -54,6 +87,8 @@ public abstract class HttpJsonCallOptions {
     public abstract Builder setDeadline(Instant value);
 
     public abstract Builder setCredentials(Credentials value);
+
+    public abstract Builder setTypeRegistry(TypeRegistry value);
 
     public abstract HttpJsonCallOptions build();
   }

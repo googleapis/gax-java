@@ -229,7 +229,7 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
 
     attemptContext
         .getTracer()
-        .attemptStarted(outerRetryingFuture.getAttemptSettings().getOverallAttemptCount());
+        .attemptStarted(request, outerRetryingFuture.getAttemptSettings().getOverallAttemptCount());
 
     innerCallable.call(
         request,

@@ -29,16 +29,20 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.mtls.AbstractMtlsTransportChannelTest;
+import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -46,6 +50,7 @@ import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,6 +59,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -62,7 +68,7 @@ import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class InstantiatingGrpcChannelProviderTest {
+public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportChannelTest {
 
   @Test
   public void testEndpoint() {
@@ -145,15 +151,43 @@ public class InstantiatingGrpcChannelProviderTest {
     provider.getTransportChannel().shutdownNow();
 
     provider = provider.withPoolSize(2);
-    assertThat(provider.acceptsPoolSize()).isFalse();
     provider.getTransportChannel().shutdownNow();
+  }
 
-    try {
-      provider.withPoolSize(3);
-      fail("acceptsPoolSize() returned false; we shouldn't be able to set it again");
-    } catch (IllegalStateException e) {
+  @Test
+  public void testToBuilder() {
+    Duration keepaliveTime = Duration.ofSeconds(1);
+    Duration keepaliveTimeout = Duration.ofSeconds(2);
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        builder -> {
+          throw new UnsupportedOperationException();
+        };
+    Map<String, ?> directPathServiceConfig = ImmutableMap.of("loadbalancingConfig", "grpclb");
 
-    }
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setProcessorCount(2)
+            .setEndpoint("fake.endpoint:443")
+            .setMaxInboundMessageSize(12345678)
+            .setMaxInboundMetadataSize(4096)
+            .setKeepAliveTime(keepaliveTime)
+            .setKeepAliveTimeout(keepaliveTimeout)
+            .setKeepAliveWithoutCalls(true)
+            .setChannelConfigurator(channelConfigurator)
+            .setChannelsPerCpu(2.5)
+            .setDirectPathServiceConfig(directPathServiceConfig)
+            .build();
+
+    InstantiatingGrpcChannelProvider.Builder builder = provider.toBuilder();
+
+    assertThat(builder.getEndpoint()).isEqualTo("fake.endpoint:443");
+    assertThat(builder.getMaxInboundMessageSize()).isEqualTo(12345678);
+    assertThat(builder.getMaxInboundMetadataSize()).isEqualTo(4096);
+    assertThat(builder.getKeepAliveTime()).isEqualTo(keepaliveTime);
+    assertThat(builder.getKeepAliveTimeout()).isEqualTo(keepaliveTimeout);
+    assertThat(builder.getChannelConfigurator()).isEqualTo(channelConfigurator);
+    assertThat(builder.getPoolSize()).isEqualTo(5);
+    assertThat(builder.build().directPathServiceConfig).isEqualTo(directPathServiceConfig);
   }
 
   @Test
@@ -192,10 +226,10 @@ public class InstantiatingGrpcChannelProviderTest {
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         Mockito.mock(ApiFunction.class);
 
-    ArgumentCaptor<ManagedChannelBuilder> channelBuilderCaptor =
+    ArgumentCaptor<ManagedChannelBuilder<?>> channelBuilderCaptor =
         ArgumentCaptor.forClass(ManagedChannelBuilder.class);
 
-    ManagedChannelBuilder swappedBuilder = Mockito.mock(ManagedChannelBuilder.class);
+    ManagedChannelBuilder<?> swappedBuilder = Mockito.mock(ManagedChannelBuilder.class);
     ManagedChannel fakeChannel = Mockito.mock(ManagedChannel.class);
     Mockito.when(swappedBuilder.build()).thenReturn(fakeChannel);
 
@@ -223,25 +257,20 @@ public class InstantiatingGrpcChannelProviderTest {
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
-    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
-            return channelBuilder;
-          }
-        };
-
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .setAttemptDirectPath(true)
-            .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
     assertThat(provider.needsCredentials()).isTrue();
-    provider = provider.withCredentials(ComputeEngineCredentials.create());
+    if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+      provider = provider.withCredentials(ComputeEngineCredentials.create());
+    } else {
+      provider = provider.withCredentials(CloudShellCredentials.create(3000));
+    }
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
@@ -253,12 +282,10 @@ public class InstantiatingGrpcChannelProviderTest {
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients with non-GCE credentials will not attempt DirectPath.
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients with non-GCE credentials will not attempt DirectPath.
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -283,12 +310,10 @@ public class InstantiatingGrpcChannelProviderTest {
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without setting attemptDirectPath flag will not attempt DirectPath
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients without setting attemptDirectPath flag will not attempt DirectPath
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -313,12 +338,10 @@ public class InstantiatingGrpcChannelProviderTest {
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without setting attemptDirectPath flag will not attempt DirectPath
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
-            return channelBuilder;
-          }
+        channelBuilder -> {
+          // Clients without setting attemptDirectPath flag will not attempt DirectPath
+          assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+          return channelBuilder;
         };
 
     TransportChannelProvider provider =
@@ -443,5 +466,92 @@ public class InstantiatingGrpcChannelProviderTest {
     for (String field : toStringFields) {
       assertThat(toString).contains(field + "=");
     }
+  }
+
+  @Test
+  public void testWithDefaultDirectPathServiceConfig() {
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder().build();
+
+    ImmutableMap<String, ?> defaultServiceConfig = provider.directPathServiceConfig;
+
+    List<Map<String, ?>> lbConfigs = getAsObjectList(defaultServiceConfig, "loadBalancingConfig");
+    assertThat(lbConfigs).hasSize(1);
+    Map<String, ?> lbConfig = lbConfigs.get(0);
+    Map<String, ?> grpclb = getAsObject(lbConfig, "grpclb");
+    List<Map<String, ?>> childPolicies = getAsObjectList(grpclb, "childPolicy");
+    assertThat(childPolicies).hasSize(1);
+    Map<String, ?> childPolicy = childPolicies.get(0);
+    assertThat(childPolicy.keySet()).containsExactly("pick_first");
+  }
+
+  @Nullable
+  private static Map<String, ?> getAsObject(Map<String, ?> json, String key) {
+    Object mapObject = json.get(key);
+    if (mapObject == null) {
+      return null;
+    }
+    return checkObject(mapObject);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, ?> checkObject(Object json) {
+    checkArgument(json instanceof Map, "Invalid json object representation: %s", json);
+    for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) json).entrySet()) {
+      checkArgument(entry.getKey() instanceof String, "Key is not string");
+    }
+    return (Map<String, ?>) json;
+  }
+
+  private static List<Map<String, ?>> getAsObjectList(Map<String, ?> json, String key) {
+    Object listObject = json.get(key);
+    if (listObject == null) {
+      return null;
+    }
+    return checkListOfObjects(listObject);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, ?>> checkListOfObjects(Object listObject) {
+    checkArgument(listObject instanceof List, "Passed object is not a list");
+    List<Map<String, ?>> list = new ArrayList<>();
+    for (Object object : ((List<Object>) listObject)) {
+      list.add(checkObject(object));
+    }
+    return list;
+  }
+
+  @Test
+  public void testWithCustomDirectPathServiceConfig() {
+    ImmutableMap<String, Object> pickFirstStrategy =
+        ImmutableMap.<String, Object>of("round_robin", ImmutableMap.of());
+    ImmutableMap<String, Object> childPolicy =
+        ImmutableMap.<String, Object>of(
+            "childPolicy", ImmutableList.of(pickFirstStrategy), "foo", "bar");
+    ImmutableMap<String, Object> grpcLbPolicy =
+        ImmutableMap.<String, Object>of("grpclb", childPolicy);
+    Map<String, Object> passedServiceConfig = new HashMap<>();
+    passedServiceConfig.put("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setDirectPathServiceConfig(passedServiceConfig)
+            .build();
+
+    ImmutableMap<String, ?> defaultServiceConfig = provider.directPathServiceConfig;
+    assertThat(defaultServiceConfig).isEqualTo(passedServiceConfig);
+  }
+
+  @Override
+  protected Object getMtlsObjectFromTransportChannel(MtlsProvider provider)
+      throws IOException, GeneralSecurityException {
+    InstantiatingGrpcChannelProvider channelProvider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setMtlsProvider(provider)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
+            .build();
+    return channelProvider.createMtlsChannelCredentials();
   }
 }

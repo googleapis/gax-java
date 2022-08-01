@@ -33,9 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import org.threeten.bp.Instant;
+import com.google.protobuf.TypeRegistry;
 
 /**
  * {@code HttpJsonDirectCallable} creates HTTP calls.
@@ -44,9 +42,16 @@ import org.threeten.bp.Instant;
  */
 class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final ApiMethodDescriptor<RequestT, ResponseT> descriptor;
+  private final TypeRegistry typeRegistry;
 
   HttpJsonDirectCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
+    this(descriptor, null);
+  }
+
+  HttpJsonDirectCallable(
+      ApiMethodDescriptor<RequestT, ResponseT> descriptor, TypeRegistry typeRegistry) {
     this.descriptor = descriptor;
+    this.typeRegistry = typeRegistry;
   }
 
   @Override
@@ -54,22 +59,13 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
     Preconditions.checkNotNull(request);
     HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
 
-    @Nullable Instant deadline = context.getDeadline();
-    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
-    if (context.getTimeout() != null) {
-      @Nonnull Instant newDeadline = Instant.now().plus(context.getTimeout());
+    context =
+        context.withCallOptions(
+            context.getCallOptions().toBuilder().setTypeRegistry(typeRegistry).build());
 
-      if (deadline == null || newDeadline.isBefore(deadline)) {
-        deadline = newDeadline;
-      }
-    }
-
-    HttpJsonCallOptions callOptions =
-        HttpJsonCallOptions.newBuilder()
-            .setDeadline(deadline)
-            .setCredentials(context.getCredentials())
-            .build();
-    return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
+    HttpJsonClientCall<RequestT, ResponseT> clientCall =
+        HttpJsonClientCalls.newCall(descriptor, context);
+    return HttpJsonClientCalls.eagerFutureUnaryCall(clientCall, request);
   }
 
   @Override

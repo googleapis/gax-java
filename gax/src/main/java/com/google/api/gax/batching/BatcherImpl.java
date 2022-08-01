@@ -34,12 +34,16 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.FlowController.FlowControlException;
+import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Futures;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -49,12 +53,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 
 /**
  * Queues up the elements until {@link #flush()} is called; once batching is over, returned future
@@ -67,7 +73,6 @@ import java.util.logging.Logger;
  * @param <RequestT> The type of the request that will contain the accumulated elements.
  * @param <ResponseT> The type of the response that will unpack into individual element results.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalApi("For google-cloud-java client use only")
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
@@ -85,22 +90,78 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final Object flushLock = new Object();
   private final Object elementLock = new Object();
   private final Future<?> scheduledFuture;
-  private volatile boolean isClosed = false;
+  private SettableApiFuture<Void> closeFuture;
   private final BatcherStats batcherStats = new BatcherStats();
+  private final FlowController flowController;
+  private final ApiCallContext callContext;
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
-   *     into wrappers request and response.
-   * @param unaryCallable a {@link UnaryCallable} object.
-   * @param prototype a {@link RequestT} object.
-   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds.
+   *     into wrappers request and response
+   * @param unaryCallable a {@link UnaryCallable} object
+   * @param prototype a {@link RequestT} object
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
+   * @deprecated Please instantiate the Batcher with {@link FlowController} and {@link
+   *     ApiCallContext}
    */
+  @Deprecated
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,
       RequestT prototype,
       BatchingSettings batchingSettings,
       ScheduledExecutorService executor) {
+
+    this(batchingDescriptor, unaryCallable, prototype, batchingSettings, executor, null, null);
+  }
+
+  /**
+   * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
+   *     into wrappers request and response
+   * @param unaryCallable a {@link UnaryCallable} object
+   * @param prototype a {@link RequestT} object
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
+   * @param flowController a {@link FlowController} for throttling requests. If it's null, create a
+   *     {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
+   * @deprecated Please instantiate the Batcher with {@link ApiCallContext}
+   */
+  @Deprecated
+  public BatcherImpl(
+      BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
+      UnaryCallable<RequestT, ResponseT> unaryCallable,
+      RequestT prototype,
+      BatchingSettings batchingSettings,
+      ScheduledExecutorService executor,
+      @Nullable FlowController flowController) {
+
+    this(
+        batchingDescriptor,
+        unaryCallable,
+        prototype,
+        batchingSettings,
+        executor,
+        flowController,
+        null);
+  }
+
+  /**
+   * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
+   *     into wrappers request and response
+   * @param unaryCallable a {@link UnaryCallable} object
+   * @param prototype a {@link RequestT} object
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
+   * @param flowController a {@link FlowController} for throttling requests. If it's null, create a
+   *     {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
+   * @param callContext a {@link ApiCallContext} object that'll be merged in unaryCallable
+   */
+  public BatcherImpl(
+      BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
+      UnaryCallable<RequestT, ResponseT> unaryCallable,
+      RequestT prototype,
+      BatchingSettings batchingSettings,
+      ScheduledExecutorService executor,
+      @Nullable FlowController flowController,
+      @Nullable ApiCallContext callContext) {
 
     this.batchingDescriptor =
         Preconditions.checkNotNull(batchingDescriptor, "batching descriptor cannot be null");
@@ -109,8 +170,29 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     this.batchingSettings =
         Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
     Preconditions.checkNotNull(executor, "executor cannot be null");
+    if (flowController == null) {
+      flowController = new FlowController(batchingSettings.getFlowControlSettings());
+    }
+    // If throttling is enabled, make sure flow control limits are greater or equal to batch sizes
+    // to avoid deadlocking
+    if (flowController.getLimitExceededBehavior() != LimitExceededBehavior.Ignore) {
+      Preconditions.checkArgument(
+          flowController.getMaxElementCountLimit() == null
+              || batchingSettings.getElementCountThreshold() == null
+              || flowController.getMaxElementCountLimit()
+                  >= batchingSettings.getElementCountThreshold(),
+          "If throttling and batching on element count are enabled, FlowController"
+              + "#maxOutstandingElementCount must be greater or equal to elementCountThreshold");
+      Preconditions.checkArgument(
+          flowController.getMaxRequestBytesLimit() == null
+              || batchingSettings.getRequestByteThreshold() == null
+              || flowController.getMaxRequestBytesLimit()
+                  >= batchingSettings.getRequestByteThreshold(),
+          "If throttling and batching on request bytes are enabled, FlowController"
+              + "#maxOutstandingRequestBytes must be greater or equal to requestByteThreshold");
+    }
+    this.flowController = flowController;
     currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
-
     if (batchingSettings.getDelayThreshold() != null) {
       long delay = batchingSettings.getDelayThreshold().toMillis();
       PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
@@ -121,16 +203,43 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       scheduledFuture = Futures.immediateCancelledFuture();
     }
     currentBatcherReference = new BatcherReference(this);
+    this.callContext = callContext;
   }
 
   /** {@inheritDoc} */
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
-    Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
-    SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
+    // Note: there is no need to synchronize over closeFuture. The write & read of the variable
+    // will only be done from a single calling thread.
+    Preconditions.checkState(closeFuture == null, "Cannot add elements on a closed batcher");
 
+    // This is not the optimal way of throttling. It does not send out partial batches, which
+    // means that the Batcher might not use up all the resources allowed by FlowController.
+    // The more efficient implementation should look like:
+    // if (!flowController.tryReserve(1, bytes)) {
+    //   sendOutstanding();
+    //   reserve(1, bytes);
+    // }
+    // where tryReserve() will return false if there isn't enough resources, or reserve and return
+    // true.
+    // However, with the current FlowController implementation, adding a tryReserve() could be
+    // confusing. FlowController will end up having 3 different reserve behaviors: blocking,
+    // non blocking and try reserve. And we'll also need to add a tryAcquire() to the Semaphore64
+    // class, which made it seem unnecessary to have blocking and non-blocking semaphore
+    // implementations. Some refactoring may be needed for the optimized implementation. So we'll
+    // defer it till we decide on if refactoring FlowController is necessary.
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    try {
+      flowController.reserve(1, batchingDescriptor.countBytes(element));
+    } catch (FlowControlException e) {
+      // This exception will only be thrown if the FlowController is set to ThrowException behavior
+      throw FlowControlRuntimeException.fromFlowControlException(e);
+    }
+    long throttledTimeMs = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
+    SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
     synchronized (elementLock) {
-      currentOpenBatch.add(element, result);
+      currentOpenBatch.add(element, result, throttledTimeMs);
     }
 
     if (currentOpenBatch.hasAnyThresholdReached()) {
@@ -159,8 +268,14 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
     }
 
+    // This check is for old clients that instantiated the batcher without ApiCallContext
+    ApiCallContext callContextWithOption = null;
+    if (callContext != null) {
+      callContextWithOption =
+          callContext.withOption(THROTTLED_TIME_KEY, accumulatedBatch.totalThrottledTimeMs);
+    }
     final ApiFuture<ResponseT> batchResponse =
-        unaryCallable.futureCall(accumulatedBatch.builder.build());
+        unaryCallable.futureCall(accumulatedBatch.builder.build(), callContextWithOption);
 
     numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(
@@ -169,6 +284,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onSuccess(ResponseT response) {
             try {
+              flowController.release(accumulatedBatch.elementCounter, accumulatedBatch.byteCounter);
               accumulatedBatch.onBatchSuccess(response);
             } finally {
               onBatchCompletion();
@@ -178,6 +294,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
+              flowController.release(accumulatedBatch.elementCounter, accumulatedBatch.byteCounter);
               accumulatedBatch.onBatchFailure(throwable);
             } finally {
               onBatchCompletion();
@@ -188,9 +305,20 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   }
 
   private void onBatchCompletion() {
-    if (numOfOutstandingBatches.decrementAndGet() == 0) {
-      synchronized (flushLock) {
+    boolean shouldClose = false;
+
+    synchronized (flushLock) {
+      if (numOfOutstandingBatches.decrementAndGet() == 0) {
         flushLock.notifyAll();
+        shouldClose = closeFuture != null;
+      }
+    }
+    if (shouldClose) {
+      BatchingException overallError = batcherStats.asException();
+      if (overallError != null) {
+        closeFuture.setException(overallError);
+      } else {
+        closeFuture.set(null);
       }
     }
   }
@@ -210,18 +338,63 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void close() throws InterruptedException {
-    if (isClosed) {
-      return;
+    try {
+      closeAsync().get();
+    } catch (ExecutionException e) {
+      // Original stacktrace of a batching exception is not useful, so rethrow the error with
+      // the caller stacktrace
+      if (e.getCause() instanceof BatchingException) {
+        BatchingException cause = (BatchingException) e.getCause();
+        throw new BatchingException(cause.getMessage());
+      } else {
+        throw new IllegalStateException("unexpected error closing the batcher", e.getCause());
+      }
     }
-    flush();
-    scheduledFuture.cancel(true);
-    isClosed = true;
+  }
+
+  @Override
+  public ApiFuture<Void> closeAsync() {
+    if (closeFuture != null) {
+      return closeFuture;
+    }
+
+    // Send any buffered elements
+    // Must come before numOfOutstandingBatches check below
+    sendOutstanding();
+
+    boolean closeImmediately;
+
+    synchronized (flushLock) {
+      // prevent admission of new elements
+      closeFuture = SettableApiFuture.create();
+      // check if we can close immediately
+      closeImmediately = numOfOutstandingBatches.get() == 0;
+    }
+
+    // Clean up accounting
+    scheduledFuture.cancel(false);
     currentBatcherReference.closed = true;
     currentBatcherReference.clear();
-    BatchingException exception = batcherStats.asException();
-    if (exception != null) {
-      throw exception;
+
+    // notify futures
+    if (closeImmediately) {
+      finishClose();
     }
+    return closeFuture;
+  }
+
+  private void finishClose() {
+    BatchingException batchingException = batcherStats.asException();
+    if (batchingException != null) {
+      closeFuture.setException(batchingException);
+    } else {
+      closeFuture.set(null);
+    }
+  }
+
+  @InternalApi("For google-cloud-java client use only")
+  public FlowController getFlowController() {
+    return flowController;
   }
 
   /**
@@ -238,6 +411,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     private long elementCounter = 0;
     private long byteCounter = 0;
+    private long totalThrottledTimeMs = 0;
 
     private Batch(
         RequestT prototype,
@@ -254,11 +428,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       this.batcherStats = batcherStats;
     }
 
-    void add(ElementT element, SettableApiFuture<ElementResultT> result) {
+    void add(ElementT element, SettableApiFuture<ElementResultT> result, long throttledTimeMs) {
       builder.add(element);
       entries.add(BatchEntry.create(element, result));
       elementCounter++;
       byteCounter += descriptor.countBytes(element);
+      totalThrottledTimeMs += throttledTimeMs;
     }
 
     void onBatchSuccess(ResponseT response) {

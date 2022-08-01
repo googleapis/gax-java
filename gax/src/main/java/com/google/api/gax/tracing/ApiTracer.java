@@ -39,9 +39,9 @@ import org.threeten.bp.Duration;
  * its lifecycle. Constructing an instance of a subclass will implicitly signal the start of a new
  * operation.
  *
- * <p>For internal use only.
+ * <p>For internal use only. google-cloud-java libraries should extend {@link BaseApiTracer}.
  */
-@InternalApi("For internal use by google-cloud-java clients only")
+@InternalApi
 public interface ApiTracer {
 
   /**
@@ -83,8 +83,20 @@ public interface ApiTracer {
    * start of the operation. The attemptNumber is zero based. So the initial attempt will be 0.
    *
    * @param attemptNumber the zero based sequential attempt number.
+   * @deprecated Please use {@link #attemptStarted(Object, int)} instead.
    */
+  @Deprecated
   void attemptStarted(int attemptNumber);
+
+  /**
+   * Adds an annotation that an attempt is about to start with additional information from the
+   * request. In general this should occur at the very start of the operation. The attemptNumber is
+   * zero based. So the initial attempt will be 0.
+   *
+   * @param attemptNumber the zero based sequential attempt number.
+   * @param request request of this attempt.
+   */
+  void attemptStarted(Object request, int attemptNumber);
 
   /** Adds an annotation that the attempt succeeded. */
   void attemptSucceeded();

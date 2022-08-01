@@ -33,12 +33,10 @@ import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -50,11 +48,20 @@ import java.util.Map;
  */
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
-  private ProtoRestSerializer() {}
+  private final TypeRegistry registry;
+
+  private ProtoRestSerializer(TypeRegistry registry) {
+    this.registry = registry;
+  }
 
   /** Creates a new instance of ProtoRestSerializer. */
   public static <RequestT extends Message> ProtoRestSerializer<RequestT> create() {
-    return new ProtoRestSerializer<>();
+    return create(TypeRegistry.getEmptyTypeRegistry());
+  }
+
+  /** Creates a new instance of ProtoRestSerializer. */
+  static <RequestT extends Message> ProtoRestSerializer<RequestT> create(TypeRegistry registry) {
+    return new ProtoRestSerializer<>(registry);
   }
 
   /**
@@ -67,7 +74,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    */
   String toJson(RequestT message) {
     try {
-      return JsonFormat.printer().print(message);
+      return JsonFormat.printer().usingTypeRegistry(registry).print(message);
     } catch (InvalidProtocolBufferException e) {
       throw new RestSerializationException("Failed to serialize message to JSON", e);
     }
@@ -76,16 +83,15 @@ public class ProtoRestSerializer<RequestT extends Message> {
   /**
    * Deserializes a {@code message} from an input stream to a protobuf message.
    *
-   * @param message the input stream with a JSON-encoded message in it
-   * @param messageCharset the message charset
+   * @param json the input reader with a JSON-encoded message in it
    * @param builder an empty builder for the specific {@code RequestT} message to serialize
    * @throws RestSerializationException if failed to deserialize a protobuf message from the JSON
    *     stream
    */
   @SuppressWarnings("unchecked")
-  RequestT fromJson(InputStream message, Charset messageCharset, Message.Builder builder) {
-    try (Reader json = new InputStreamReader(message, messageCharset)) {
-      JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
+  RequestT fromJson(Reader json, Message.Builder builder) {
+    try {
+      JsonFormat.parser().usingTypeRegistry(registry).ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {
       throw new RestSerializationException("Failed to parse response message", e);
@@ -101,9 +107,6 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putPathParam(Map<String, String> fields, String fieldName, Object fieldValue) {
-    if (isDefaultValue(fieldName, fieldValue)) {
-      return;
-    }
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
@@ -116,11 +119,6 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
-    // Avoids empty query parameter
-    if (isDefaultValue(fieldName, fieldValue)) {
-      return;
-    }
-
     ImmutableList.Builder<String> paramValueList = ImmutableList.builder();
     if (fieldValue instanceof List<?>) {
       for (Object fieldValueItem : (List<?>) fieldValue) {
@@ -141,16 +139,5 @@ public class ProtoRestSerializer<RequestT extends Message> {
    */
   public String toBody(String fieldName, RequestT fieldValue) {
     return toJson(fieldValue);
-  }
-
-  private boolean isDefaultValue(String fieldName, Object fieldValue) {
-    // TODO: Revisit this approach to ensure proper default-value handling as per design.
-    if (fieldValue instanceof Number) {
-      return ((Number) fieldValue).longValue() == 0L;
-    } else if (fieldValue instanceof String) {
-      return ((String) fieldValue).isEmpty();
-    }
-
-    return false;
   }
 }

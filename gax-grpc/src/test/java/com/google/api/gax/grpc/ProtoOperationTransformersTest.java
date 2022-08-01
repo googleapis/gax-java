@@ -29,11 +29,13 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertThrows;
+
 import com.google.api.gax.grpc.ProtoOperationTransformers.MetadataTransformer;
 import com.google.api.gax.grpc.ProtoOperationTransformers.ResponseTransformer;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.UnavailableException;
+import com.google.api.gax.rpc.UnknownException;
 import com.google.common.truth.Truth;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
@@ -41,16 +43,14 @@ import com.google.rpc.Status;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.Status.Code;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ProtoOperationTransformersTest {
-
   @Test
-  public void testResponseTransformer() {
+  public void testAnyResponseTransformer() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
@@ -60,25 +60,22 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testResponseTransformer_exception() {
+  public void testAnyResponseTransformer_exception() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.value()).build();
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("ResponseTransformer should have thrown an exception");
-    } catch (UnavailableException expected) {
-      Truth.assertThat(expected)
-          .hasMessageThat()
-          .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
-    }
+    Exception exception =
+        assertThrows(UnavailableException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception)
+        .hasMessageThat()
+        .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
   }
 
   @Test
-  public void testResponseTransformer_mismatchedTypes() {
+  public void testAnyResponseTransformer_mismatchedTypes() {
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
@@ -87,16 +84,13 @@ public class ProtoOperationTransformersTest {
                 .setResponse(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("ResponseTransformer should have thrown an exception");
-    } catch (ApiException expected) {
-      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-    }
+    Exception exception =
+        assertThrows(UnknownException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception).hasMessageThat().contains("encountered a problem unpacking it");
   }
 
   @Test
-  public void testMetadataTransformer() {
+  public void testAnyMetadataTransformer() {
     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
@@ -106,7 +100,7 @@ public class ProtoOperationTransformersTest {
   }
 
   @Test
-  public void testMetadataTransformer_mismatchedTypes() {
+  public void testAnyMetadataTransformer_mismatchedTypes() {
     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
@@ -115,11 +109,8 @@ public class ProtoOperationTransformersTest {
                 .setMetadata(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    try {
-      transformer.apply(operationSnapshot);
-      Assert.fail("MetadataTransformer should have thrown an exception");
-    } catch (ApiException expected) {
-      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
-    }
+    Exception exception =
+        assertThrows(UnknownException.class, () -> transformer.apply(operationSnapshot));
+    Truth.assertThat(exception).hasMessageThat().contains("encountered a problem unpacking it");
   }
 }

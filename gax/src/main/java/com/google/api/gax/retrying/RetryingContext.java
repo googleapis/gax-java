@@ -30,8 +30,11 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.tracing.ApiTracer;
+import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Context for a retryable operation.
@@ -43,4 +46,18 @@ public interface RetryingContext {
   /** Returns the {@link ApiTracer} associated with the current operation. */
   @Nonnull
   ApiTracer getTracer();
+
+  /**
+   * Returns the {@link RetrySettings} to use with this context, or <code>null</code> if the default
+   * {@link RetrySettings} should be used.
+   */
+  @Nullable
+  RetrySettings getRetrySettings();
+
+  /**
+   * Returns the retryable codes to use with this context, or <code>null</code> if the default
+   * retryable codes should be used.
+   */
+  @Nullable
+  Set<StatusCode.Code> getRetryableCodes();
 }

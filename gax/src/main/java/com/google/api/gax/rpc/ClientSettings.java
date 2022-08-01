@@ -31,11 +31,11 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.common.base.MoreObjects;
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -63,8 +63,14 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings;
   }
 
+  /** @deprecated Please use {@link #getBackgroundExecutorProvider()} */
+  @Deprecated
   public final ExecutorProvider getExecutorProvider() {
     return stubSettings.getExecutorProvider();
+  }
+
+  public final ExecutorProvider getBackgroundExecutorProvider() {
+    return stubSettings.getBackgroundExecutorProvider();
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
@@ -75,12 +81,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getCredentialsProvider();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public final HeaderProvider getHeaderProvider() {
     return stubSettings.getHeaderProvider();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected final HeaderProvider getInternalHeaderProvider() {
     return stubSettings.getInternalHeaderProvider();
   }
@@ -97,13 +101,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getQuotaProjectId();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getWatchdogProvider() {
     return stubSettings.getStreamWatchdogProvider();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public final Duration getWatchdogCheckInterval() {
     return stubSettings.getStreamWatchdogCheckInterval();
@@ -113,6 +115,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", getExecutorProvider())
+        .add("backgroundExecutorProvider", getBackgroundExecutorProvider())
         .add("transportChannelProvider", getTransportChannelProvider())
         .add("credentialsProvider", getCredentialsProvider())
         .add("headerProvider", getHeaderProvider())
@@ -160,9 +163,27 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * call logic (such as retries and long-running operations), and also to pass to the transport
      * settings if an executor is needed for the transport and it doesn't have its own executor
      * provider.
+     *
+     * @deprecated Please use {@link #setBackgroundExecutorProvider(ExecutorProvider)} for setting
+     *     executor to use for running scheduled API call logic. To set executor for {@link
+     *     TransportChannelProvider}, please use {@link
+     *     TransportChannelProvider#withExecutor(Executor)} instead.
      */
+    @Deprecated
     public B setExecutorProvider(ExecutorProvider executorProvider) {
       stubSettings.setExecutorProvider(executorProvider);
+      stubSettings.setBackgroundExecutorProvider(executorProvider);
+      return self();
+    }
+
+    /**
+     * Sets the ExecutorProvider to use for getting the executor to use for running scheduled API
+     * call logic (such as retries and long-running operations). This will not set the executor in
+     * {@link TransportChannelProvider}. To set executor for {@link TransportChannelProvider},
+     * please use {@link TransportChannelProvider#withExecutor(Executor)}.
+     */
+    public B setBackgroundExecutorProvider(ExecutorProvider executorProvider) {
+      stubSettings.setBackgroundExecutorProvider(executorProvider);
       return self();
     }
 
@@ -179,7 +200,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * Some reserved headers can be overridden (e.g. Content-Type) or merged with the default value
      * (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       stubSettings.setHeaderProvider(headerProvider);
       return self();
@@ -192,7 +212,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * the constructed client. Some reserved headers can be overridden (e.g. Content-Type) or merged
      * with the default value (e.g. User-Agent) by the underlying transport layer.
      */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       stubSettings.setInternalHeaderProvider(internalHeaderProvider);
       return self();
@@ -227,21 +246,37 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
       stubSettings.setStreamWatchdogProvider(watchdogProvider);
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogCheckInterval(@Nullable Duration checkInterval) {
       stubSettings.setStreamWatchdogCheckInterval(checkInterval);
       return self();
     }
 
-    /** Gets the ExecutorProvider that was previously set on this Builder. */
+    /**
+     * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
+     * to use for running asynchronous API call logic (such as retries and long-running operations),
+     * and also to pass to the transport settings if an executor is needed for the transport and it
+     * doesn't have its own executor provider.
+     *
+     * @deprecated Please use {@link #getBackgroundExecutorProvider()} for getting the executor
+     *     provider that's used for running scheduled API call logic.
+     */
+    @Deprecated
     public ExecutorProvider getExecutorProvider() {
       return stubSettings.getExecutorProvider();
+    }
+
+    /**
+     * Gets the ExecutorProvider that was previously set on this Builder. This ExecutorProvider is
+     * to use for running asynchronous API call logic (such as retries and long-running operations).
+     * This ExecutorProvider is not used to set the executor in {@link TransportChannelProvider}.
+     */
+    public ExecutorProvider getBackgroundExecutorProvider() {
+      return stubSettings.getBackgroundExecutorProvider();
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */
@@ -255,13 +290,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     }
 
     /** Gets the custom HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
       return stubSettings.getHeaderProvider();
     }
 
     /** Gets the internal HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected HeaderProvider getInternalHeaderProvider() {
       return stubSettings.getInternalHeaderProvider();
     }
@@ -280,13 +313,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getQuotaProjectId();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getWatchdogProvider() {
       return stubSettings.getStreamWatchdogProvider();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public Duration getWatchdogCheckInterval() {
       return stubSettings.getStreamWatchdogCheckInterval();
@@ -305,6 +336,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", getExecutorProvider())
+          .add("backgroundExecutorProvider", getBackgroundExecutorProvider())
           .add("transportChannelProvider", getTransportChannelProvider())
           .add("credentialsProvider", getCredentialsProvider())
           .add("headerProvider", getHeaderProvider())

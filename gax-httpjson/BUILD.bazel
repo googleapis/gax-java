@@ -2,9 +2,9 @@ load("//:gax_java.bzl", "google_java_format", "google_java_format_verification",
 
 _JAVA_COPTS = [
     "-source",
-    "1.7",
+    "1.8",
     "-target",
-    "1.7",
+    "1.8",
 ]
 
 _COMPILE_DEPS = [
@@ -18,8 +18,9 @@ _COMPILE_DEPS = [
     "@com_google_api_api_common//jar",
     "@com_google_auto_value_auto_value//jar",
     "@com_google_auto_value_auto_value_annotations//jar",
-    "@com_google_http_client_google_http_client_jackson2//jar",
     "@javax_annotation_javax_annotation_api//jar",
+    "@com_google_http_client_google_http_client_gson//jar",
+    "@com_google_api_grpc_proto_google_common_protos//jar",
     "@com_google_protobuf//:protobuf_java",
     "@com_google_protobuf_java_util//jar",
     "//gax:gax",

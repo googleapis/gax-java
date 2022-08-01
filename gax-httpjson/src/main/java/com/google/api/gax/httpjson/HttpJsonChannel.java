@@ -29,14 +29,11 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 
 /** HttpJsonChannel contains the functionality to issue http-json calls. */
 @BetaApi
 public interface HttpJsonChannel {
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+  <RequestT, ResponseT> HttpJsonClientCall<RequestT, ResponseT> newCall(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor, HttpJsonCallOptions callOptions);
 }

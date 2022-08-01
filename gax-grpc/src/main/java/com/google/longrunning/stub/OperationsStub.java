@@ -31,7 +31,6 @@ package com.google.longrunning.stub;
 
 import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -40,17 +39,14 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
+import com.google.longrunning.WaitOperationRequest;
 import com.google.protobuf.Empty;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /**
  * Base stub class for Google Long Running Operations API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by GAPIC v0.0.5")
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public abstract class OperationsStub implements BackgroundResource {
 
   public UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
@@ -72,6 +68,10 @@ public abstract class OperationsStub implements BackgroundResource {
 
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     throw new UnsupportedOperationException("Not implemented: deleteOperationCallable()");
+  }
+
+  public UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    throw new UnsupportedOperationException("Not implemented: waitOperationCallable()");
   }
 
   @Override

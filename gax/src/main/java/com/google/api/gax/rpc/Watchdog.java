@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
@@ -61,7 +60,6 @@ import org.threeten.bp.Duration;
  *       had no outstanding demand. Duration.ZERO disables the timeout.
  * </ul>
  */
-@BetaApi
 public final class Watchdog implements Runnable, BackgroundResource {
   private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
 
@@ -183,7 +181,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
     private boolean autoAutoFlowControl = true;
 
     private final ResponseObserver<ResponseT> outerResponseObserver;
-    private StreamController innerController;
+    private volatile StreamController innerController;
 
     @GuardedBy("lock")
     private State state = State.IDLE;
@@ -296,6 +294,12 @@ public final class Watchdog implements Runnable, BackgroundResource {
      * @return True if the stream was canceled.
      */
     boolean cancelIfStale() {
+      // If the stream hasn't started yet, innerController will be null. Skip the check this time
+      // and return false so the stream is still watched.
+      if (innerController == null) {
+        return false;
+      }
+
       Throwable myError = null;
 
       synchronized (lock) {

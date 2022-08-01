@@ -29,10 +29,7 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -40,15 +37,12 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 import com.google.longrunning.stub.OperationsStubSettings;
 import com.google.protobuf.Empty;
 import java.io.IOException;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsClient}. */
-@Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
@@ -72,6 +66,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return ((OperationsStubSettings) getStubSettings()).deleteOperationSettings();
   }
 
+  /** Returns the object with the settings used for calls to waitOperation. */
+  public UnaryCallSettings<WaitOperationRequest, Operation> waitOperationSettings() {
+    return ((OperationsStubSettings) getStubSettings()).waitOperationSettings();
+  }
+
   public static final OperationsSettings create(OperationsStubSettings stub) throws IOException {
     return new OperationsSettings.Builder(stub.toBuilder()).build();
   }
@@ -86,7 +85,6 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return OperationsStubSettings.defaultCredentialsProviderBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return OperationsStubSettings.defaultApiClientHeaderProviderBuilder();
   }
@@ -102,6 +100,7 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   }
 
   /** Returns a builder containing all the values of this settings class. */
+  @Override
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -168,6 +167,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     /** Returns the builder for the settings used for calls to deleteOperation. */
     public UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return getStubSettingsBuilder().deleteOperationSettings();
+    }
+
+    /** Returns the builder for the settings used for calls to deleteOperation. */
+    public UnaryCallSettings.Builder<WaitOperationRequest, Operation> waitOperationSettings() {
+      return getStubSettingsBuilder().waitOperationSettings();
     }
 
     @Override

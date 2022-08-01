@@ -192,7 +192,7 @@ public class OperationCallableImplTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     executor.shutdown();
   }
 
@@ -537,10 +537,9 @@ public class OperationCallableImplTest {
     String opName = "testFutureCallContextPropagation";
 
     Color resp = getColor(0.5f);
-    Currency meta1 = Currency.getInstance("UAH");
-    Currency meta2 = Currency.getInstance("USD");
+    Currency meta = Currency.getInstance("USD");
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
-    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta2, true);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
 
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
         mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
@@ -841,7 +840,7 @@ public class OperationCallableImplTest {
   }
 
   @Test
-  public void call() throws Exception {
+  public void call() {
     ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
@@ -853,7 +852,7 @@ public class OperationCallableImplTest {
   }
 
   @Test
-  public void callWithContext() throws Exception {
+  public void callWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiCallContext context =
@@ -1251,7 +1250,7 @@ public class OperationCallableImplTest {
   }
 
   private void assertExceptionMatchesCode(FakeStatusCode code, Throwable exception) {
-    Class expectedClass;
+    Class<?> expectedClass;
     switch (code.getCode()) {
       case CANCELLED:
         expectedClass = CancelledException.class;

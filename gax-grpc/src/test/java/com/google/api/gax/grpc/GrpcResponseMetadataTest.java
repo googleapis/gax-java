@@ -147,7 +147,7 @@ public class GrpcResponseMetadataTest {
   }
 
   @Test
-  public void testResponseMetadataUnaryCall() throws Exception {
+  public void testResponseMetadataUnaryCall() {
     GrpcCallSettings<Color, Money> grpcCallSettings =
         GrpcCallSettings.create(FakeServiceGrpc.METHOD_RECOGNIZE);
 

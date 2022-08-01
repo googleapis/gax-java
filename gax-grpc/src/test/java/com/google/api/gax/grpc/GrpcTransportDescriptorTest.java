@@ -58,7 +58,7 @@ public class GrpcTransportDescriptorTest {
   private static boolean IS_RETRYABLE = true;
 
   @Test
-  public void translateException_StatusException_noRetry() throws Exception {
+  public void translateException_StatusException_noRetry() {
     Throwable originalException = new StatusException(Status.INVALID_ARGUMENT);
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(
@@ -73,7 +73,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_StatusException_withRetry() throws Exception {
+  public void translateException_StatusException_withRetry() {
     Throwable originalException = new StatusException(Status.UNAVAILABLE);
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(
@@ -88,7 +88,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_StatusRuntimeException_noRetry() throws Exception {
+  public void translateException_StatusRuntimeException_noRetry() {
     Throwable originalException = new StatusRuntimeException(Status.INVALID_ARGUMENT);
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(
@@ -103,7 +103,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_StatusRuntimeException_withRetry() throws Exception {
+  public void translateException_StatusRuntimeException_withRetry() {
     Throwable originalException = new StatusRuntimeException(Status.UNAVAILABLE);
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(
@@ -118,7 +118,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_cancelled() throws Exception {
+  public void translateException_cancelled() {
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(inactiveCallable(), Collections.<StatusCode.Code>emptySet());
     ApiFuture<Integer> result = exceptionCallable.futureCall(0);
@@ -129,7 +129,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_ApiException() throws Exception {
+  public void translateException_ApiException() {
     Throwable originalException = new RuntimeException("stuff went wrong");
     Throwable apiException =
         new DataLossException(
@@ -147,7 +147,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   @Test
-  public void translateException_RuntimeException() throws Exception {
+  public void translateException_RuntimeException() {
     Throwable originalException = new RuntimeException("stuff went wrong");
     GrpcExceptionCallable<Integer, Integer> exceptionCallable =
         new GrpcExceptionCallable<>(
@@ -180,8 +180,7 @@ public class GrpcTransportDescriptorTest {
   }
 
   public void assertInnerExceptionIsInstanceOf(
-      Throwable thrownException, Class<?> clazz, boolean retryable, Throwable originalException)
-      throws Exception {
+      Throwable thrownException, Class<?> clazz, boolean retryable, Throwable originalException) {
     Truth.assertThat(thrownException).isInstanceOf(clazz);
     ApiException apiException = (ApiException) thrownException;
     Truth.assertThat(apiException.isRetryable()).isEqualTo(retryable);

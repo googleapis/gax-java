@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.gax.core.FakeApiClock;
+import com.google.api.gax.rpc.testing.FakeCallContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -50,13 +51,25 @@ public class ExponentialRetryAlgorithmTest {
           .setRetryDelayMultiplier(2.0)
           .setMaxRetryDelay(Duration.ofMillis(8L))
           .setInitialRpcTimeout(Duration.ofMillis(1L))
-          .setJittered(false)
           .setRpcTimeoutMultiplier(2.0)
           .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(200L))
           .build();
   private final ExponentialRetryAlgorithm algorithm =
       new ExponentialRetryAlgorithm(retrySettings, clock);
+  private final RetrySettings retrySettingsOverride =
+      RetrySettings.newBuilder()
+          .setMaxAttempts(3)
+          .setInitialRetryDelay(Duration.ofMillis(2L))
+          .setRetryDelayMultiplier(3.0)
+          .setMaxRetryDelay(Duration.ofMillis(18L))
+          .setInitialRpcTimeout(Duration.ofMillis(2L))
+          .setRpcTimeoutMultiplier(3.0)
+          .setMaxRpcTimeout(Duration.ofMillis(18L))
+          .setTotalTimeout(Duration.ofMillis(300L))
+          .build();
+  private final RetryingContext retryingContext =
+      FakeCallContext.createDefault().withRetrySettings(retrySettingsOverride);
 
   @Test
   public void testCreateFirstAttempt() {
@@ -72,6 +85,19 @@ public class ExponentialRetryAlgorithmTest {
   }
 
   @Test
+  public void testCreateFirstAttemptOverride() {
+    TimedAttemptSettings attempt = algorithm.createFirstAttempt(retryingContext);
+
+    // Checking only the most core values, to not make this test too implementation specific.
+    assertEquals(0, attempt.getAttemptCount());
+    assertEquals(0, attempt.getOverallAttemptCount());
+    assertEquals(Duration.ZERO, attempt.getRetryDelay());
+    assertEquals(Duration.ZERO, attempt.getRandomizedRetryDelay());
+    assertEquals(retrySettingsOverride.getInitialRpcTimeout(), attempt.getRpcTimeout());
+    assertEquals(Duration.ZERO, attempt.getRetryDelay());
+  }
+
+  @Test
   public void testCreateNextAttempt() {
     TimedAttemptSettings firstAttempt = algorithm.createFirstAttempt();
     TimedAttemptSettings secondAttempt = algorithm.createNextAttempt(firstAttempt);
@@ -80,14 +106,29 @@ public class ExponentialRetryAlgorithmTest {
     assertEquals(1, secondAttempt.getAttemptCount());
     assertEquals(1, secondAttempt.getOverallAttemptCount());
     assertEquals(Duration.ofMillis(1L), secondAttempt.getRetryDelay());
-    assertEquals(Duration.ofMillis(1L), secondAttempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(2L), secondAttempt.getRpcTimeout());
 
     TimedAttemptSettings thirdAttempt = algorithm.createNextAttempt(secondAttempt);
     assertEquals(2, thirdAttempt.getAttemptCount());
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRetryDelay());
-    assertEquals(Duration.ofMillis(2L), thirdAttempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(4L), thirdAttempt.getRpcTimeout());
+  }
+
+  @Test
+  public void testCreateNextAttemptOverride() {
+    TimedAttemptSettings firstAttempt = algorithm.createFirstAttempt(retryingContext);
+    TimedAttemptSettings secondAttempt = algorithm.createNextAttempt(firstAttempt);
+
+    // Checking only the most core values, to not make this test too implementation specific.
+    assertEquals(1, secondAttempt.getAttemptCount());
+    assertEquals(1, secondAttempt.getOverallAttemptCount());
+    assertEquals(Duration.ofMillis(2L), secondAttempt.getRetryDelay());
+    assertEquals(Duration.ofMillis(6L), secondAttempt.getRpcTimeout());
+
+    TimedAttemptSettings thirdAttempt = algorithm.createNextAttempt(secondAttempt);
+    assertEquals(2, thirdAttempt.getAttemptCount());
+    assertEquals(Duration.ofMillis(6L), thirdAttempt.getRetryDelay());
+    assertEquals(Duration.ofMillis(18L), thirdAttempt.getRpcTimeout());
   }
 
   @Test
@@ -103,10 +144,11 @@ public class ExponentialRetryAlgorithmTest {
 
     TimedAttemptSettings firstAttempt = timeoutAlg.createFirstAttempt();
     TimedAttemptSettings secondAttempt = timeoutAlg.createNextAttempt(firstAttempt);
-    assertThat(firstAttempt.getRpcTimeout()).isGreaterThan(secondAttempt.getRpcTimeout());
+    assertThat(secondAttempt.getRpcTimeout()).isAtLeast(firstAttempt.getRpcTimeout());
+    assertThat(secondAttempt.getRpcTimeout()).isAtMost(Duration.ofSeconds(4L));
 
     TimedAttemptSettings thirdAttempt = timeoutAlg.createNextAttempt(secondAttempt);
-    assertThat(secondAttempt.getRpcTimeout()).isGreaterThan(thirdAttempt.getRpcTimeout());
+    assertThat(thirdAttempt.getRpcTimeout()).isAtMost(Duration.ofSeconds(4L));
   }
 
   @Test
@@ -136,7 +178,7 @@ public class ExponentialRetryAlgorithmTest {
     for (int i = 0; i < 4; i++) {
       assertTrue(algorithm.shouldRetry(attempt));
       attempt = algorithm.createNextAttempt(attempt);
-      clock.incrementNanoTime(Duration.ofMillis(50L).toNanos());
+      clock.incrementNanoTime(Duration.ofMillis(60L).toNanos());
     }
 
     assertFalse(algorithm.shouldRetry(attempt));

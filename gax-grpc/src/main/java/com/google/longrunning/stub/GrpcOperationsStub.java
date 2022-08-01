@@ -31,34 +31,33 @@ package com.google.longrunning.stub;
 
 import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcStubCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.RequestParamsExtractor;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.collect.ImmutableMap;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.DeleteOperationRequest;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
+import com.google.longrunning.WaitOperationRequest;
 import com.google.protobuf.Empty;
 import io.grpc.MethodDescriptor;
 import io.grpc.protobuf.ProtoUtils;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /**
  * gRPC stub implementation for Google Long Running Operations API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by GAPIC v0.0.5")
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class GrpcOperationsStub extends OperationsStub {
 
   private static final MethodDescriptor<GetOperationRequest, Operation>
@@ -97,6 +96,15 @@ public class GrpcOperationsStub extends OperationsStub {
                   ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()))
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
+  private static final MethodDescriptor<WaitOperationRequest, Operation>
+      waitOperationMethodDescriptor =
+          MethodDescriptor.<WaitOperationRequest, Operation>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/WaitOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(WaitOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Operation.getDefaultInstance()))
+              .build();
 
   private final BackgroundResource backgroundResources;
 
@@ -106,6 +114,7 @@ public class GrpcOperationsStub extends OperationsStub {
       listOperationsPagedCallable;
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
+  private final UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable;
 
   private final GrpcStubCallableFactory callableFactory;
 
@@ -149,19 +158,68 @@ public class GrpcOperationsStub extends OperationsStub {
     GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
             .setMethodDescriptor(getOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<GetOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(GetOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
     GrpcCallSettings<ListOperationsRequest, ListOperationsResponse>
         listOperationsTransportSettings =
             GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
                 .setMethodDescriptor(listOperationsMethodDescriptor)
+                .setParamsExtractor(
+                    new RequestParamsExtractor<ListOperationsRequest>() {
+                      @Override
+                      public Map<String, String> extract(ListOperationsRequest request) {
+                        ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                        params.put("name", String.valueOf(request.getName()));
+                        return params.build();
+                      }
+                    })
                 .build();
     GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<CancelOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(CancelOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
     GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<DeleteOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(DeleteOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
+            .build();
+    GrpcCallSettings<WaitOperationRequest, Operation> waitOperationTransportSettings =
+        GrpcCallSettings.<WaitOperationRequest, Operation>newBuilder()
+            .setMethodDescriptor(waitOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<WaitOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(WaitOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
 
     this.getOperationCallable =
@@ -179,29 +237,42 @@ public class GrpcOperationsStub extends OperationsStub {
     this.deleteOperationCallable =
         callableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
+    this.waitOperationCallable =
+        callableFactory.createUnaryCallable(
+            waitOperationTransportSettings, settings.waitOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
 
+  @Override
   public UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
     return getOperationCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable() {
     return listOperationsPagedCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsCallable() {
     return listOperationsCallable;
   }
 
+  @Override
   public UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
     return cancelOperationCallable;
   }
 
+  @Override
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return deleteOperationCallable;
+  }
+
+  @Override
+  public UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    return waitOperationCallable;
   }
 
   @Override

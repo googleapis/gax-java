@@ -1,47 +1,78 @@
-# Whether or not rebase-merging is enabled on this repository.
-# Defaults to `true`
 rebaseMergeAllowed: false
-
-# Whether or not squash-merging is enabled on this repository.
-# Defaults to `true`
 squashMergeAllowed: true
-
-# Whether or not PRs are merged with a merge commit on this repository.
-# Defaults to `false`
 mergeCommitAllowed: false
-
-# Rules for master branch protection
 branchProtectionRules:
-# Identifies the protection rule pattern. Name of the branch to be protected.
-# Defaults to `master`
-- pattern: master
-  # Can admins overwrite branch protection.
-  # Defaults to `true`
-  isAdminEnforced: true
-  # Number of approving reviews required to update matching branches.
-  # Defaults to `1`
-  requiredApprovingReviewCount: 1
-  # Are reviews from code owners required to update matching branches.
-  # Defaults to `false`
-  requiresCodeOwnerReviews: true
-  # Require up to date branches
-  requiresStrictStatusChecks: true
-  # List of required status check contexts that must pass for commits to be accepted to matching branches.
-  requiredStatusCheckContexts:
-    - "linkage-monitor"
-    - "units (7)"
-    - "units (8)"
-    - "units (11)"
-    - "cla/google"
-# List of explicit permissions to add (additive only)
+  - pattern: main
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: false
+    requiredStatusCheckContexts:
+      - bazel
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 1.63.0-sp
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 1.64.0-sp
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: java7
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - units (7)
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 2.6.x
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - units (8)
+      - units (11)
+      - cla/google
+  - pattern: 2.16.x
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: true
+    requiredStatusCheckContexts:
+      - bazel
+      - units (8)
+      - units (11)
+      - cla/google
 permissionRules:
-- team: yoshi-admins
-  permission: admin
-- team: yoshi-java-admins
-  permission: admin
-- team: yoshi-java
-  permission: push
-- team: actools
-  permission: admin
-- team: actools-java
-  permission: push
+  - team: yoshi-admins
+    permission: admin
+  - team: yoshi-java-admins
+    permission: admin
+  - team: yoshi-java
+    permission: push
+  - team: actools
+    permission: admin
+  - team: actools-java
+    permission: push

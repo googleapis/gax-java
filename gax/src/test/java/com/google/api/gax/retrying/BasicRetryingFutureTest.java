@@ -71,15 +71,18 @@ public class BasicRetryingFutureTest {
 
     Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
 
-    Mockito.when(retryAlgorithm.createFirstAttempt()).thenReturn(timedAttemptSettings);
+    Mockito.when(retryAlgorithm.createFirstAttempt(ArgumentMatchers.<RetryingContext>any()))
+        .thenReturn(timedAttemptSettings);
     Mockito.when(
             retryAlgorithm.createNextAttempt(
+                ArgumentMatchers.<RetryingContext>any(),
                 ArgumentMatchers.<Throwable>any(),
                 ArgumentMatchers.<Integer>any(),
                 ArgumentMatchers.<TimedAttemptSettings>any()))
         .thenReturn(timedAttemptSettings);
     Mockito.when(
             retryAlgorithm.shouldRetry(
+                ArgumentMatchers.<RetryingContext>any(),
                 ArgumentMatchers.<Throwable>any(),
                 ArgumentMatchers.<Integer>any(),
                 ArgumentMatchers.<TimedAttemptSettings>any()))
@@ -95,6 +98,55 @@ public class BasicRetryingFutureTest {
     Mockito.verify(tracer)
         .attemptFailed(ArgumentMatchers.<Throwable>any(), ArgumentMatchers.<Duration>any());
     Mockito.verifyNoMoreInteractions(tracer);
+  }
+
+  @Test
+  public void testUsesRetryingContext() throws Exception {
+    @SuppressWarnings("unchecked")
+    Callable<Integer> callable = mock(Callable.class);
+    @SuppressWarnings("unchecked")
+    RetryAlgorithm<Integer> retryAlgorithm = mock(RetryAlgorithm.class);
+    RetryingContext retryingContext = mock(RetryingContext.class);
+    ApiTracer tracer = mock(ApiTracer.class);
+    TimedAttemptSettings timedAttemptSettings = mock(TimedAttemptSettings.class);
+    Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
+
+    Mockito.when(retryAlgorithm.createFirstAttempt(retryingContext))
+        .thenReturn(timedAttemptSettings);
+    Mockito.when(
+            retryAlgorithm.createNextAttempt(
+                ArgumentMatchers.eq(retryingContext),
+                ArgumentMatchers.<Throwable>any(),
+                ArgumentMatchers.<Integer>any(),
+                ArgumentMatchers.<TimedAttemptSettings>any()))
+        .thenReturn(timedAttemptSettings);
+    Mockito.when(
+            retryAlgorithm.shouldRetry(
+                ArgumentMatchers.eq(retryingContext),
+                ArgumentMatchers.<Throwable>any(),
+                ArgumentMatchers.<Integer>any(),
+                ArgumentMatchers.<TimedAttemptSettings>any()))
+        .thenReturn(true);
+
+    BasicRetryingFuture<Integer> future =
+        new BasicRetryingFuture<>(callable, retryAlgorithm, retryingContext);
+
+    future.handleAttempt(null, null);
+
+    Mockito.verify(retryAlgorithm).createFirstAttempt(retryingContext);
+    Mockito.verify(retryAlgorithm)
+        .createNextAttempt(
+            ArgumentMatchers.eq(retryingContext),
+            ArgumentMatchers.<Throwable>any(),
+            ArgumentMatchers.<Integer>any(),
+            ArgumentMatchers.<TimedAttemptSettings>any());
+    Mockito.verify(retryAlgorithm)
+        .shouldRetry(
+            ArgumentMatchers.eq(retryingContext),
+            ArgumentMatchers.<Throwable>any(),
+            ArgumentMatchers.<Integer>any(),
+            ArgumentMatchers.<TimedAttemptSettings>any());
+    Mockito.verifyNoMoreInteractions(retryAlgorithm);
   }
 
   private Logger getLoggerInstance() throws NoSuchFieldException, IllegalAccessException {

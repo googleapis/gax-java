@@ -76,7 +76,7 @@ public class TracedOperationCallableTest {
 
   @Before
   public void setUp() {
-    parentTracer = NoopApiTracer.getInstance();
+    parentTracer = BaseApiTracer.getInstance();
 
     // Wire the mock tracer factory
     when(tracerFactory.newTracer(

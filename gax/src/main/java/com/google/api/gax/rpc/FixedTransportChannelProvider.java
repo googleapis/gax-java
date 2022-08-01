@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -70,13 +69,11 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return false;
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public FixedTransportChannelProvider withHeaders(Map<String, String> headers) {
     throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
   }
@@ -92,14 +89,16 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
         "FixedTransportChannelProvider doesn't need an endpoint");
   }
 
+  /** @deprecated FixedTransportChannelProvider doesn't support ChannelPool configuration */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return false;
   }
 
+  /** @deprecated FixedTransportChannelProvider doesn't support ChannelPool configuration */
+  @Deprecated
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "FixedTransportChannelProvider doesn't allow pool size customization");

@@ -49,7 +49,7 @@ import javax.annotation.Nonnull;
  * <p>This class is thread safe.
  */
 @InternalApi("For google-cloud-java client use only")
-public final class OpencensusTracerFactory implements ApiTracerFactory {
+public final class OpencensusTracerFactory extends BaseApiTracerFactory {
   @Nonnull private final Tracer internalTracer;
   @Nonnull private final Map<String, AttributeValue> spanAttributes;
 

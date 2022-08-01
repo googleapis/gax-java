@@ -30,7 +30,7 @@ To build GAX:
 To install GAX into the local maven repository:
 
 ```sh
-./gradlew publishToMavenLocal -Pskip.signing
+./gradlew publishToMavenLocal
 ```
 
 ### The small print

@@ -207,7 +207,7 @@ import org.threeten.bp.Duration;
  * com.google.api.gax.rpc.ApiStreamObserver} for more information.
  */
 @BetaApi("Surface for tracing is not yet stable")
-public class OpencensusTracer implements ApiTracer {
+public class OpencensusTracer extends BaseApiTracer {
   private final Tracer tracer;
   private final Span span;
   private final OperationType operationType;
@@ -305,6 +305,12 @@ public class OpencensusTracer implements ApiTracer {
 
     // NOTE: no annotations are added because they don't provide any semantic value.
     // This simply is used for state management.
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void attemptStarted(Object request, int attemptNumber) {
+    attemptStarted(attemptNumber);
   }
 
   /** {@inheritDoc} */
