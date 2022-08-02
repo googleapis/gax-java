@@ -94,10 +94,4 @@ git diff
 echo
 
 # This reads the JOB_TYPE environmental variable ("test" or "graalvm")
-mvn install -B -V -ntp \
-    -DskipTests=true \
-    -Dclirr.skip=true \
-    -Denforcer.skip=true \
-    -Dmaven.javadoc.skip=true \
-    -Dgcloud.download.skip=true \
-    -T 1C
+.kokoro/build.sh
