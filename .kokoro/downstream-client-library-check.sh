@@ -93,5 +93,7 @@ echo "Modification on the shared dependencies BOM:"
 git diff
 echo
 
+export INTEGRATION_TEST_ARGS="-Denforcer.skip=true"
+
 # This reads the JOB_TYPE environmental variable ("test" or "graalvm")
 .kokoro/build.sh
