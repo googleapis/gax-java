@@ -887,10 +887,15 @@ public class BatcherImplTest {
       }
 
       try {
-        future.get(100, TimeUnit.MILLISECONDS);
+        future.get(3, TimeUnit.SECONDS);
       } catch (TimeoutException e) {
         assertWithMessage("adding elements to batcher should not be blocked").fail();
       }
+
+      // Mockito recommends using verify() as the ONLY recommended way to interact with Argument
+      // captors - otherwise it may incur in unexpected behaviour
+      Mockito.verify(callContext, Mockito.timeout(0)).withOption(key.capture(), value.capture());
+
       // Verify that throttled time is recorded in ApiCallContext
       assertThat(key.getValue()).isSameInstanceAs(Batcher.THROTTLED_TIME_KEY);
       assertThat(value.getValue()).isAtLeast(throttledTime);
