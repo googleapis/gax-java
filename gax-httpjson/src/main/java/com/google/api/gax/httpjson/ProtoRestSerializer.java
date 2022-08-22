@@ -152,11 +152,11 @@ public class ProtoRestSerializer<RequestT extends Message> {
   /**
    * Serializes a message to a request body in a form of JSON-encoded string.
    *
+   * @param fieldName a name of a request message field this message belongs to
    * @param fieldValue a field value to serialize
    * @param numericEnum a boolean flag that determine if enum values should be serialized to number
-   *     or not
    */
-  public String toBody(RequestT fieldValue, boolean numericEnum) {
+  public String toBody(String fieldName, RequestT fieldValue, boolean numericEnum) {
     return toJson(fieldValue, numericEnum);
   }
 }

@@ -183,7 +183,7 @@ public class ProtoRestSerializerTest {
 
   @Test
   public void toBody() {
-    String body = requestSerializer.toBody(field, false);
+    String body = requestSerializer.toBody("bodyField1", field, false);
     Truth.assertThat(body).isEqualTo(fieldJson);
   }
 }

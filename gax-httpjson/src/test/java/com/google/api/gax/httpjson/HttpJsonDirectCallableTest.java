@@ -83,7 +83,7 @@ public class HttpJsonDirectCallableTest {
                   .setRequestBodyExtractor(
                       request ->
                           ProtoRestSerializer.create()
-                              .toBody(request.toBuilder().clearName().build(), false))
+                              .toBody("*", request.toBuilder().clearName().build(), false))
                   .build())
           .setResponseParser(
               ProtoMessageResponseParser.<Field>newBuilder()
