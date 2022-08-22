@@ -79,7 +79,7 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
   /* {@inheritDoc} */
   @Override
   public String serialize(ResponseT response) {
-    return ProtoRestSerializer.create(defaultRegistry).toJson(response);
+    return ProtoRestSerializer.create(defaultRegistry).toJson(response, false);
   }
 
   // Convert to @AutoValue if this class gets more complicated

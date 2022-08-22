@@ -48,6 +48,8 @@ public class ProtoRestSerializerTest {
   private ProtoRestSerializer<Field> requestSerializer;
   private Field field;
   private String fieldJson;
+  private String fieldJsonNumericEnum;
+  private String fieldJsonUnknownNumericEnum;
 
   @Before
   public void setUp() {
@@ -72,19 +74,65 @@ public class ProtoRestSerializerTest {
             + "    \"name\": \"opt_name2\"\n"
             + "  }]\n"
             + "}";
+
+    fieldJsonNumericEnum =
+        "{\n"
+            + "  \"cardinality\": 1,\n"
+            + "  \"number\": 2,\n"
+            + "  \"name\": \"field_name1\",\n"
+            + "  \"options\": [{\n"
+            + "    \"name\": \"opt_name1\"\n"
+            + "  }, {\n"
+            + "    \"name\": \"opt_name2\"\n"
+            + "  }]\n"
+            + "}";
+
+    fieldJsonUnknownNumericEnum =
+        "{\n"
+            + "  \"cardinality\": 7,\n"
+            + "  \"number\": 2,\n"
+            + "  \"name\": \"field_name1\",\n"
+            + "  \"options\": [{\n"
+            + "    \"name\": \"opt_name1\"\n"
+            + "  }, {\n"
+            + "    \"name\": \"opt_name2\"\n"
+            + "  }]\n"
+            + "}";
   }
 
   @Test
-  public void toJson() {
-    String fieldToJson = requestSerializer.toJson(field);
+  public void toJson_numericEnumTrue() {
+    String fieldToJson = requestSerializer.toJson(field, true);
+    Truth.assertThat(fieldToJson).isEqualTo(fieldJsonNumericEnum);
+  }
+
+  @Test
+  public void toJson_numericEnumFalse() {
+    String fieldToJson = requestSerializer.toJson(field, false);
     Truth.assertThat(fieldToJson).isEqualTo(fieldJson);
   }
 
   @Test
-  public void fromJson() {
+  public void fromJson_numericEnumTrue() {
+    Field fieldFromJson =
+        requestSerializer.fromJson(new StringReader(fieldJsonNumericEnum), Field.newBuilder());
+    Truth.assertThat(fieldFromJson).isEqualTo(field);
+  }
+
+  @Test
+  public void fromJson_numericEnumFalse() {
     Field fieldFromJson =
         requestSerializer.fromJson(new StringReader(fieldJson), Field.newBuilder());
     Truth.assertThat(fieldFromJson).isEqualTo(field);
+  }
+
+  @Test
+  public void fromJson_numericEnumTrueAndUnknownEnum() {
+    Field expected = field.toBuilder().setCardinalityValue(7).build();
+    Field fieldFromJson =
+        requestSerializer.fromJson(
+            new StringReader(fieldJsonUnknownNumericEnum), Field.newBuilder());
+    Truth.assertThat(fieldFromJson).isEqualTo(expected);
   }
 
   @Test
@@ -135,7 +183,7 @@ public class ProtoRestSerializerTest {
 
   @Test
   public void toBody() {
-    String body = requestSerializer.toBody("bodyField1", field);
+    String body = requestSerializer.toBody("bodyField1", field, false);
     Truth.assertThat(body).isEqualTo(fieldJson);
   }
 }

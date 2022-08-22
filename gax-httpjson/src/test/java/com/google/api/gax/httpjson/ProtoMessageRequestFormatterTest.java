@@ -79,7 +79,7 @@ public class ProtoMessageRequestFormatterTest {
             .setRequestBodyExtractor(
                 request -> {
                   ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                  return serializer.toBody("field", request);
+                  return serializer.toBody("field", request, false);
                 })
             .setAdditionalPaths("/api/v1/names/{name=field_name1/**}/hello")
             .build();
