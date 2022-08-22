@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.18.7](https://github.com/googleapis/gax-java/compare/v2.18.6...v2.18.7) (2022-08-01)
+
+
+### Bug Fixes
+
+* **java:** initialize netty class at run time ([#1758](https://github.com/googleapis/gax-java/issues/1758)) ([e1d6eb9](https://github.com/googleapis/gax-java/commit/e1d6eb979da21e9795b3c3d2fffb9200ee43ed15))
+
+## [2.18.6](https://github.com/googleapis/gax-java/compare/v2.18.5...v2.18.6) (2022-07-29)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.2 ([#1746](https://github.com/googleapis/gax-java/issues/1746)) ([8163f8a](https://github.com/googleapis/gax-java/commit/8163f8aa822881d8cd6f1f72aca66b50fbd2e66a))
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.3 ([#1748](https://github.com/googleapis/gax-java/issues/1748)) ([f2b7cb2](https://github.com/googleapis/gax-java/commit/f2b7cb2b6b783095547b798da054b6879d3764f1))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.4 ([#1747](https://github.com/googleapis/gax-java/issues/1747)) ([0b2b1ef](https://github.com/googleapis/gax-java/commit/0b2b1efcf38ff9f253e426af8c21722d646c8627))
+* Exclude error_prone_annotations from guava. ([#1750](https://github.com/googleapis/gax-java/issues/1750)) ([e1c91a4](https://github.com/googleapis/gax-java/commit/e1c91a40bcf413af5210da1d43e409d44dcf13bd))
+
+## [2.18.5](https://github.com/googleapis/gax-java/compare/v2.18.4...v2.18.5) (2022-07-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.2 ([#1735](https://github.com/googleapis/gax-java/issues/1735)) ([d7f00be](https://github.com/googleapis/gax-java/commit/d7f00beae84c093a732982aaeedd7d6a8752e52c))
+* **deps:** update dependency com.google.api.grpc:proto-google-common-protos to v2.9.2 ([#1736](https://github.com/googleapis/gax-java/issues/1736)) ([ee3d4ad](https://github.com/googleapis/gax-java/commit/ee3d4ad29a84da9113790dd03b8f0bbd89625a7c))
+* **deps:** update dependency com.google.auth:google-auth-library-credentials to v1.8.1 ([#1737](https://github.com/googleapis/gax-java/issues/1737)) ([24bc629](https://github.com/googleapis/gax-java/commit/24bc629aa1ffc0513ba766858935ead7ab18bf9e))
+* **deps:** update dependency com.google.auth:google-auth-library-oauth2-http to v1.8.1 ([#1738](https://github.com/googleapis/gax-java/issues/1738)) ([1030eb6](https://github.com/googleapis/gax-java/commit/1030eb6b1df5008f304d0989fd991f88f148cc2a))
+* **deps:** update dependency com.google.cloud:google-cloud-shared-config to v1.5.1 ([#1726](https://github.com/googleapis/gax-java/issues/1726)) ([bdffb86](https://github.com/googleapis/gax-java/commit/bdffb86c05235c4ad783ab7afd28724386465569))
+* **deps:** update dependency com.google.http-client:google-http-client-bom to v1.42.2 ([#1727](https://github.com/googleapis/gax-java/issues/1727)) ([030e9b3](https://github.com/googleapis/gax-java/commit/030e9b33ec6bd98122fba59a1bc39513444c3511))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.3 ([#1742](https://github.com/googleapis/gax-java/issues/1742)) ([9215e1f](https://github.com/googleapis/gax-java/commit/9215e1f58ebcc6eccef42c53981ab90865fe366a))
+* **deps:** update dependency io.grpc:grpc-bom to v1.48.0 ([#1741](https://github.com/googleapis/gax-java/issues/1741)) ([4735a4b](https://github.com/googleapis/gax-java/commit/4735a4b29b686ba510a25ad8458142870e50b1c5))
+* remove initialization of logger classes which is conflicting with slf4j ([#1733](https://github.com/googleapis/gax-java/issues/1733)) ([ccaf265](https://github.com/googleapis/gax-java/commit/ccaf26537a189dacb9b3bb58760a4c6f6cd48a87))
+
 ## [2.18.4](https://github.com/googleapis/gax-java/compare/v2.18.3...v2.18.4) (2022-07-11)
 
 
