@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.19.0](https://github.com/googleapis/gax-java/compare/v2.18.7...v2.19.0) (2022-08-22)
+
+
+### Features
+
+* Add numeric enum support. ([#1743](https://github.com/googleapis/gax-java/issues/1743)) ([3f7628e](https://github.com/googleapis/gax-java/commit/3f7628e27495806675ec8c8521e9c33725908936))
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.auth:google-auth-library-credentials to v1.10.0 ([#1768](https://github.com/googleapis/gax-java/issues/1768)) ([3f2188d](https://github.com/googleapis/gax-java/commit/3f2188d83751272de1a4c3db85e95d79b690e3fc))
+* **deps:** update dependency com.google.auth:google-auth-library-credentials to v1.9.0 ([#1765](https://github.com/googleapis/gax-java/issues/1765)) ([103db3c](https://github.com/googleapis/gax-java/commit/103db3cc06cfaafeda1a043b6e19e668083ed782))
+* **deps:** update dependency com.google.auth:google-auth-library-oauth2-http to v1.10.0 ([#1769](https://github.com/googleapis/gax-java/issues/1769)) ([0b1eb92](https://github.com/googleapis/gax-java/commit/0b1eb924aefc79b6fc4757d253d4c8a93a094c84))
+* **deps:** update dependency com.google.auth:google-auth-library-oauth2-http to v1.9.0 ([#1766](https://github.com/googleapis/gax-java/issues/1766)) ([2677f07](https://github.com/googleapis/gax-java/commit/2677f07a8e20c82403f60c6aa1f9d46c1274b37f))
+* **deps:** update dependency com.google.code.gson:gson to v2.9.1 ([#1757](https://github.com/googleapis/gax-java/issues/1757)) ([ea2a075](https://github.com/googleapis/gax-java/commit/ea2a07504899703e4fcd428f31d615fb208a50aa))
+* **deps:** update dependency com.google.protobuf:protobuf-bom to v3.21.5 ([#1772](https://github.com/googleapis/gax-java/issues/1772)) ([d7a48d1](https://github.com/googleapis/gax-java/commit/d7a48d1886a3f39acb26580d1d35a288102af436))
+* **deps:** update dependency io.grpc:grpc-bom to v1.48.1 ([#1763](https://github.com/googleapis/gax-java/issues/1763)) ([e5e4232](https://github.com/googleapis/gax-java/commit/e5e423200260c210071ce626612d7e54af0695e4))
+* **deps:** update dependency org.graalvm.sdk:graal-sdk to v22.2.0 ([#1740](https://github.com/googleapis/gax-java/issues/1740)) ([ded44a6](https://github.com/googleapis/gax-java/commit/ded44a66d3de8a2678fa4c5efe8b3ded4484de2b))
+* **deps:** update dependency org.mockito:mockito-core to v4.7.0 ([#1774](https://github.com/googleapis/gax-java/issues/1774)) ([29678c8](https://github.com/googleapis/gax-java/commit/29678c805855c97b4c26f0156923a41820411a10))
+* **deps:** update dependency org.threeten:threetenbp to v1.6.1 ([#1773](https://github.com/googleapis/gax-java/issues/1773)) ([d2c84e6](https://github.com/googleapis/gax-java/commit/d2c84e6fb22a2752b68fecc9b6c9e480f398b87c))
+* **test:** testThrottlingBlocking flakyness fix ([#1775](https://github.com/googleapis/gax-java/issues/1775)) ([e69393c](https://github.com/googleapis/gax-java/commit/e69393c32ffe32306acc8f495b1f41198d86f507))
+
+
+### Documentation
+
+* explaining UNIX environment is required ([#1760](https://github.com/googleapis/gax-java/issues/1760)) ([1d31e90](https://github.com/googleapis/gax-java/commit/1d31e90e70867cb4b896d7a393f9271788b6371f))
+
 ## [2.18.7](https://github.com/googleapis/gax-java/compare/v2.18.6...v2.18.7) (2022-08-01)
 
 
