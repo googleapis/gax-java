@@ -31,8 +31,10 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
@@ -75,7 +77,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @throws InvalidProtocolBufferException if failed to serialize the protobuf message to JSON
    *     format
    */
-  String toJson(RequestT message, boolean numericEnum) {
+  String toJson(MessageOrBuilder message, boolean numericEnum) {
     try {
       Printer printer = JsonFormat.printer().usingTypeRegistry(registry);
       if (numericEnum) {
@@ -130,10 +132,10 @@ public class ProtoRestSerializer<RequestT extends Message> {
     ImmutableList.Builder<String> paramValueList = ImmutableList.builder();
     if (fieldValue instanceof List<?>) {
       for (Object fieldValueItem : (List<?>) fieldValue) {
-        paramValueList.add(String.valueOf(fieldValueItem));
+        paramValueList.add(toQueryParamValue(fieldValueItem));
       }
     } else {
-      paramValueList.add(String.valueOf(fieldValue));
+      paramValueList.add(toQueryParamValue(fieldValue));
     }
 
     fields.put(fieldName, paramValueList.build());
@@ -158,5 +160,20 @@ public class ProtoRestSerializer<RequestT extends Message> {
    */
   public String toBody(String fieldName, RequestT fieldValue, boolean numericEnum) {
     return toJson(fieldValue, numericEnum);
+  }
+
+  /**
+   * Serializes an object to a query parameter Handles the case of a message such as Duration,
+   * FieldMask or Int32Value to prevent wrong formatting that String.valueOf() would make
+   *
+   * @param fieldValue a field value to serialize
+   */
+  public String toQueryParamValue(Object fieldValue) {
+    if (fieldValue instanceof GeneratedMessageV3) {
+      return toJson(((GeneratedMessageV3) fieldValue).toBuilder(), false)
+          .replaceAll("^\"", "")
+          .replaceAll("\"$", "");
+    }
+    return String.valueOf(fieldValue);
   }
 }

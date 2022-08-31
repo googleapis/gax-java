@@ -31,9 +31,14 @@
 package com.google.api.gax.httpjson;
 
 import com.google.common.truth.Truth;
+import com.google.protobuf.Duration;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
+import com.google.protobuf.FieldMask;
+import com.google.protobuf.FloatValue;
+import com.google.protobuf.Int32Value;
 import com.google.protobuf.Option;
+import com.google.protobuf.Timestamp;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -170,6 +175,14 @@ public class ProtoRestSerializerTest {
     requestSerializer.putQueryParam(fields, "optName3", "three");
     requestSerializer.putQueryParam(fields, "optName4", "");
     requestSerializer.putQueryParam(fields, "optName5", Arrays.asList("four", "five"));
+    requestSerializer.putQueryParam(
+        fields, "optName6", Duration.newBuilder().setSeconds(1).setNanos(1).build());
+    requestSerializer.putQueryParam(
+        fields, "optName7", Timestamp.newBuilder().setSeconds(1).setNanos(1).build());
+    requestSerializer.putQueryParam(
+        fields, "optName8", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
+    requestSerializer.putQueryParam(fields, "optName9", Int32Value.of(1));
+    requestSerializer.putQueryParam(fields, "optName10", FloatValue.of(1.1f));
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
@@ -177,6 +190,11 @@ public class ProtoRestSerializerTest {
     expectedFields.put("optName3", Arrays.asList("three"));
     expectedFields.put("optName4", Arrays.asList(""));
     expectedFields.put("optName5", Arrays.asList("four", "five"));
+    expectedFields.put("optName6", Arrays.asList("1.000000001s"));
+    expectedFields.put("optName7", Arrays.asList("1970-01-01T00:00:01.000000001Z"));
+    expectedFields.put("optName8", Arrays.asList("a.b,c.d"));
+    expectedFields.put("optName9", Arrays.asList("1"));
+    expectedFields.put("optName10", Arrays.asList("1.1"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }
