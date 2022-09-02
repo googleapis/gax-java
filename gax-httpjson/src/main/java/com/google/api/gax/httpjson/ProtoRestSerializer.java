@@ -31,17 +31,28 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.DoubleValue;
+import com.google.protobuf.FloatValue;
 import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Int64Value;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.TypeRegistry;
+import com.google.protobuf.UInt32Value;
+import com.google.protobuf.UInt64Value;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class serializes/deserializes protobuf {@link Message} for REST interactions. It serializes
@@ -52,6 +63,25 @@ import java.util.Map;
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
   private final TypeRegistry registry;
+  private static final Set<Class<GeneratedMessageV3>> jsonSerializableMessages = new HashSet(
+      Arrays.asList(
+          com.google.protobuf.BoolValue.class,
+          com.google.protobuf.BytesValue.class,
+          com.google.protobuf.DoubleValue.class,
+          com.google.protobuf.Duration.class,
+          com.google.protobuf.FieldMask.class,
+          com.google.protobuf.FloatValue.class,
+          com.google.protobuf.Int32Value.class,
+          com.google.protobuf.Int64Value.class,
+          com.google.protobuf.StringValue.class,
+          com.google.protobuf.Timestamp.class,
+          com.google.protobuf.UInt32Value.class,
+          com.google.protobuf.UInt64Value.class
+      ));
+
+  private boolean isNonSerializableMessageValue(Object value) {
+    return value instanceof GeneratedMessageV3 && !jsonSerializableMessages.contains(value.getClass());
+  }
 
   private ProtoRestSerializer(TypeRegistry registry) {
     this.registry = registry;
@@ -120,6 +150,16 @@ public class ProtoRestSerializer<RequestT extends Message> {
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
+  private void putDecomposedMessageQueryParam(
+      Map<String, List<String>> fields, String fieldName, Object fieldValue
+  ) {
+    for (Map.Entry<FieldDescriptor, Object> fieldEntry : ((GeneratedMessageV3) fieldValue)
+        .getAllFields().entrySet()) {
+      Object value = fieldEntry.getValue();
+      putQueryParam(fields, String.format("%s.%s",fieldName, fieldEntry.getKey().toProto().getName()), fieldEntry.getValue());
+    }
+  }
+
   /**
    * Puts a message field in {@code fields} map which will be used to populate query parameters of a
    * request.
@@ -129,16 +169,34 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
-    ImmutableList.Builder<String> paramValueList = ImmutableList.builder();
+    ArrayList<String> paramValueList = new ArrayList();
     if (fieldValue instanceof List<?>) {
+      boolean hasProcessedMessage = false;
       for (Object fieldValueItem : (List<?>) fieldValue) {
-        paramValueList.add(toQueryParamValue(fieldValueItem));
+        if (isNonSerializableMessageValue(fieldValueItem)) {
+          putDecomposedMessageQueryParam(fields, fieldName, fieldValueItem);
+          hasProcessedMessage = true;
+        } else {
+          paramValueList.add(toQueryParamValue(fieldValueItem));
+        }
+      }
+      if (hasProcessedMessage) {
+        return;
       }
     } else {
-      paramValueList.add(toQueryParamValue(fieldValue));
+      if (isNonSerializableMessageValue(fieldValue)) {
+        putDecomposedMessageQueryParam(fields, fieldName, fieldValue);
+        return;
+      } else {
+        paramValueList.add(toQueryParamValue(fieldValue));
+      }
     }
 
-    fields.put(fieldName, paramValueList.build());
+    if (fields.containsKey(fieldName)) {
+      fields.get(fieldName).addAll(paramValueList);
+    } else {
+      fields.put(fieldName, paramValueList);
+    }
   }
 
   /**
@@ -173,6 +231,9 @@ public class ProtoRestSerializer<RequestT extends Message> {
       return toJson(((GeneratedMessageV3) fieldValue).toBuilder(), false)
           .replaceAll("^\"", "")
           .replaceAll("\"$", "");
+    }
+    if (fieldValue instanceof ByteString) {
+      return ((ByteString) fieldValue).toStringUtf8();
     }
     return String.valueOf(fieldValue);
   }
