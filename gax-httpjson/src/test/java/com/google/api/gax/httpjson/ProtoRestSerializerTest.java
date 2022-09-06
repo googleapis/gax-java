@@ -188,15 +188,21 @@ public class ProtoRestSerializerTest {
         fields, "optName8", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
     requestSerializer.putQueryParam(fields, "optName9", Int32Value.of(1));
     requestSerializer.putQueryParam(fields, "optName10", FloatValue.of(1.1f));
-    com.google.longrunning.Operation operation = Operation.newBuilder()
-        .setDone(true)
-        .setError(Status.newBuilder()
-            .addDetails(Any.newBuilder().setValue(ByteString.copyFrom("error-1",
-              Charset.defaultCharset())).build())
-            .addDetails(Any.newBuilder().setValue(ByteString.copyFrom("error-2",
-              Charset.defaultCharset())).build()))
-        .setName("test")
-        .build();
+    com.google.longrunning.Operation operation =
+        Operation.newBuilder()
+            .setDone(true)
+            .setError(
+                Status.newBuilder()
+                    .addDetails(
+                        Any.newBuilder()
+                            .setValue(ByteString.copyFrom("error-1", Charset.defaultCharset()))
+                            .build())
+                    .addDetails(
+                        Any.newBuilder()
+                            .setValue(ByteString.copyFrom("error-2", Charset.defaultCharset()))
+                            .build()))
+            .setName("test")
+            .build();
     requestSerializer.putQueryParam(fields, "optName11", operation);
 
     Map<String, List<String>> expectedFields = new HashMap<>();

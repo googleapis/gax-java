@@ -30,19 +30,13 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.DoubleValue;
-import com.google.protobuf.FloatValue;
 import com.google.protobuf.GeneratedMessageV3;
-import com.google.protobuf.Int64Value;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.TypeRegistry;
-import com.google.protobuf.UInt32Value;
-import com.google.protobuf.UInt64Value;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
 import java.io.IOException;
@@ -66,24 +60,25 @@ public class ProtoRestSerializer<RequestT extends Message> {
 
   // well-known types obtained from
   // https://github.com/googleapis/gapic-showcase/blob/fe414784c18878d704b884348d84c68fd6b87466/util/genrest/resttools/populatefield.go#L27
-  private static final Set<Class<GeneratedMessageV3>> jsonSerializableMessages = new HashSet(
-      Arrays.asList(
-          com.google.protobuf.BoolValue.class,
-          com.google.protobuf.BytesValue.class,
-          com.google.protobuf.DoubleValue.class,
-          com.google.protobuf.Duration.class,
-          com.google.protobuf.FieldMask.class,
-          com.google.protobuf.FloatValue.class,
-          com.google.protobuf.Int32Value.class,
-          com.google.protobuf.Int64Value.class,
-          com.google.protobuf.StringValue.class,
-          com.google.protobuf.Timestamp.class,
-          com.google.protobuf.UInt32Value.class,
-          com.google.protobuf.UInt64Value.class
-      ));
+  private static final Set<Class<GeneratedMessageV3>> jsonSerializableMessages =
+      new HashSet(
+          Arrays.asList(
+              com.google.protobuf.BoolValue.class,
+              com.google.protobuf.BytesValue.class,
+              com.google.protobuf.DoubleValue.class,
+              com.google.protobuf.Duration.class,
+              com.google.protobuf.FieldMask.class,
+              com.google.protobuf.FloatValue.class,
+              com.google.protobuf.Int32Value.class,
+              com.google.protobuf.Int64Value.class,
+              com.google.protobuf.StringValue.class,
+              com.google.protobuf.Timestamp.class,
+              com.google.protobuf.UInt32Value.class,
+              com.google.protobuf.UInt64Value.class));
 
   private boolean isNonSerializableMessageValue(Object value) {
-    return value instanceof GeneratedMessageV3 && !jsonSerializableMessages.contains(value.getClass());
+    return value instanceof GeneratedMessageV3
+        && !jsonSerializableMessages.contains(value.getClass());
   }
 
   private ProtoRestSerializer(TypeRegistry registry) {
@@ -154,12 +149,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
   }
 
   private void putDecomposedMessageQueryParam(
-      Map<String, List<String>> fields, String fieldName, Object fieldValue
-  ) {
-    for (Map.Entry<FieldDescriptor, Object> fieldEntry : ((GeneratedMessageV3) fieldValue)
-        .getAllFields().entrySet()) {
+      Map<String, List<String>> fields, String fieldName, Object fieldValue) {
+    for (Map.Entry<FieldDescriptor, Object> fieldEntry :
+        ((GeneratedMessageV3) fieldValue).getAllFields().entrySet()) {
       Object value = fieldEntry.getValue();
-      putQueryParam(fields, String.format("%s.%s",fieldName, fieldEntry.getKey().toProto().getName()), fieldEntry.getValue());
+      putQueryParam(
+          fields,
+          String.format("%s.%s", fieldName, fieldEntry.getKey().toProto().getName()),
+          fieldEntry.getValue());
     }
   }
 
