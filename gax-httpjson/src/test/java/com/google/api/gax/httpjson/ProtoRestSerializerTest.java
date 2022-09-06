@@ -31,6 +31,9 @@
 package com.google.api.gax.httpjson;
 
 import com.google.common.truth.Truth;
+import com.google.longrunning.Operation;
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
@@ -39,8 +42,10 @@ import com.google.protobuf.FloatValue;
 import com.google.protobuf.Int32Value;
 import com.google.protobuf.Option;
 import com.google.protobuf.Timestamp;
+import com.google.rpc.Status;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -183,6 +188,16 @@ public class ProtoRestSerializerTest {
         fields, "optName8", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
     requestSerializer.putQueryParam(fields, "optName9", Int32Value.of(1));
     requestSerializer.putQueryParam(fields, "optName10", FloatValue.of(1.1f));
+    com.google.longrunning.Operation operation = Operation.newBuilder()
+        .setDone(true)
+        .setError(Status.newBuilder()
+            .addDetails(Any.newBuilder().setValue(ByteString.copyFrom("error-1",
+              Charset.defaultCharset())).build())
+            .addDetails(Any.newBuilder().setValue(ByteString.copyFrom("error-2",
+              Charset.defaultCharset())).build()))
+        .setName("test")
+        .build();
+    requestSerializer.putQueryParam(fields, "optName11", operation);
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
@@ -195,6 +210,9 @@ public class ProtoRestSerializerTest {
     expectedFields.put("optName8", Arrays.asList("a.b,c.d"));
     expectedFields.put("optName9", Arrays.asList("1"));
     expectedFields.put("optName10", Arrays.asList("1.1"));
+    expectedFields.put("optName11.name", Arrays.asList("test"));
+    expectedFields.put("optName11.done", Arrays.asList("true"));
+    expectedFields.put("optName11.error.details.value", Arrays.asList("error-1", "error-2"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }

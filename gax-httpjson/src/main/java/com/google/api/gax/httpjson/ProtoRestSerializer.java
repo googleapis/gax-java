@@ -63,6 +63,9 @@ import java.util.Set;
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
   private final TypeRegistry registry;
+
+  // well-known types obtained from
+  // https://github.com/googleapis/gapic-showcase/blob/fe414784c18878d704b884348d84c68fd6b87466/util/genrest/resttools/populatefield.go#L27
   private static final Set<Class<GeneratedMessageV3>> jsonSerializableMessages = new HashSet(
       Arrays.asList(
           com.google.protobuf.BoolValue.class,
@@ -227,7 +230,8 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value to serialize
    */
   public String toQueryParamValue(Object fieldValue) {
-    if (fieldValue instanceof GeneratedMessageV3) {
+    // This will match with message types that are serializable (e.g. FieldMask)
+    if (fieldValue instanceof GeneratedMessageV3 && !isNonSerializableMessageValue(fieldValue)) {
       return toJson(((GeneratedMessageV3) fieldValue).toBuilder(), false)
           .replaceAll("^\"", "")
           .replaceAll("\"$", "");
