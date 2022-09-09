@@ -168,22 +168,13 @@ public class ProtoRestSerializerTest {
   }
 
   @Test
-  public void putQueryParam() {
+  public void putQueryParamPrimitive() {
     Map<String, List<String>> fields = new HashMap<>();
     requestSerializer.putQueryParam(fields, "optName1", 1);
     requestSerializer.putQueryParam(fields, "optName2", 0);
     requestSerializer.putQueryParam(fields, "optName3", "three");
     requestSerializer.putQueryParam(fields, "optName4", "");
     requestSerializer.putQueryParam(fields, "optName5", Arrays.asList("four", "five"));
-    requestSerializer.putQueryParam(
-        fields, "optName6", Duration.newBuilder().setSeconds(1).setNanos(1).build());
-    requestSerializer.putQueryParam(
-        fields, "optName7", Timestamp.newBuilder().setSeconds(1).setNanos(1).build());
-    requestSerializer.putQueryParam(
-        fields, "optName8", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
-    requestSerializer.putQueryParam(fields, "optName9", Int32Value.of(1));
-    requestSerializer.putQueryParam(fields, "optName10", FloatValue.of(1.1f));
-    requestSerializer.putQueryParam(fields, "optName11", field);
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
@@ -191,15 +182,36 @@ public class ProtoRestSerializerTest {
     expectedFields.put("optName3", Arrays.asList("three"));
     expectedFields.put("optName4", Arrays.asList(""));
     expectedFields.put("optName5", Arrays.asList("four", "five"));
-    expectedFields.put("optName6", Arrays.asList("1.000000001s"));
-    expectedFields.put("optName7", Arrays.asList("1970-01-01T00:00:01.000000001Z"));
-    expectedFields.put("optName8", Arrays.asList("a.b,c.d"));
-    expectedFields.put("optName9", Arrays.asList("1"));
-    expectedFields.put("optName10", Arrays.asList("1.1"));
-    expectedFields.put("optName11.name", Arrays.asList("field_name1"));
-    expectedFields.put("optName11.number", Arrays.asList("2"));
-    expectedFields.put("optName11.options.name", Arrays.asList("opt_name1", "opt_name2"));
-    expectedFields.put("optName11.cardinality", Arrays.asList("1"));
+
+    Truth.assertThat(fields).isEqualTo(expectedFields);
+  }
+
+  @Test
+  public void putQueryParamComplexObject() {
+    Map<String, List<String>> fields = new HashMap<>();
+    requestSerializer.putQueryParam(
+        fields, "optName1", Duration.newBuilder().setSeconds(1).setNanos(1).build());
+    requestSerializer.putQueryParam(
+        fields, "optName2", Timestamp.newBuilder().setSeconds(1).setNanos(1).build());
+    requestSerializer.putQueryParam(
+        fields, "optName3", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
+    requestSerializer.putQueryParam(fields, "optName4", Int32Value.of(1));
+    requestSerializer.putQueryParam(fields, "optName5", FloatValue.of(1.1f));
+    requestSerializer.putQueryParam(fields, "optName6", field);
+    requestSerializer.putQueryParam(
+        fields, "optName7", Arrays.asList(Cardinality.CARDINALITY_REPEATED));
+
+    Map<String, List<String>> expectedFields = new HashMap<>();
+    expectedFields.put("optName1", Arrays.asList("1.000000001s"));
+    expectedFields.put("optName2", Arrays.asList("1970-01-01T00:00:01.000000001Z"));
+    expectedFields.put("optName3", Arrays.asList("a.b,c.d"));
+    expectedFields.put("optName4", Arrays.asList("1"));
+    expectedFields.put("optName5", Arrays.asList("1.1"));
+    expectedFields.put("optName6.name", Arrays.asList("field_name1"));
+    expectedFields.put("optName6.number", Arrays.asList("2"));
+    expectedFields.put("optName6.options.name", Arrays.asList("opt_name1", "opt_name2"));
+    expectedFields.put("optName6.cardinality", Arrays.asList("1"));
+    expectedFields.put("optName7", Arrays.asList("3"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }

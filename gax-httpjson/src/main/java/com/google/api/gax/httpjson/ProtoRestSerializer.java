@@ -36,6 +36,7 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
+import com.google.protobuf.ProtocolMessageEnum;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
@@ -157,6 +158,8 @@ public class ProtoRestSerializer<RequestT extends Message> {
         String json = toJson(((Message) fieldValueItem).toBuilder(), true);
         JsonElement parsed = JsonParser.parseString(json);
         putDecomposedMessageQueryParam(fields, fieldName, parsed);
+      } else if (fieldValueItem instanceof ProtocolMessageEnum) {
+        paramValueList.add(String.valueOf(((ProtocolMessageEnum) fieldValueItem).getNumber()));
       } else {
         paramValueList.add(String.valueOf(fieldValueItem));
       }
