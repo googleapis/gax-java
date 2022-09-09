@@ -35,8 +35,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import com.google.protobuf.MessageOrBuilder;
-import com.google.protobuf.ProtocolMessageEnum;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
@@ -54,6 +52,7 @@ import java.util.Map;
  */
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
+
   private final TypeRegistry registry;
 
   private ProtoRestSerializer(TypeRegistry registry) {
@@ -80,7 +79,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @throws InvalidProtocolBufferException if failed to serialize the protobuf message to JSON
    *     format
    */
-  String toJson(MessageOrBuilder message, boolean numericEnum) {
+  String toJson(Message message, boolean numericEnum) {
     try {
       Printer printer = JsonFormat.printer().usingTypeRegistry(registry);
       if (numericEnum) {
@@ -126,8 +125,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
   private void putDecomposedMessageQueryParam(
       Map<String, List<String>> fields, String fieldName, JsonElement parsed) {
     if (parsed.isJsonPrimitive() || parsed.isJsonNull()) {
-      putQueryParam(
-          fields, fieldName, parsed.getAsString().replaceAll("^\"", "").replaceAll("\"$", ""));
+      putQueryParam(fields, fieldName, parsed.getAsString());
     } else if (parsed.isJsonArray()) {
       for (JsonElement element : parsed.getAsJsonArray()) {
         putDecomposedMessageQueryParam(fields, fieldName, element);
@@ -150,29 +148,25 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
-    ArrayList<String> paramValueList = new ArrayList<>();
+    List<String> currentParamValueList = new ArrayList<>();
     List<Object> toProcess =
         fieldValue instanceof List<?> ? (List<Object>) fieldValue : ImmutableList.of(fieldValue);
     for (Object fieldValueItem : toProcess) {
       if (fieldValueItem instanceof Message) {
-        String json = toJson(((Message) fieldValueItem).toBuilder(), true);
+        String json = toJson(((Message) fieldValueItem), true);
         JsonElement parsed = JsonParser.parseString(json);
         putDecomposedMessageQueryParam(fields, fieldName, parsed);
-      } else if (fieldValueItem instanceof ProtocolMessageEnum) {
-        paramValueList.add(String.valueOf(((ProtocolMessageEnum) fieldValueItem).getNumber()));
       } else {
-        paramValueList.add(String.valueOf(fieldValueItem));
+        currentParamValueList.add(String.valueOf(fieldValueItem));
       }
     }
-    if (paramValueList.isEmpty()) {
-      // we have processed a message and added its properties into the query
+    if (currentParamValueList.isEmpty()) {
+      // We try to avoid putting non-leaf level fields to the query params
       return;
     }
-    if (fields.containsKey(fieldName)) {
-      fields.get(fieldName).addAll(paramValueList);
-    } else {
-      fields.put(fieldName, paramValueList);
-    }
+    List<String> accumulativeParamValueList = fields.getOrDefault(fieldName, new ArrayList<>());
+    accumulativeParamValueList.addAll(currentParamValueList);
+    fields.put(fieldName, accumulativeParamValueList);
   }
 
   /**

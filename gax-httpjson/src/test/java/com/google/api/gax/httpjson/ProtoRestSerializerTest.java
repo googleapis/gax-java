@@ -198,8 +198,6 @@ public class ProtoRestSerializerTest {
     requestSerializer.putQueryParam(fields, "optName4", Int32Value.of(1));
     requestSerializer.putQueryParam(fields, "optName5", FloatValue.of(1.1f));
     requestSerializer.putQueryParam(fields, "optName6", field);
-    requestSerializer.putQueryParam(
-        fields, "optName7", Arrays.asList(Cardinality.CARDINALITY_REPEATED));
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1.000000001s"));
@@ -211,7 +209,6 @@ public class ProtoRestSerializerTest {
     expectedFields.put("optName6.number", Arrays.asList("2"));
     expectedFields.put("optName6.options.name", Arrays.asList("opt_name1", "opt_name2"));
     expectedFields.put("optName6.cardinality", Arrays.asList("1"));
-    expectedFields.put("optName7", Arrays.asList("3"));
 
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }
