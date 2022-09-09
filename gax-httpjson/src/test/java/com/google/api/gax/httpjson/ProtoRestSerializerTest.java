@@ -31,6 +31,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.common.truth.Truth;
+import com.google.protobuf.Any;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
@@ -39,6 +40,7 @@ import com.google.protobuf.FloatValue;
 import com.google.protobuf.Int32Value;
 import com.google.protobuf.Option;
 import com.google.protobuf.Timestamp;
+import com.google.protobuf.TypeRegistry;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -58,7 +60,14 @@ public class ProtoRestSerializerTest {
 
   @Before
   public void setUp() {
-    requestSerializer = ProtoRestSerializer.create();
+    // tests with Any type messages require corresponding descriptors in the type registry
+    requestSerializer =
+        ProtoRestSerializer.create(
+            TypeRegistry.newBuilder()
+                .add(FieldMask.getDescriptor())
+                .add(Duration.getDescriptor())
+                .build());
+
     field =
         Field.newBuilder()
             .setNumber(2)
@@ -189,27 +198,69 @@ public class ProtoRestSerializerTest {
   @Test
   public void putQueryParamComplexObject() {
     Map<String, List<String>> fields = new HashMap<>();
-    requestSerializer.putQueryParam(
-        fields, "optName1", Duration.newBuilder().setSeconds(1).setNanos(1).build());
-    requestSerializer.putQueryParam(
-        fields, "optName2", Timestamp.newBuilder().setSeconds(1).setNanos(1).build());
-    requestSerializer.putQueryParam(
-        fields, "optName3", FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build());
-    requestSerializer.putQueryParam(fields, "optName4", Int32Value.of(1));
-    requestSerializer.putQueryParam(fields, "optName5", FloatValue.of(1.1f));
-    requestSerializer.putQueryParam(fields, "optName6", field);
+    Any fieldMask = Any.pack(FieldMask.newBuilder().addPaths("a.b.c").addPaths("d.e.f").build());
+    Any duration1 = Any.pack(Duration.newBuilder().setSeconds(1).setNanos(1).build());
+    Any duration2 = Any.pack(Duration.newBuilder().setSeconds(2).setNanos(2).build());
+    Field value =
+        Field.newBuilder()
+            .setNumber(2)
+            .setName("well_known_container")
+            .addOptions(Option.newBuilder().setName("duration").setValue(duration1).build())
+            .addOptions(Option.newBuilder().setName("duration").setValue(duration2).build())
+            .addOptions(Option.newBuilder().setName("mask").setValue(fieldMask).build())
+            .setCardinality(Cardinality.CARDINALITY_OPTIONAL)
+            .build();
+    requestSerializer.putQueryParam(fields, "object", value);
 
     Map<String, List<String>> expectedFields = new HashMap<>();
-    expectedFields.put("optName1", Arrays.asList("1.000000001s"));
-    expectedFields.put("optName2", Arrays.asList("1970-01-01T00:00:01.000000001Z"));
-    expectedFields.put("optName3", Arrays.asList("a.b,c.d"));
-    expectedFields.put("optName4", Arrays.asList("1"));
-    expectedFields.put("optName5", Arrays.asList("1.1"));
-    expectedFields.put("optName6.name", Arrays.asList("field_name1"));
-    expectedFields.put("optName6.number", Arrays.asList("2"));
-    expectedFields.put("optName6.options.name", Arrays.asList("opt_name1", "opt_name2"));
-    expectedFields.put("optName6.cardinality", Arrays.asList("1"));
+    expectedFields.put("object.name", Arrays.asList("well_known_container"));
+    expectedFields.put("object.number", Arrays.asList("2"));
+    expectedFields.put("object.options.name", Arrays.asList("duration", "duration", "mask"));
+    expectedFields.put(
+        "object.options.value.value", Arrays.asList("1.000000001s", "2.000000002s", "a.b.c,d.e.f"));
+    // used by JSON parser to obtain descriptors from this type url
+    expectedFields.put(
+        "object.options.value.@type",
+        Arrays.asList(
+            "type.googleapis.com/google.protobuf.Duration",
+            "type.googleapis.com/google.protobuf.Duration",
+            "type.googleapis.com/google.protobuf.FieldMask"));
+    expectedFields.put("object.cardinality", Arrays.asList("1"));
 
+    Truth.assertThat(fields).isEqualTo(expectedFields);
+  }
+
+  @Test
+  public void putQueryParamDuration() {
+    queryParamHelper(Duration.newBuilder().setSeconds(1).setNanos(1).build(), "1.000000001s");
+  }
+
+  @Test
+  public void putQueryParamTimestamp() {
+    queryParamHelper(
+        Timestamp.newBuilder().setSeconds(1).setNanos(1).build(), "1970-01-01T00:00:01.000000001Z");
+  }
+
+  @Test
+  public void putQueryParamFieldMask() {
+    queryParamHelper(FieldMask.newBuilder().addPaths("a.b").addPaths("c.d").build(), "a.b,c.d");
+  }
+
+  @Test
+  public void putQueryParamInt32Value() {
+    queryParamHelper(Int32Value.of(1), "1");
+  }
+
+  @Test
+  public void putQueryParamFloatValue() {
+    queryParamHelper(FloatValue.of(1.1f), "1.1");
+  }
+
+  private void queryParamHelper(Object value, String expected) {
+    Map<String, List<String>> fields = new HashMap<>();
+    requestSerializer.putQueryParam(fields, "value", value);
+    Map<String, List<String>> expectedFields = new HashMap<>();
+    expectedFields.put("value", Arrays.asList(expected));
     Truth.assertThat(fields).isEqualTo(expectedFields);
   }
 
