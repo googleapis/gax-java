@@ -31,6 +31,8 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
@@ -38,6 +40,7 @@ import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Printer;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +52,7 @@ import java.util.Map;
  */
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
+
   private final TypeRegistry registry;
 
   private ProtoRestSerializer(TypeRegistry registry) {
@@ -75,7 +79,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @throws InvalidProtocolBufferException if failed to serialize the protobuf message to JSON
    *     format
    */
-  String toJson(RequestT message, boolean numericEnum) {
+  String toJson(Message message, boolean numericEnum) {
     try {
       Printer printer = JsonFormat.printer().usingTypeRegistry(registry);
       if (numericEnum) {
@@ -118,6 +122,23 @@ public class ProtoRestSerializer<RequestT extends Message> {
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
+  private void putDecomposedMessageQueryParam(
+      Map<String, List<String>> fields, String fieldName, JsonElement parsed) {
+    if (parsed.isJsonPrimitive() || parsed.isJsonNull()) {
+      putQueryParam(fields, fieldName, parsed.getAsString());
+    } else if (parsed.isJsonArray()) {
+      for (JsonElement element : parsed.getAsJsonArray()) {
+        putDecomposedMessageQueryParam(fields, fieldName, element);
+      }
+    } else {
+      // it is a json object
+      for (String key : parsed.getAsJsonObject().keySet()) {
+        putDecomposedMessageQueryParam(
+            fields, String.format("%s.%s", fieldName, key), parsed.getAsJsonObject().get(key));
+      }
+    }
+  }
+
   /**
    * Puts a message field in {@code fields} map which will be used to populate query parameters of a
    * request.
@@ -127,16 +148,25 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
-    ImmutableList.Builder<String> paramValueList = ImmutableList.builder();
-    if (fieldValue instanceof List<?>) {
-      for (Object fieldValueItem : (List<?>) fieldValue) {
-        paramValueList.add(String.valueOf(fieldValueItem));
+    List<String> currentParamValueList = new ArrayList<>();
+    List<Object> toProcess =
+        fieldValue instanceof List<?> ? (List<Object>) fieldValue : ImmutableList.of(fieldValue);
+    for (Object fieldValueItem : toProcess) {
+      if (fieldValueItem instanceof Message) {
+        String json = toJson(((Message) fieldValueItem), true);
+        JsonElement parsed = JsonParser.parseString(json);
+        putDecomposedMessageQueryParam(fields, fieldName, parsed);
+      } else {
+        currentParamValueList.add(String.valueOf(fieldValueItem));
       }
-    } else {
-      paramValueList.add(String.valueOf(fieldValue));
     }
-
-    fields.put(fieldName, paramValueList.build());
+    if (currentParamValueList.isEmpty()) {
+      // We try to avoid putting non-leaf level fields to the query params
+      return;
+    }
+    List<String> accumulativeParamValueList = fields.getOrDefault(fieldName, new ArrayList<>());
+    accumulativeParamValueList.addAll(currentParamValueList);
+    fields.put(fieldName, accumulativeParamValueList);
   }
 
   /**
