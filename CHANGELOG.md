@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.19.1](https://github.com/googleapis/gax-java/compare/v2.19.0...v2.19.1) (2022-09-13)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.11.0 ([#1786](https://github.com/googleapis/gax-java/issues/1786)) ([4889ff7](https://github.com/googleapis/gax-java/commit/4889ff7ccd3ae13052c4b7009ce81bcd88d650a9))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.11.0 ([#1787](https://github.com/googleapis/gax-java/issues/1787)) ([4f5cd42](https://github.com/googleapis/gax-java/commit/4f5cd428f416e7d43f3268de32e5314ac3317460))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.0 ([#1779](https://github.com/googleapis/gax-java/issues/1779)) ([037e131](https://github.com/googleapis/gax-java/commit/037e131ad46690f6d1badb45dc2f31ca981c1348))
+* **deps:** Update dependency org.mockito:mockito-core to v4.8.0 ([#1785](https://github.com/googleapis/gax-java/issues/1785)) ([f2989bd](https://github.com/googleapis/gax-java/commit/f2989bd706e7b3c524d2f0b8ceaa1d576dd7f751))
+* **httpjson:** Handle message derived query params ([#1784](https://github.com/googleapis/gax-java/issues/1784)) ([4524fad](https://github.com/googleapis/gax-java/commit/4524fadbe688d96a7c5e715ab88b542b4bb3891a))
+
 ## [2.19.0](https://github.com/googleapis/gax-java/compare/v2.18.7...v2.19.0) (2022-08-22)
 
 
