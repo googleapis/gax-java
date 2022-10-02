@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.19.2](https://github.com/googleapis/gax-java/compare/v2.19.1...v2.19.2) (2022-10-02)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.3 ([#1797](https://github.com/googleapis/gax-java/issues/1797)) ([50c6a75](https://github.com/googleapis/gax-java/commit/50c6a75db05537b873d0d143fdccab82f46bc644))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.4 ([#1800](https://github.com/googleapis/gax-java/issues/1800)) ([6d4e62d](https://github.com/googleapis/gax-java/commit/6d4e62de5c2303d7c31faa046966b8842cbcfe53))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.5 ([#1805](https://github.com/googleapis/gax-java/issues/1805)) ([1f9fe38](https://github.com/googleapis/gax-java/commit/1f9fe38e3b152dad50a026adea8ea9b488acf786))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.6 ([#1810](https://github.com/googleapis/gax-java/issues/1810)) ([a206f46](https://github.com/googleapis/gax-java/commit/a206f46a095812c77cce1085a546692ba871deef))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.3 ([#1798](https://github.com/googleapis/gax-java/issues/1798)) ([8a1c732](https://github.com/googleapis/gax-java/commit/8a1c732bf938818a40c907b5656025cac52b9645))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.4 ([#1801](https://github.com/googleapis/gax-java/issues/1801)) ([0e2a405](https://github.com/googleapis/gax-java/commit/0e2a4053d945f4d4da55f8b5486df6dbcab66c2f))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.5 ([#1806](https://github.com/googleapis/gax-java/issues/1806)) ([da9dff8](https://github.com/googleapis/gax-java/commit/da9dff8a9cd2db63b396df42830c679b3555187d))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.6 ([#1811](https://github.com/googleapis/gax-java/issues/1811)) ([bb5dffa](https://github.com/googleapis/gax-java/commit/bb5dffa51de48a6f97304a50c4a596e21673bb6e))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.6 ([#1792](https://github.com/googleapis/gax-java/issues/1792)) ([d94482e](https://github.com/googleapis/gax-java/commit/d94482ef19f45b6dfbe775d7facf3467b09cb194))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.7 ([#1803](https://github.com/googleapis/gax-java/issues/1803)) ([534250b](https://github.com/googleapis/gax-java/commit/534250bdb165576bea7793a61b39c11312e4ec31))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.1 ([#1796](https://github.com/googleapis/gax-java/issues/1796)) ([9cb8d36](https://github.com/googleapis/gax-java/commit/9cb8d3640ff40f30f8dae2efd7341578fd449a7d))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.2 ([#1808](https://github.com/googleapis/gax-java/issues/1808)) ([b27f15d](https://github.com/googleapis/gax-java/commit/b27f15d277f74bc11e10e6e25b588b1767f8e5ee))
+* **deps:** Update dependency org.threeten:threetenbp to v1.6.2 ([#1799](https://github.com/googleapis/gax-java/issues/1799)) ([6a45067](https://github.com/googleapis/gax-java/commit/6a450679302c611960710f5a98e32d278bda2b60))
+* remove --allow-incomplete-classpath which has been deprecated as of Graalvm 22.1.0 ([e5c739c](https://github.com/googleapis/gax-java/commit/e5c739c093067f6f2340f873ed96dfea8ef9b7d6))
+* Remove --allow-incomplete-classpath which was deprecated as of Graalvm 22.1.0 ([#1794](https://github.com/googleapis/gax-java/issues/1794)) ([e5c739c](https://github.com/googleapis/gax-java/commit/e5c739c093067f6f2340f873ed96dfea8ef9b7d6))
+
 ## [2.19.1](https://github.com/googleapis/gax-java/compare/v2.19.0...v2.19.1) (2022-09-13)
 
 
