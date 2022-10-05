@@ -128,7 +128,7 @@ final class ServerStreamIterator<V> implements Iterator<V>, AutoCloseable {
   @Override
   public void close() {
     if (!observer.canClose()) {
-      logger.warning("closed stream when there are more responses");
+      logger.warning("closed stream when there are more responses," + observer.debugString());
     }
   }
 }
