@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 /**
  * Internal implementation of a blocking Iterator, which will coordinate with the
@@ -43,7 +44,9 @@ import java.util.NoSuchElementException;
  *
  * @param <V> The type of items to be Iterated over.
  */
-final class ServerStreamIterator<V> implements Iterator<V> {
+final class ServerStreamIterator<V> implements Iterator<V>, AutoCloseable {
+
+  private static Logger logger = Logger.getLogger(ServerStreamIterator.class.getName());
   private final QueuingResponseObserver<V> observer;
   private Object last;
 
@@ -120,5 +123,12 @@ final class ServerStreamIterator<V> implements Iterator<V> {
   @Override
   public void remove() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close() {
+    if (!observer.canClose()) {
+      logger.warning("closed stream when there are more responses");
+    }
   }
 }

@@ -59,6 +59,8 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
   private StreamController controller;
   private boolean isCancelled;
 
+  private boolean isDone;
+
   void request() {
     controller.request(1);
   }
@@ -114,6 +116,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    */
   @Override
   protected void onErrorImpl(Throwable t) {
+    isDone = true;
     buffer.add(t);
   }
 
@@ -124,6 +127,17 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    */
   @Override
   protected void onCompleteImpl() {
+    isDone = true;
     buffer.add(EOF_MARKER);
+  }
+
+  /**
+   * Check if the buffer is empty and the status is done or cancelled. We can also close the stream
+   * if the buffer only has EOF_MARKER.
+   *
+   * @return true if the stream can be closed
+   */
+  protected boolean canClose() {
+    return (buffer.isEmpty() || buffer.peek() == EOF_MARKER) && (isCancelled || isDone);
   }
 }
