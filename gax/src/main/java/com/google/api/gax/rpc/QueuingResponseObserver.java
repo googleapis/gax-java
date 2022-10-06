@@ -57,8 +57,6 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
 
   private final BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
   private StreamController controller;
-  private volatile boolean isCancelled;
-
   private volatile boolean isDone;
 
   void request() {
@@ -66,14 +64,14 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
   }
 
   Object getNext() throws InterruptedException {
-    if (isCancelled) {
+    if (isDone) {
       return EOF_MARKER;
     }
     return buffer.take();
   }
 
   boolean isReady() {
-    return isCancelled || !buffer.isEmpty();
+    return isDone || !buffer.isEmpty();
   }
 
   /**
@@ -81,7 +79,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    * called after starting the underlying call.
    */
   void cancel() {
-    isCancelled = true;
+    isDone = true;
     controller.cancel();
   }
 
@@ -132,17 +130,17 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
   }
 
   /**
-   * Check if the buffer is empty and the status is done or cancelled
+   * Check if the buffer is empty and the status is done
    *
    * @return true if the stream can be closed
    */
   protected boolean canClose() {
-    return (isCancelled || isDone) && buffer.isEmpty();
+    return isDone && buffer.isEmpty();
   }
 
   protected String debugString() {
     StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("isDone=").append(isDone).append("isCancelled=").append(isCancelled);
+    stringBuilder.append("isDone=").append(isDone);
     if (!buffer.isEmpty()) {
       stringBuilder.append(buffer.peek());
     }
