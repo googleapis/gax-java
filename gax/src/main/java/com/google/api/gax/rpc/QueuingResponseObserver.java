@@ -57,21 +57,26 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
 
   private final BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
   private StreamController controller;
-  private volatile boolean isDone;
+
+  // We need to have 2 flags because a cancelled stream won't return any more elements even if the
+  // buffer is non-empty, but when the upstream is exhausted, the queue will continue returning
+  // elements after onComplete as long as there are elements in the buffer.
+  private volatile boolean isCancelled;
+  private volatile boolean upstreamExhausted;
 
   void request() {
     controller.request(1);
   }
 
   Object getNext() throws InterruptedException {
-    if (isDone) {
+    if (isCancelled) {
       return EOF_MARKER;
     }
     return buffer.take();
   }
 
   boolean isReady() {
-    return isDone || !buffer.isEmpty();
+    return isCancelled || !buffer.isEmpty();
   }
 
   /**
@@ -79,7 +84,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    * called after starting the underlying call.
    */
   void cancel() {
-    isDone = true;
+    isCancelled = true;
     controller.cancel();
   }
 
@@ -114,7 +119,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    */
   @Override
   protected void onErrorImpl(Throwable t) {
-    isDone = true;
+    upstreamExhausted = true;
     buffer.add(t);
   }
 
@@ -125,7 +130,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    */
   @Override
   protected void onCompleteImpl() {
-    isDone = true;
+    upstreamExhausted = true;
     buffer.add(EOF_MARKER);
   }
 
@@ -135,14 +140,19 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
    * @return true if the stream can be closed
    */
   protected boolean canClose() {
-    return isDone && buffer.isEmpty();
+    return (upstreamExhausted || isCancelled) && buffer.isEmpty();
   }
 
   protected String debugString() {
     StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("isDone=").append(isDone);
-    if (!buffer.isEmpty()) {
-      stringBuilder.append(buffer.peek());
+    stringBuilder
+        .append("upstreamExhausted=")
+        .append(upstreamExhausted)
+        .append("isCancelled")
+        .append(isCancelled);
+    stringBuilder.append("buffered elements: ");
+    while (!buffer.isEmpty()) {
+      stringBuilder.append(buffer.poll());
     }
     return stringBuilder.toString();
   }
