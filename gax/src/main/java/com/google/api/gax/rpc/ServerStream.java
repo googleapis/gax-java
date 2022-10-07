@@ -64,7 +64,7 @@ import javax.annotation.Nonnull;
  *
  * @param <V> The type of each response.
  */
-public class ServerStream<V> implements Iterable<V> {
+public class ServerStream<V> implements Iterable<V>, AutoCloseable {
   private final QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);
   private boolean consumed;
@@ -106,5 +106,11 @@ public class ServerStream<V> implements Iterable<V> {
    */
   public void cancel() {
     observer.cancel();
+  }
+
+  /** Close the stream. */
+  @Override
+  public void close() {
+    iterator.close();
   }
 }
