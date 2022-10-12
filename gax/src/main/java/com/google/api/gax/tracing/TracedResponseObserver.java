@@ -40,7 +40,9 @@ import javax.annotation.Nonnull;
  * A {@link ResponseObserver} to mark a started operation trace as finished.
  *
  * <p>The operation will be marked as complete before notifying the wrapped observer. Which means
- * that the
+ * that the span of the instrumentation will not include processing of the innerObserver's
+ * onComplete.
+ *
  */
 @InternalApi
 class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
