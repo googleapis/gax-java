@@ -42,7 +42,6 @@ import javax.annotation.Nonnull;
  * <p>The operation will be marked as complete before notifying the wrapped observer. Which means
  * that the span of the instrumentation will not include processing of the innerObserver's
  * onComplete.
- *
  */
 @InternalApi
 class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
