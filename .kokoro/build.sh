@@ -36,7 +36,7 @@ fi
 
 echo "Compiling using Java:"
 java -version
-mvn -V -B -ntp clean compile
+mvn -V -B -ntp clean install -DskipTests
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
@@ -56,4 +56,5 @@ if [ "${GITHUB_JOB}" == "units-java8" ]; then
 fi
 
 echo
-mvn install -DskipTests
+# run tests in Java 8 with the source compiled in Java 11
+mvn -V -B -ntp surefire:test
