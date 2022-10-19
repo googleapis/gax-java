@@ -35,7 +35,7 @@ jobs:
 #          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
 #          restore-keys: ${{ runner.os }}-gradle
       - name: Maven Install
-        run: mvn clean install
+        run: mvn clean install -DskipTests
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
