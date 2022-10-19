@@ -36,7 +36,8 @@ fi
 
 echo "Compiling using Java:"
 java -version
-mvn -V -B -ntp clean install -DskipTests=true
+echo
+mvn -V -B -ntp clean install
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
