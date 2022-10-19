@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.4](https://github.com/googleapis/gax-java/compare/v2.19.3...v2.19.4) (2022-10-19)
+
+
+### Bug Fixes
+
+* Scope the throttling metric to exclude element size calculation ([#1835](https://github.com/googleapis/gax-java/issues/1835)) ([0287f83](https://github.com/googleapis/gax-java/commit/0287f83f9cabbb9dff6cb7e8ea3068ccc1ab12d9))
+
 ## [2.19.3](https://github.com/googleapis/gax-java/compare/v2.19.2...v2.19.3) (2022-10-19)
 
 
