@@ -18,7 +18,8 @@ set -eo pipefail
 if [[ -n "${AUTORELEASE_PR}" ]]
 then
   # Start the releasetool reporter
-  python3 -m pip install gcp-releasetool
+  requirementsFile=$(realpath $(dirname "${BASH_SOURCE[0]}")/../requirements.txt)
+  python3 -m pip install --require-hashes -r $requirementsFile
   python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
 fi
 
