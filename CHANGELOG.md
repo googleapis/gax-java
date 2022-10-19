@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.19.3](https://github.com/googleapis/gax-java/compare/v2.19.2...v2.19.3) (2022-10-19)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.12.0 ([#1822](https://github.com/googleapis/gax-java/issues/1822)) ([ad139e4](https://github.com/googleapis/gax-java/commit/ad139e45d29bd0fbf6b6f080b12ef9a987fa2e0d))
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.12.1 ([#1830](https://github.com/googleapis/gax-java/issues/1830)) ([d726921](https://github.com/googleapis/gax-java/commit/d7269210767a92e94568712920b34064278dddbc))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.12.0 ([#1823](https://github.com/googleapis/gax-java/issues/1823)) ([c6180ca](https://github.com/googleapis/gax-java/commit/c6180cacdaf4d191098e499eff0f6b014e730654))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.12.1 ([#1831](https://github.com/googleapis/gax-java/issues/1831)) ([227c8af](https://github.com/googleapis/gax-java/commit/227c8af66c95e86e8d90e5de9dd3f429895b44cc))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.8 ([#1828](https://github.com/googleapis/gax-java/issues/1828)) ([462a100](https://github.com/googleapis/gax-java/commit/462a1009a84a046da28298ad10f23cadfb7a61ea))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.50.1 ([#1819](https://github.com/googleapis/gax-java/issues/1819)) ([75600ea](https://github.com/googleapis/gax-java/commit/75600eab90ec2e33378c00824535763f5df87b24))
+* **deps:** Update dependency org.graalvm.sdk:graal-sdk to v22.2.0.1 ([#1817](https://github.com/googleapis/gax-java/issues/1817)) ([a8f8ae2](https://github.com/googleapis/gax-java/commit/a8f8ae2b5e035dc08ce161134ec2e441e6c2d4fc))
+* **deps:** Update dependency org.threeten:threetenbp to v1.6.3 ([#1821](https://github.com/googleapis/gax-java/issues/1821)) ([3bca572](https://github.com/googleapis/gax-java/commit/3bca572486e7780ff8fb8b581aa691738885401c))
+* **java:** Address ClassNotFoundException in GraalVM 22.2.0 ([#1816](https://github.com/googleapis/gax-java/issues/1816)) ([ae6e8be](https://github.com/googleapis/gax-java/commit/ae6e8beb6ed5525504df1a3bb7ce71bdf114a233))
+* **java:** Address reachability issues in native image compilation with version 22.2.0 ([#1815](https://github.com/googleapis/gax-java/issues/1815)) ([0f3215f](https://github.com/googleapis/gax-java/commit/0f3215f98bfc5def4e608c780d91953900e17946))
+
 ## [2.19.2](https://github.com/googleapis/gax-java/compare/v2.19.1...v2.19.2) (2022-10-02)
 
 
