@@ -36,8 +36,7 @@ fi
 
 echo "Compiling using Java:"
 java -version
-echo
-./gradlew compileJava compileTestJava javadoc
+mvn -V -B -ntp clean compile
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
@@ -57,6 +56,4 @@ if [ "${GITHUB_JOB}" == "units-java8" ]; then
 fi
 
 echo
-./gradlew build publishToMavenLocal \
-  --exclude-task compileJava --exclude-task compileTestJava \
-  --exclude-task javadoc
+mvn install -DskipTests
