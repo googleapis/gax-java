@@ -274,8 +274,13 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       callContextWithOption =
           callContext.withOption(THROTTLED_TIME_KEY, accumulatedBatch.totalThrottledTimeMs);
     }
-    final ApiFuture<ResponseT> batchResponse =
-        unaryCallable.futureCall(accumulatedBatch.builder.build(), callContextWithOption);
+    ApiFuture<ResponseT> batchResponse;
+    try {
+      batchResponse =
+          unaryCallable.futureCall(accumulatedBatch.builder.build(), callContextWithOption);
+    } catch (Exception ex) {
+      batchResponse = ApiFutures.immediateFailedFuture(ex);
+    }
 
     numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(

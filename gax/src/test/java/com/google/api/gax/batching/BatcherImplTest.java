@@ -46,6 +46,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
@@ -929,6 +930,80 @@ public class BatcherImplTest {
       flowController.release(1, 1);
       batcher.add(1);
     }
+  }
+
+  /**
+   * If the batcher's unary callable throws an exception when obtaining a response, then the
+   * response .get() should throw the exception
+   */
+  @Test
+  public void testAddDoesNotHangIfExceptionThrowStartingACall() {
+    BatchingDescriptor<Object, Object, Object, Object> batchingDescriptor =
+        new BatchingDescriptor<Object, Object, Object, Object>() {
+          @Override
+          public BatchingRequestBuilder<Object, Object> newRequestBuilder(Object o) {
+            return new BatchingRequestBuilder<Object, Object>() {
+              @Override
+              public void add(Object o) {}
+
+              @Override
+              public Object build() {
+                return new Object();
+              }
+            };
+          }
+
+          @Override
+          public void splitResponse(Object o, List<BatchEntry<Object, Object>> list) {
+            for (BatchEntry<Object, Object> e : list) {
+              e.getResultFuture().set(new Object());
+            }
+          }
+
+          @Override
+          public void splitException(Throwable throwable, List<BatchEntry<Object, Object>> list) {
+            for (BatchEntry<Object, Object> e : list) {
+              e.getResultFuture().setException(new RuntimeException("fake"));
+            }
+          }
+
+          @Override
+          public long countBytes(Object o) {
+            return 1;
+          }
+        };
+
+    UnaryCallable<Object, Object> unaryCallable =
+        new UnaryCallable<Object, Object>() {
+          @Override
+          public ApiFuture<Object> futureCall(Object o, ApiCallContext apiCallContext) {
+            throw new RuntimeException("this should bubble up");
+          }
+        };
+    Object prototype = new Object();
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
+            .setDelayThreshold(Duration.ofSeconds(1))
+            .setElementCountThreshold(100L)
+            .setRequestByteThreshold(100L)
+            .setFlowControlSettings(FlowControlSettings.getDefaultInstance())
+            .build();
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+    FlowController flowController = new FlowController(batchingSettings.getFlowControlSettings());
+    ApiCallContext callContext = FakeCallContext.createDefault();
+
+    BatcherImpl<Object, Object, Object, Object> batcher =
+        new BatcherImpl<>(
+            batchingDescriptor,
+            unaryCallable,
+            prototype,
+            batchingSettings,
+            executor,
+            flowController,
+            callContext);
+
+    ApiFuture<Object> f = batcher.add(new Object());
+    Assert.assertThrows(ExecutionException.class, f::get);
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {
