@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Google Inc.
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ if [[ -z "${CREDENTIALS}" ]]; then
 fi
 
 if [[ -z "${STAGING_BUCKET_V2}" ]]; then
-  echo "Need to set STAGING_BUCKET environment variable"
+  echo "Need to set STAGING_BUCKET_V2 environment variable"
   exit 1
 fi
 
@@ -30,30 +30,45 @@ pushd $(dirname "$0")/../../
 # install docuploader package
 python3 -m pip install --require-hashes -r .kokoro/requirements.txt
 
-NAME=gax
-VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
+doclet_name="java-docfx-doclet-${DOCLET_VERSION}.jar"
 
-# build the docs
-./gradlew javadocCombinedV3
+# compile all packages
+mvn clean install -B -q -DskipTests=true
 
-# copy README to docfx-yml dir and rename index.md
-cp README.md tmp_docs/docfx-yml/index.md
+export NAME=gax
+export VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
 
-# copy CHANGELOG to docfx-yml dir and rename history.md
-cp CHANGELOG.md tmp_docs/docfx-yml/history.md
+# cloud RAD generation
+mvn clean -B -ntp \
+  -P docFX \
+  -DdocletPath=${KOKORO_GFILE_DIR}/${doclet_name} \
+  -Dclirr.skip=true \
+  -Denforcer.skip=true \
+  -Dcheckstyle.skip=true \
+  -Dflatten.skip=true \
+  -Danimal.sniffer.skip=true \
+  javadoc:aggregate
 
-pushd tmp_docs/docfx-yml/
+# include CHANGELOG
+cp CHANGELOG.md target/docfx-yml/history.md
+
+pushd target/docfx-yml
 
 # create metadata
 python3 -m docuploader create-metadata \
   --name ${NAME} \
   --version ${VERSION} \
+  --xrefs devsite://java/gax \
+  --xrefs devsite://java/google-cloud-core \
+  --xrefs devsite://java/api-common \
+  --xrefs devsite://java/proto-google-common-protos \
+  --xrefs devsite://java/google-api-client \
+  --xrefs devsite://java/google-http-client \
+  --xrefs devsite://java/protobuf \
   --language java
 
-# upload docs
+# upload yml to production bucket
 python3 -m docuploader upload . \
   --credentials ${CREDENTIALS} \
   --staging-bucket ${STAGING_BUCKET_V2} \
   --destination-prefix docfx
-
-popd
