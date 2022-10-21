@@ -48,6 +48,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -177,6 +178,8 @@ public class HttpJsonClientInterceptorTest {
   }
 
   @Test
+  // TODO: Remove this ignore later
+  @Ignore("Ignore flaky test for now")
   public void testCustomInterceptor() throws ExecutionException, InterruptedException {
     HttpJsonDirectCallable<Field, Field> callable =
         new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);

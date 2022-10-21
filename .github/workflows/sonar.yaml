@@ -30,8 +30,9 @@ jobs:
           key: ${{ runner.os }}-maven
       - name: Maven Install
         run: mvn clean install -DskipTests
-      - name: Build and analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn sonar:sonar -Dsonar.projectKey=googleapis_gax-java
+      # TODO: Remove this later to enable sonar
+#      - name: Build and analyze
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#        run: mvn sonar:sonar -Dsonar.projectKey=googleapis_gax-java
