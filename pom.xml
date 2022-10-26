@@ -247,15 +247,8 @@
 
   <profiles>
     <profile>
-<!--      TODO: Confirm this profile-->
       <!-- profile for nexus-staging:release invocation -->
       <id>release-staging-repository</id>
-      <activation>
-        <property>
-          <!-- The root project not using nexus-staging-maven-plugin when signing -->
-          <name>!gpg.executable</name>
-        </property>
-      </activation>
       <distributionManagement>
         <snapshotRepository>
           <id>sonatype-nexus-snapshots</id>

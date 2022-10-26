@@ -43,6 +43,7 @@ then
   mvn nexus-staging:release -B \
     -DperformRelease=true \
     --settings=${MAVEN_SETTINGS_FILE}
+    -Prelease-staging-repository
 else
   echo "AUTORELEASE_PR is not set. Not releasing."
 fi
