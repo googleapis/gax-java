@@ -56,6 +56,19 @@ if [ "${GITHUB_JOB}" == "units-java8" ]; then
   fi
 fi
 
-echo
-# run tests in Java 8 with the source compiled in Java 11
-mvn -V -B -ntp surefire:test
+RETURN_CODE=0
+
+case "${JOB_TYPE}" in
+test)
+  mvn test -B -ntp -Dclirr.skip=true -Denforcer.skip=true
+  RETURN_CODE=$?
+  ;;
+clirr)
+  mvn -B -ntp -Denforcer.skip=true clirr:check
+  RETURN_CODE=$?
+  ;;
+*) ;;
+esac
+
+echo "exiting with ${RETURN_CODE}"
+exit ${RETURN_CODE}
