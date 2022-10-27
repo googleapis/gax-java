@@ -269,6 +269,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // logic
         synchronized (lock) {
           if (allMessagesConsumed) {
+            System.out.println("All Message Consumed");
             // allMessagesProcessed was set to true on previous loop iteration. We do it this
             // way to make sure that notifyListeners() is called in between consuming the last
             // message in a stream and closing the call.
@@ -385,6 +386,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   @GuardedBy("lock")
   private void close(
       int statusCode, String message, Throwable cause, boolean terminateImmediatelly) {
+    System.out.println("HttpJsonClientCallImpl Status Code: " + statusCode);
     try {
       if (closed) {
         return;
@@ -487,6 +489,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
+      System.out.println("OnCloseNotificationTask Status Code: " + statusCode);
       getListener().onClose(statusCode, trailers);
     }
   }

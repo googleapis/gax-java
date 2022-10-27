@@ -54,6 +54,7 @@ public abstract class ForwardingHttpJsonClientCallListener<ResponseT>
 
   @Override
   public void onClose(int statusCode, HttpJsonMetadata trailers) {
+    System.out.println("ForwardingHttpJsonClientCallListener Status Code: " + statusCode);
     delegate().onClose(statusCode, trailers);
   }
 
