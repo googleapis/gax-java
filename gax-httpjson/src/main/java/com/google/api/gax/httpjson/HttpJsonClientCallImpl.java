@@ -473,6 +473,7 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
+      System.out.println("OnMessageNotificationTask message: " + message);
       getListener().onMessage(message);
     }
   }
