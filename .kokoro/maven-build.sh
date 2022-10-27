@@ -56,8 +56,6 @@ if [ "${GITHUB_JOB}" == "units-java8" ]; then
   fi
 fi
 
-cd gax-httpjson
-
 echo
 # run tests in Java 8 with the source compiled in Java 11
 mvn -V -B -ntp surefire:test
