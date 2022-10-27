@@ -44,9 +44,6 @@ if [ ! -z "${JAVA8_HOME}" ]; then
   setJava "${JAVA8_HOME}"
 fi
 
-echo "Running tests using Java:"
-java -version
-
 if [ "${GITHUB_JOB}" == "units-java8" ]; then
   java -version 2>&1 | grep -q 'openjdk version "1.8.'
   MATCH=$? # 0 if the output has the match
