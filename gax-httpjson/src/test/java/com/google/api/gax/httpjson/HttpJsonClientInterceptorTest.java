@@ -88,7 +88,8 @@ public class HttpJsonClientInterceptorTest {
 
                 @Override
                 public void onClose(int statusCode, HttpJsonMetadata trailers) {
-                  System.out.println("SimpleForwardingHttpJsonClientCall Status Code: " + statusCode);
+                  System.out.println(
+                      "SimpleForwardingHttpJsonClientCall Status Code: " + statusCode);
                   capturedStatusCode = statusCode;
                   super.onClose(statusCode, trailers);
                 }
@@ -201,6 +202,8 @@ public class HttpJsonClientInterceptorTest {
     MOCK_SERVICE.addResponse(expectedResponse);
 
     Field actualResponse = callable.futureCall(request, callContext).get();
+
+    Thread.sleep(10000);
 
     // Test that the interceptors did not affect normal execution
     assertThat(actualResponse).isEqualTo(expectedResponse);
