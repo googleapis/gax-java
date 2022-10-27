@@ -49,6 +49,7 @@ public abstract class ForwardingHttpJsonClientCallListener<ResponseT>
 
   @Override
   public void onMessage(ResponseT message) {
+    System.out.println("ForwardingHttpJsonClientCallListener Status Code: " + message);
     delegate().onMessage(message);
   }
 

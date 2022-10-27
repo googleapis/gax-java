@@ -77,6 +77,7 @@ class HttpJsonClientCalls {
       // Request an extra message to detect misconfigured servers
       clientCall.request(2);
     } catch (Throwable sendError) {
+      LOGGER.log(Level.SEVERE, "Error sending the request", sendError);
       // Cancel if anything goes wrong
       try {
         clientCall.cancel(null, sendError);
