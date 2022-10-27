@@ -88,6 +88,7 @@ public class HttpJsonClientInterceptorTest {
 
                 @Override
                 public void onClose(int statusCode, HttpJsonMetadata trailers) {
+                  System.out.println("SimpleForwardingHttpJsonClientCall Status Code: " + statusCode);
                   capturedStatusCode = statusCode;
                   super.onClose(statusCode, trailers);
                 }
