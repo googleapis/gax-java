@@ -165,6 +165,12 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void request(int numMessages) {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl request("
+            + numMessages
+            + ") called");
     if (numMessages < 0) {
       throw new IllegalArgumentException("numMessages must be non-negative");
     }
@@ -227,6 +233,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   }
 
   private void deliver() {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl deliver() called");
     // A flag stored in method stack space to detect when we enter a delivery loop (regardless if
     // it is a concurrent thread or a recursive call execution of delivery() method within the same
     // thread).

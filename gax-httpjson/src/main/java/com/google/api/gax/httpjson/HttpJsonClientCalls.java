@@ -66,6 +66,10 @@ class HttpJsonClientCalls {
 
   static <RequestT, ResponseT> ApiFuture<ResponseT> eagerFutureUnaryCall(
       HttpJsonClientCall<RequestT, ResponseT> clientCall, RequestT request) {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + "HttpJsonClientCalls eagerFutureUnaryCall()");
     // Start the call
     HttpJsonFuture<ResponseT> future = new HttpJsonFuture<>(clientCall);
     clientCall.start(new FutureListener<>(future), HttpJsonMetadata.newBuilder().build());
