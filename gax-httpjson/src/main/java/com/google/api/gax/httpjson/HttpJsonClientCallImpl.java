@@ -132,6 +132,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void setResult(RunnableResult runnableResult) {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl setResult() called");
     Preconditions.checkNotNull(runnableResult);
     synchronized (lock) {
       if (closed) {
@@ -151,6 +155,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void start(Listener<ResponseT> responseListener, HttpJsonMetadata requestHeaders) {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl start() called");
     Preconditions.checkNotNull(responseListener);
     Preconditions.checkNotNull(requestHeaders);
     synchronized (lock) {
@@ -187,6 +195,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void cancel(@Nullable String message, @Nullable Throwable cause) {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl cancel() called");
     Throwable actualCause = cause;
     if (actualCause == null) {
       actualCause = new CancellationException(message);
@@ -339,16 +351,38 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         }
       }
     }
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl deliver() done...");
   }
 
   private void notifyListeners() {
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl notifyListeners() called");
     while (true) {
       NotificationTask<ResponseT> notification;
       synchronized (lock) {
+        System.out.println(
+            "Thread ID: "
+                + Thread.currentThread().getName()
+                + ": HttpJsonClientCallImpl notifyListeners() num messages: "
+                + pendingNotifications.size());
         if (pendingNotifications.isEmpty()) {
+          System.out.println(
+              "Thread ID: "
+                  + Thread.currentThread().getName()
+                  + ": HttpJsonClientCallImpl notifyListeners() done...");
           return;
         }
         notification = pendingNotifications.poll();
+        System.out.println(
+            "Thread ID: "
+                + Thread.currentThread().getName()
+                + ": HttpJsonClientCallImpl notifyListeners() type: "
+                + notification.getClass());
       }
       notification.call();
     }
