@@ -4,12 +4,12 @@ plugins {
   id 'java'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 
-  id 'com.diffplug.eclipse.apt' version '3.39.0' apply false
+  id 'com.diffplug.eclipse.apt' version '3.40.0' apply false
   id 'com.dorongold.task-tree' version '2.1.0' apply false
   id 'com.github.johnrengelman.shadow' version '7.1.2' apply false
   id 'com.github.sherter.google-java-format' version '0.9' apply false
 
-  id 'org.sonarqube' version '3.4.0.2513'
+  id 'org.sonarqube' version '3.5.0.2730'
 }
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
