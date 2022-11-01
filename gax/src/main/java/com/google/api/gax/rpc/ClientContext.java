@@ -218,7 +218,7 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
       if (watchdogProvider.needsExecutor()) {
-        watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor);
+        watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor, backgroundExecutorProvider.shouldAutoClose());
       }
       watchdog = watchdogProvider.getWatchdog();
     }

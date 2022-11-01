@@ -48,18 +48,21 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Nullable private final ApiClock clock;
   @Nullable private final ScheduledExecutorService executor;
   @Nullable private final Duration checkInterval;
+  @Nullable private final Boolean shouldShutdownExecutor;
 
   public static WatchdogProvider create() {
-    return new InstantiatingWatchdogProvider(null, null, null);
+    return new InstantiatingWatchdogProvider(null, null, null, null);
   }
 
   private InstantiatingWatchdogProvider(
       @Nullable ApiClock clock,
       @Nullable ScheduledExecutorService executor,
-      @Nullable Duration checkInterval) {
+      @Nullable Duration checkInterval,
+      @Nullable Boolean shouldShutdownExecutor) {
     this.clock = clock;
     this.executor = executor;
     this.checkInterval = checkInterval;
+    this.shouldShutdownExecutor = shouldShutdownExecutor;
   }
 
   @Override
@@ -70,7 +73,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public WatchdogProvider withClock(@Nonnull ApiClock clock) {
     return new InstantiatingWatchdogProvider(
-        Preconditions.checkNotNull(clock), executor, checkInterval);
+        Preconditions.checkNotNull(clock), executor, checkInterval, shouldShutdownExecutor);
   }
 
   @Override
@@ -81,7 +84,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public WatchdogProvider withCheckInterval(@Nonnull Duration checkInterval) {
     return new InstantiatingWatchdogProvider(
-        clock, executor, Preconditions.checkNotNull(checkInterval));
+        clock, executor, Preconditions.checkNotNull(checkInterval), shouldShutdownExecutor);
   }
 
   @Override
@@ -90,9 +93,9 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
-  public WatchdogProvider withExecutor(ScheduledExecutorService executor) {
+  public WatchdogProvider withExecutor(ScheduledExecutorService executor, boolean shouldShutdownExecutor) {
     return new InstantiatingWatchdogProvider(
-        clock, Preconditions.checkNotNull(executor), checkInterval);
+        clock, Preconditions.checkNotNull(executor), checkInterval, shouldShutdownExecutor);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -108,7 +111,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
       return null;
     }
 
-    return Watchdog.create(clock, checkInterval, executor);
+    return Watchdog.create(clock, checkInterval, executor, shouldShutdownExecutor);
   }
 
   @Override

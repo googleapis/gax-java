@@ -45,7 +45,7 @@ public interface WatchdogProvider {
 
   boolean needsExecutor();
 
-  WatchdogProvider withExecutor(ScheduledExecutorService executor);
+  WatchdogProvider withExecutor(ScheduledExecutorService executor, boolean shouldShutdownExecutor);
 
   Watchdog getWatchdog();
 

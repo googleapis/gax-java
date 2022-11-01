@@ -70,20 +70,22 @@ public final class Watchdog implements Runnable, BackgroundResource {
   private final ApiClock clock;
   private final Duration scheduleInterval;
   private final ScheduledExecutorService executor;
+  private final boolean shouldShutdownExecutor;
   private ScheduledFuture<?> future;
 
   /** returns a Watchdog which is scheduled at the provided interval. */
   public static Watchdog create(
-      ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
-    Watchdog watchdog = new Watchdog(clock, scheduleInterval, executor);
+      ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor, boolean shouldShutdownExecutor) {
+    Watchdog watchdog = new Watchdog(clock, scheduleInterval, executor, shouldShutdownExecutor);
     watchdog.start();
     return watchdog;
   }
 
-  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
+  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor, boolean shouldShutdownExecutor) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
     this.scheduleInterval = scheduleInterval;
     this.executor = executor;
+    this.shouldShutdownExecutor = shouldShutdownExecutor;
   }
 
   private void start() {
@@ -138,12 +140,18 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean isShutdown() {
-    return executor.isShutdown();
+    if (shouldShutdownExecutor) {
+      return executor.isShutdown();
+    }
+    return true;
   }
 
   @Override
   public boolean isTerminated() {
-    return executor.isTerminated();
+    if (shouldShutdownExecutor){
+      return executor.isTerminated();
+    }
+    return true;
   }
 
   @Override
@@ -153,7 +161,10 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
-    return executor.awaitTermination(duration, unit);
+    if (shouldShutdownExecutor) {
+      return executor.awaitTermination(duration, unit);
+    }
+    return true;
   }
 
   @Override

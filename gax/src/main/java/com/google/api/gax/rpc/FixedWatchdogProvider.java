@@ -81,7 +81,7 @@ public final class FixedWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
-  public WatchdogProvider withExecutor(ScheduledExecutorService executor) {
+  public WatchdogProvider withExecutor(ScheduledExecutorService executor, boolean shouldShutdownExecutor) {
     throw new UnsupportedOperationException("FixedWatchdogProvider doesn't need an executor");
   }
 
