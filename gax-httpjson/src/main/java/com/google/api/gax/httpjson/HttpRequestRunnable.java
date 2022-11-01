@@ -101,9 +101,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   @Override
   public void run() {
     System.out.println(
-            "Thread ID: "
-                    + Thread.currentThread().getName()
-                    + ": Running HttpRequestRunnable run()");
+        "Thread ID: " + Thread.currentThread().getName() + ": Running HttpRequestRunnable run()");
     HttpResponse httpResponse = null;
     RunnableResult.Builder result = RunnableResult.builder();
     HttpJsonMetadata.Builder trailers = HttpJsonMetadata.newBuilder();
