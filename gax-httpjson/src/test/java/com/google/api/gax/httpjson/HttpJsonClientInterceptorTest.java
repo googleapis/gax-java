@@ -202,11 +202,16 @@ public class HttpJsonClientInterceptorTest {
     MOCK_SERVICE.addResponse(expectedResponse);
 
     Field actualResponse = callable.futureCall(request, callContext).get();
-    System.out.println("Future blocking is done -- Got response back from get()");
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": Future blocking is done -- Got response back from get()");
 
-    System.out.println("Starting to sleep for 10 seconds...");
+    System.out.println(
+        "Thread ID: " + Thread.currentThread().getName() + ": Starting to sleep for 10 seconds...");
     Thread.sleep(10000);
-    System.out.println("Done sleeping 10 seconds...");
+    System.out.println(
+        "Thread ID: " + Thread.currentThread().getName() + ": Done sleeping 10 seconds...");
 
     // Test that the interceptors did not affect normal execution
     assertThat(actualResponse).isEqualTo(expectedResponse);

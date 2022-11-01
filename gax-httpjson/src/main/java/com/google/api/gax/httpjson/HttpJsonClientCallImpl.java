@@ -269,7 +269,10 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // logic
         synchronized (lock) {
           if (allMessagesConsumed) {
-            System.out.println("All Message Consumed");
+            System.out.println(
+                "Thread ID: "
+                    + Thread.currentThread().getName()
+                    + ": All Message Consumed -- Now calling close()");
             // allMessagesProcessed was set to true on previous loop iteration. We do it this
             // way to make sure that notifyListeners() is called in between consuming the last
             // message in a stream and closing the call.
@@ -386,7 +389,11 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   @GuardedBy("lock")
   private void close(
       int statusCode, String message, Throwable cause, boolean terminateImmediatelly) {
-    System.out.println("HttpJsonClientCallImpl Status Code: " + statusCode);
+    System.out.println(
+        "Thread ID: "
+            + Thread.currentThread().getName()
+            + ": HttpJsonClientCallImpl close() Status Code: "
+            + statusCode);
     try {
       if (closed) {
         return;
@@ -473,7 +480,11 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
-      System.out.println("OnMessageNotificationTask message: " + message);
+      System.out.println(
+          "Thread ID: "
+              + Thread.currentThread().getName()
+              + ": OnMessageNotificationTask message: "
+              + message);
       getListener().onMessage(message);
     }
   }
@@ -490,7 +501,11 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
-      System.out.println("OnCloseNotificationTask Status Code: " + statusCode);
+      System.out.println(
+          "Thread ID: "
+              + Thread.currentThread().getName()
+              + ": OnCloseNotificationTask Status Code: "
+              + statusCode);
       getListener().onClose(statusCode, trailers);
     }
   }
