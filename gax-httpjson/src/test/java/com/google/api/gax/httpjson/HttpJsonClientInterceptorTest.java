@@ -55,6 +55,10 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class HttpJsonClientInterceptorTest {
+
+  private static final int NUM_RETRIES = 10;
+  private static final int BUSY_WAIT_TIME = 1000;
+
   private static class CapturingClientInterceptor implements HttpJsonClientInterceptor {
     // Manually capturing arguments instead of using Mockito. This is intentional, as this
     // specific test interceptor class represents a typical interceptor implementation. Doing the
@@ -76,12 +80,20 @@ public class HttpJsonClientInterceptorTest {
               new SimpleForwardingHttpJsonClientCallListener<ResponseT>(responseListener) {
                 @Override
                 public void onHeaders(HttpJsonMetadata responseHeaders) {
+                  System.out.println(
+                      "Thread ID: "
+                          + Thread.currentThread().getName()
+                          + ": HttpJsonClientInterceptorTest.SimpleForwardingHttpJsonClientCall.onHeaders()");
                   capturedResponseHeaders = responseHeaders;
                   super.onHeaders(responseHeaders);
                 }
 
                 @Override
                 public void onMessage(ResponseT message) {
+                  System.out.println(
+                      "Thread ID: "
+                          + Thread.currentThread().getName()
+                          + ": HttpJsonClientInterceptorTest.SimpleForwardingHttpJsonClientCall.onMessage()");
                   capturedMessage = message;
                   super.onMessage(message);
                 }
@@ -91,7 +103,7 @@ public class HttpJsonClientInterceptorTest {
                   System.out.println(
                       "Thread ID: "
                           + Thread.currentThread().getName()
-                          + "HttpJsonClientInterceptorTest.SimpleForwardingHttpJsonClientCall.interceptCall()");
+                          + ": HttpJsonClientInterceptorTest.SimpleForwardingHttpJsonClientCall.onClose()");
                   capturedStatusCode = statusCode;
                   super.onClose(statusCode, trailers);
                 }
@@ -209,11 +221,12 @@ public class HttpJsonClientInterceptorTest {
             + Thread.currentThread().getName()
             + ": Future blocking is done -- Got response back from get()");
 
-    System.out.println(
-        "Thread ID: " + Thread.currentThread().getName() + ": Starting to sleep for 10 seconds...");
-    Thread.sleep(10000);
-    System.out.println(
-        "Thread ID: " + Thread.currentThread().getName() + ": Done sleeping 10 seconds...");
+    //    System.out.println(
+    //        "Thread ID: " + Thread.currentThread().getName() + ": Starting to sleep for 10
+    // seconds...");
+    //    Thread.sleep(10000);
+    //    System.out.println(
+    //        "Thread ID: " + Thread.currentThread().getName() + ": Done sleeping 10 seconds...");
 
     // Test that the interceptors did not affect normal execution
     assertThat(actualResponse).isEqualTo(expectedResponse);
@@ -224,8 +237,21 @@ public class HttpJsonClientInterceptorTest {
     assertThat(headerValue).isEqualTo("headerValue");
 
     // Test that the custom interceptor was called
-    assertThat(interceptor.capturedStatusCode).isEqualTo(200);
+    // These two tests cases are guaranteed to respond back by the time `get()` is unblocked
     assertThat(interceptor.capturedResponseHeaders).isNotNull();
     assertThat(interceptor.capturedMessage).isEqualTo(request);
+
+    // TODO: We have no guarantee that `close()` will be called before `get()` is unblocked
+    // We must busy wait until the interceptor's `onClose()` is called
+    int attempts = 0;
+    while (interceptor.capturedStatusCode == 0) {
+      Thread.sleep(BUSY_WAIT_TIME);
+      attempts++;
+      if (attempts == NUM_RETRIES) {
+        break;
+      }
+    }
+
+    assertThat(interceptor.capturedStatusCode).isEqualTo(200);
   }
 }
