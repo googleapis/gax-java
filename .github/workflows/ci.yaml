@@ -66,29 +66,3 @@ jobs:
           name: test-artifacts
           path: ~/.cache/bazel/*/*/*/gax-java/bazel-out/*/testlogs/*
           retention-days: 5
-  linkage-monitor:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java:
-          - 8
-          - 11
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-      - run: java -version
-      - name: Build and install local Maven repository
-        run: >-
-          ./gradlew build publishToMavenLocal -x test -x
-          signMavenJavaPublication
-      - name: >-
-          Generate artifact list (linkage-monitor-artifacts.txt) for Linkage
-          Monitor
-        run: ./gradlew createLinkageMonitorArtifactList
-      - name: Check dependency conflicts with the latest Libraries BOM
-        uses: >-
-          GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1-linkagemonitor
-      - name: Check dependency conflicts in the gax artifacts
-        run: ./gradlew checkJavaLinkage
