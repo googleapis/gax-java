@@ -65,6 +65,16 @@ branchProtectionRules:
       - units (8)
       - units (11)
       - cla/google
+  - pattern: 2.19.x
+    isAdminEnforced: true
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+    requiresStrictStatusChecks: false
+    requiredStatusCheckContexts:
+      - bazel
+      - units (8)
+      - units (11)
+      - cla/google
 permissionRules:
   - team: yoshi-admins
     permission: admin
