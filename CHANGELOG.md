@@ -5,12 +5,8 @@
 
 ### Bug Fixes
 
-* **deps:** Update dependency com.google.api:api-common to v2.2.2 ([#1852](https://github.com/googleapis/gax-java/issues/1852)) ([19ccd85](https://github.com/googleapis/gax-java/commit/19ccd8516e182e49d9e12464ad9062f32fa2c8c4))
-* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.10.0 ([#1862](https://github.com/googleapis/gax-java/issues/1862)) ([d5a06d8](https://github.com/googleapis/gax-java/commit/d5a06d88dfde9c7521d0a4fcf1cd22c545e029c3))
-* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.10.0 ([#1863](https://github.com/googleapis/gax-java/issues/1863)) ([50894cd](https://github.com/googleapis/gax-java/commit/50894cda94d537d7d4b8d28eb53ebd16ecfbe37a))
 * **deps:** Update dependency com.google.cloud:google-cloud-shared-config to v1.5.4 ([#1840](https://github.com/googleapis/gax-java/issues/1840)) ([8f7a38c](https://github.com/googleapis/gax-java/commit/8f7a38ca0a9d187af49649adf7d96ef97c9e9915))
 * **deps:** Update dependency com.google.code.gson:gson to v2.10 ([#1845](https://github.com/googleapis/gax-java/issues/1845)) ([816e666](https://github.com/googleapis/gax-java/commit/816e6665e06bc65cbaf2703617342c8db9780115))
-* **deps:** Update dependency com.google.http-client:google-http-client-bom to v1.42.3 ([#1855](https://github.com/googleapis/gax-java/issues/1855)) ([abbac93](https://github.com/googleapis/gax-java/commit/abbac939f45398569e10b2a56865d4d073d7119b))
 * **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.9 ([#1850](https://github.com/googleapis/gax-java/issues/1850)) ([f270ac4](https://github.com/googleapis/gax-java/commit/f270ac45b6a21d531eb8bd75157f2784fcad90fc))
 * **deps:** Update dependency io.grpc:grpc-bom to v1.50.2 ([#1842](https://github.com/googleapis/gax-java/issues/1842)) ([11c4a7c](https://github.com/googleapis/gax-java/commit/11c4a7caf31de256f29678de829f11f9558adcfd))
 * **deps:** Update dependency org.mockito:mockito-core to v4.8.1 ([#1843](https://github.com/googleapis/gax-java/issues/1843)) ([bf67fc2](https://github.com/googleapis/gax-java/commit/bf67fc26236286d72b9ddcb2e66113fdac74b51a))
