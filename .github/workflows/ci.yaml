@@ -127,4 +127,6 @@ jobs:
     container: gcr.io/cloud-devrel-public-resources/java8
     steps:
       - uses: actions/checkout@v2
-      - run: python3 -m pip install --require-hashes -r .kokoro/requirements.txt
+      - run: |
+          python3 --version
+          python3 -m pip install --require-hashes -r .kokoro/requirements.txt
