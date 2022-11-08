@@ -123,7 +123,8 @@ jobs:
           retention-days: 5
   requirements:
     name: "requirements"
-    runs-on: gcr.io/cloud-devrel-public-resources/java8
+    runs-on: ubuntu-latest
+    container: gcr.io/cloud-devrel-public-resources/java8
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - run: python3 pip install --require-hashes -r .kokoro/requirements.txt
