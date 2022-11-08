@@ -121,3 +121,8 @@ jobs:
           name: test-artifacts
           path: ~/.cache/bazel/*/*/*/gax-java/bazel-out/*/testlogs/*
           retention-days: 5
+  requirements:
+    name: "requirements check"
+    runs-on: gcr.io/cloud-devrel-public-resources/java8
+    steps:
+      - run: python3 pip install --require-hashes -r .kokoro/requirements.txt
