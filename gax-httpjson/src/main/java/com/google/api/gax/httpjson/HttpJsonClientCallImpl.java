@@ -132,10 +132,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void setResult(RunnableResult runnableResult) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl setResult() called");
     Preconditions.checkNotNull(runnableResult);
     synchronized (lock) {
       if (closed) {
@@ -155,10 +151,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void start(Listener<ResponseT> responseListener, HttpJsonMetadata requestHeaders) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl start() called");
     Preconditions.checkNotNull(responseListener);
     Preconditions.checkNotNull(requestHeaders);
     synchronized (lock) {
@@ -173,12 +165,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void request(int numMessages) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl request("
-            + numMessages
-            + ") called");
     if (numMessages < 0) {
       throw new IllegalArgumentException("numMessages must be non-negative");
     }
@@ -195,10 +181,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
 
   @Override
   public void cancel(@Nullable String message, @Nullable Throwable cause) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl cancel() called");
     Throwable actualCause = cause;
     if (actualCause == null) {
       actualCause = new CancellationException(message);
@@ -245,10 +227,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   }
 
   private void deliver() {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl deliver() called");
     // A flag stored in method stack space to detect when we enter a delivery loop (regardless if
     // it is a concurrent thread or a recursive call execution of delivery() method within the same
     // thread).
@@ -291,10 +269,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         // logic
         synchronized (lock) {
           if (allMessagesConsumed) {
-            System.out.println(
-                "Thread ID: "
-                    + Thread.currentThread().getName()
-                    + ": All Message Consumed -- Now calling close()");
             // allMessagesProcessed was set to true on previous loop iteration. We do it this
             // way to make sure that notifyListeners() is called in between consuming the last
             // message in a stream and closing the call.
@@ -351,38 +325,16 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
         }
       }
     }
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl deliver() done...");
   }
 
   private void notifyListeners() {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl notifyListeners() called");
     while (true) {
       NotificationTask<ResponseT> notification;
       synchronized (lock) {
-        System.out.println(
-            "Thread ID: "
-                + Thread.currentThread().getName()
-                + ": HttpJsonClientCallImpl notifyListeners() num messages: "
-                + pendingNotifications.size());
         if (pendingNotifications.isEmpty()) {
-          System.out.println(
-              "Thread ID: "
-                  + Thread.currentThread().getName()
-                  + ": HttpJsonClientCallImpl notifyListeners() done...");
           return;
         }
         notification = pendingNotifications.poll();
-        System.out.println(
-            "Thread ID: "
-                + Thread.currentThread().getName()
-                + ": HttpJsonClientCallImpl notifyListeners() type: "
-                + notification.getClass());
       }
       notification.call();
     }
@@ -433,11 +385,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
   @GuardedBy("lock")
   private void close(
       int statusCode, String message, Throwable cause, boolean terminateImmediatelly) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCallImpl close() Status Code: "
-            + statusCode);
     try {
       if (closed) {
         return;
@@ -524,11 +471,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
-      System.out.println(
-          "Thread ID: "
-              + Thread.currentThread().getName()
-              + ": OnMessageNotificationTask message: "
-              + message);
       getListener().onMessage(message);
     }
   }
@@ -545,11 +487,6 @@ final class HttpJsonClientCallImpl<RequestT, ResponseT>
     }
 
     public void call() {
-      System.out.println(
-          "Thread ID: "
-              + Thread.currentThread().getName()
-              + ": OnCloseNotificationTask Status Code: "
-              + statusCode);
       getListener().onClose(statusCode, trailers);
     }
   }

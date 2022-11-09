@@ -66,10 +66,6 @@ class HttpJsonClientCalls {
 
   static <RequestT, ResponseT> ApiFuture<ResponseT> eagerFutureUnaryCall(
       HttpJsonClientCall<RequestT, ResponseT> clientCall, RequestT request) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": HttpJsonClientCalls eagerFutureUnaryCall()");
     // Start the call
     HttpJsonFuture<ResponseT> future = new HttpJsonFuture<>(clientCall);
     clientCall.start(new FutureListener<>(future), HttpJsonMetadata.newBuilder().build());
@@ -109,8 +105,6 @@ class HttpJsonClientCalls {
 
     @Override
     public boolean set(T value) {
-      System.out.println(
-          "Thread ID: " + Thread.currentThread().getName() + ": HttpJsonFuture set() : " + value);
       return super.set(value);
     }
 
@@ -129,11 +123,6 @@ class HttpJsonClientCalls {
 
     @Override
     public void onMessage(T message) {
-      System.out.println(
-          "Thread ID: "
-              + Thread.currentThread().getName()
-              + ": HttpJsonClientCalls onMessage() : "
-              + message);
       if (!future.set(message)) {
         throw new IllegalStateException("More than one value received for unary call");
       }

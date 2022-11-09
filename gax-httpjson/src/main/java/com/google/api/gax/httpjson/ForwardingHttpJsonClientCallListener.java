@@ -49,21 +49,11 @@ public abstract class ForwardingHttpJsonClientCallListener<ResponseT>
 
   @Override
   public void onMessage(ResponseT message) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": ForwardingHttpJsonClientCallListener Message: "
-            + message);
     delegate().onMessage(message);
   }
 
   @Override
   public void onClose(int statusCode, HttpJsonMetadata trailers) {
-    System.out.println(
-        "Thread ID: "
-            + Thread.currentThread().getName()
-            + ": ForwardingHttpJsonClientCallListener Status Code: "
-            + statusCode);
     delegate().onClose(statusCode, trailers);
   }
 
