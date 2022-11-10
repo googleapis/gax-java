@@ -56,9 +56,6 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class HttpJsonClientInterceptorTest {
 
-  private static final int NUM_RETRIES = 10;
-  private static final int BUSY_WAIT_TIME_IN_MS = 1000;
-
   private static class CapturingClientInterceptor implements HttpJsonClientInterceptor {
     // Manually capturing arguments instead of using Mockito. This is intentional, as this
     // specific test interceptor class represents a typical interceptor implementation. Doing the
@@ -213,21 +210,8 @@ public class HttpJsonClientInterceptorTest {
     // Test that internal interceptor worked (the one which inserts headers)
     assertThat(headerValue).isEqualTo("headerValue");
 
-    // Test that the custom interceptor was called
-    // These two tests cases are guaranteed to respond back by the time `get()` is unblocked
+    assertThat(interceptor.capturedStatusCode).isEqualTo(200);
     assertThat(interceptor.capturedResponseHeaders).isNotNull();
     assertThat(interceptor.capturedMessage).isEqualTo(request);
-
-    // Attempt to busy wait {NUM_RETRIES} times until the interceptor's `onClose()` is called
-    int attempts = 0;
-    while (interceptor.capturedStatusCode == 0) {
-      Thread.sleep(BUSY_WAIT_TIME_IN_MS);
-      attempts++;
-      if (attempts == NUM_RETRIES) {
-        break;
-      }
-    }
-
-    assertThat(interceptor.capturedStatusCode).isEqualTo(200);
   }
 }

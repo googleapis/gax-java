@@ -65,7 +65,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
 
     HttpJsonClientCall<RequestT, ResponseT> clientCall =
         HttpJsonClientCalls.newCall(descriptor, context);
-    return HttpJsonClientCalls.eagerFutureUnaryCall(clientCall, request);
+    return HttpJsonClientCalls.futureUnaryCall(clientCall, request);
   }
 
   @Override

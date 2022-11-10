@@ -64,7 +64,7 @@ class HttpJsonClientCalls {
     return httpJsonContext.getChannel().newCall(methodDescriptor, httpJsonContext.getCallOptions());
   }
 
-  static <RequestT, ResponseT> ApiFuture<ResponseT> eagerFutureUnaryCall(
+  static <RequestT, ResponseT> ApiFuture<ResponseT> futureUnaryCall(
       HttpJsonClientCall<RequestT, ResponseT> clientCall, RequestT request) {
     // Start the call
     HttpJsonFuture<ResponseT> future = new HttpJsonFuture<>(clientCall);
@@ -115,34 +115,48 @@ class HttpJsonClientCalls {
 
   private static class FutureListener<T> extends HttpJsonClientCall.Listener<T> {
     private final HttpJsonFuture<T> future;
+    private T message;
+    private boolean isMessageReceived;
 
     private FutureListener(HttpJsonFuture<T> future) {
       this.future = future;
+      this.isMessageReceived = false;
     }
 
     @Override
     public void onMessage(T message) {
-      if (!future.set(message)) {
+      if (isMessageReceived) {
         throw new IllegalStateException("More than one value received for unary call");
       }
+      this.message = message;
+      this.isMessageReceived = true;
     }
 
     @Override
     public void onClose(int statusCode, HttpJsonMetadata trailers) {
-      if (!future.isDone()) {
-        if (trailers == null || trailers.getException() == null) {
-          future.setException(
-              new HttpJsonStatusRuntimeException(
-                  statusCode,
-                  "Exception during a client call closure",
-                  new NullPointerException(
-                      "Both response message and response exception were null")));
+      if (statusCode >= 200 && statusCode < 400) {
+        if (!isMessageReceived) {
+          if (trailers == null || trailers.getException() == null) {
+            future.setException(
+                new HttpJsonStatusRuntimeException(
+                    statusCode,
+                    "Exception during a client call closure",
+                    new NullPointerException(
+                        "Both response message and response exception were null")));
+          } else {
+            future.setException(
+                new HttpJsonStatusRuntimeException(
+                    statusCode,
+                    "Exception during a client call closure",
+                    new RuntimeException("No message received for unary call")));
+          }
         } else {
-          future.setException(trailers.getException());
+          future.set(message);
         }
-      } else if (statusCode < 200 || statusCode >= 400) {
+      } else {
         LOGGER.log(
             Level.WARNING, "Received error for unary call after receiving a successful response");
+        future.setException(trailers.getException());
       }
     }
   }
