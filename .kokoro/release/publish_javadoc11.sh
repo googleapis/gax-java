@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Google Inc.
+# Copyright 2022 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 
 set -eo pipefail
 
-if [[ -z "${CREDENTIALS}" ]]; then
-  CREDENTIALS=${KOKORO_KEYSTORE_DIR}/73713_docuploader_service_account
-fi
-
-if [[ -z "${STAGING_BUCKET_V2}" ]]; then
-  echo "Need to set STAGING_BUCKET environment variable"
-  exit 1
-fi
+#if [[ -z "${CREDENTIALS}" ]]; then
+#  CREDENTIALS=${KOKORO_KEYSTORE_DIR}/73713_docuploader_service_account
+#fi
+#
+#if [[ -z "${STAGING_BUCKET_V2}" ]]; then
+#  echo "Need to set STAGING_BUCKET environment variable"
+#  exit 1
+#fi
 
 # work from the git root directory
 pushd $(dirname "$0")/../../
@@ -31,18 +31,38 @@ pushd $(dirname "$0")/../../
 python3 -m pip install --require-hashes -r .kokoro/requirements.txt
 
 NAME=gax
-VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
+VERSION="100.0.0"
+#VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
+
+mvn -B -ntp \
+  -DtrimStackTrace=false \
+  -Dclirr.skip=true \
+  -Denforcer.skip=true \
+  -Dcheckstyle.skip=true \
+  -Dflatten.skip=true \
+  -Danimal.sniffer.skip=true \
+  -DskipTests=true \
+  -Djacoco.skip=true \
+  install
 
 # build the docs
-./gradlew javadocCombinedV3
+mvn -B -ntp \
+  -P docFX \
+  -Dclirr.skip=true \
+  -Denforcer.skip=true \
+  -Dcheckstyle.skip=true \
+  -Dflatten.skip=true \
+  -Danimal.sniffer.skip=true \
+  -DdocletPath=/Users/lawrenceqiu/IdeaProjects/java-docfx-doclet/third_party/docfx-doclet-143274/target/java-docfx-doclet-1.8.0.jar \
+  javadoc:aggregate
 
 # copy README to docfx-yml dir and rename index.md
-cp README.md tmp_docs/docfx-yml/index.md
+cp README.md target/docfx-yml/index.md
 
 # copy CHANGELOG to docfx-yml dir and rename history.md
-cp CHANGELOG.md tmp_docs/docfx-yml/history.md
+cp CHANGELOG.md target/docfx-yml/history.md
 
-pushd tmp_docs/docfx-yml/
+pushd target/docfx-yml/
 
 # create metadata
 python3 -m docuploader create-metadata \
@@ -50,10 +70,10 @@ python3 -m docuploader create-metadata \
   --version ${VERSION} \
   --language java
 
-# upload docs
+## upload docs
 python3 -m docuploader upload . \
-  --credentials ${CREDENTIALS} \
-  --staging-bucket ${STAGING_BUCKET_V2} \
+#  --credentials ${CREDENTIALS} \
+  --staging-bucket "docs-staging-v2-dev" \
   --destination-prefix docfx
 
 popd
