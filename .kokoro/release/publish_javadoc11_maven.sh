@@ -15,14 +15,14 @@
 
 set -eo pipefail
 
-if [[ -z "${CREDENTIALS}" ]]; then
-  CREDENTIALS=${KOKORO_KEYSTORE_DIR}/73713_docuploader_service_account
-fi
-
-if [[ -z "${STAGING_BUCKET_V2}" ]]; then
-  echo "Need to set STAGING_BUCKET environment variable"
-  exit 1
-fi
+#if [[ -z "${CREDENTIALS}" ]]; then
+#  CREDENTIALS=${KOKORO_KEYSTORE_DIR}/73713_docuploader_service_account
+#fi
+#
+#if [[ -z "${STAGING_BUCKET_V2}" ]]; then
+#  echo "Need to set STAGING_BUCKET environment variable"
+#  exit 1
+#fi
 
 # work from the git root directory
 pushd $(dirname "$0")/../../
@@ -31,7 +31,8 @@ pushd $(dirname "$0")/../../
 python3 -m pip install --require-hashes -r .kokoro/requirements.txt
 
 NAME=gax
-VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
+VERSION="100.0.0"
+#VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
 
 mvn -B -ntp \
   -DtrimStackTrace=false \
@@ -52,6 +53,7 @@ mvn -B -ntp \
   -Dcheckstyle.skip=true \
   -Dflatten.skip=true \
   -Danimal.sniffer.skip=true \
+  -DdocletPath=/Users/lawrenceqiu/IdeaProjects/java-docfx-doclet/third_party/docfx-doclet-143274/target/java-docfx-doclet-1.8.0.jar \
   javadoc:aggregate
 
 # copy README to docfx-yml dir and rename index.md
@@ -70,8 +72,8 @@ python3 -m docuploader create-metadata \
 
 ## upload docs
 python3 -m docuploader upload . \
-  --credentials ${CREDENTIALS} \
-  --staging-bucket ${STAGING_BUCKET_V2} \
+#  --credentials ${CREDENTIALS} \
+  --staging-bucket "docs-staging-v2-dev" \
   --destination-prefix docfx
 
 popd
