@@ -53,7 +53,6 @@ mvn -B -ntp \
   -Dcheckstyle.skip=true \
   -Dflatten.skip=true \
   -Danimal.sniffer.skip=true \
-  -DdocletPath=/Users/lawrenceqiu/IdeaProjects/java-docfx-doclet/third_party/docfx-doclet-143274/target/java-docfx-doclet-1.8.0.jar \
   javadoc:aggregate
 
 # copy README to docfx-yml dir and rename index.md
