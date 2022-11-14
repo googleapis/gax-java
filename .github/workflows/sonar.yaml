@@ -64,4 +64,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn sonar:sonar -Dsonar.projectKey=googleapis_gax-java
+        run: mvn sonar:sonar -Dsonar.projectKey=googleapis_gax-java -Denforcer.skip -Dclirr.skip
