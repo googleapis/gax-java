@@ -208,7 +208,7 @@ public abstract class ClientContext {
 
     WatchdogProvider watchdogProvider = settings.getStreamWatchdogProvider();
     @Nullable Watchdog watchdog = null;
-
+    boolean needsExecutor = false;
     if (watchdogProvider != null) {
       if (watchdogProvider.needsCheckInterval()) {
         watchdogProvider =
@@ -217,7 +217,8 @@ public abstract class ClientContext {
       if (watchdogProvider.needsClock()) {
         watchdogProvider = watchdogProvider.withClock(clock);
       }
-      if (watchdogProvider.needsExecutor()) {
+      needsExecutor = watchdogProvider.needsExecutor();
+      if (needsExecutor) {
         watchdogProvider = watchdogProvider.withExecutor(backgroundExecutor);
       }
       watchdog = watchdogProvider.getWatchdog();
@@ -231,7 +232,7 @@ public abstract class ClientContext {
     if (backgroundExecutorProvider.shouldAutoClose()) {
       backgroundResources.add(new ExecutorAsBackgroundResource(backgroundExecutor));
     }
-    if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
+    if (watchdogProvider != null && watchdogProvider.shouldAutoClose() && !needsExecutor) {
       backgroundResources.add(watchdog);
     }
 
