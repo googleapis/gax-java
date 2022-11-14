@@ -54,14 +54,13 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Maven packages
         uses: actions/cache@v3
-        id: mvn-cache
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven
-      - name: Maven Install
-        run: mvn clean install -DskipTests -Denforcer.skip -Dclirr.skip
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn sonar:sonar -Dsonar.projectKey=googleapis_gax-java -Denforcer.skip -Dclirr.skip
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=googleapis_gax-java -Dsonar.organization=googleapis -Dsonar.host.url=https://sonarcloud.io
+
