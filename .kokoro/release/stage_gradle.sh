@@ -28,26 +28,12 @@ MAVEN_SETTINGS_FILE=$(realpath $(dirname "$0")/../../)/settings.xml
 pushd $(dirname "$0")/../../
 
 setup_environment_secrets
-create_settings_xml_file "settings.xml"
+mkdir -p ${HOME}/.gradle
+create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
 
-mvn clean deploy -B \
-  -DskipTests=true \
-  -Dclirr.skip=true \
-  --settings ${MAVEN_SETTINGS_FILE} \
-  -Dgpg.executable=gpg \
-  -Dgpg.passphrase=${GPG_PASSPHRASE} \
-  -Dgpg.homedir=${GPG_HOMEDIR} \
-  -P release
-
-# TODO: The step below will release the artifact to maven central. Uncomment when ready
-
-## The job triggered by Release Please (release-trigger) has this AUTORELEASE_PR
-## environment variable. Fusion also lets us to specify this variable.
-#if [[ -n "${AUTORELEASE_PR}" ]]
-#then
-#  mvn nexus-staging:release -B \
-#    -DperformRelease=true \
-#    --settings=${MAVEN_SETTINGS_FILE}
-#else
-#  echo "AUTORELEASE_PR is not set. Not releasing."
-#fi
+if [[ -z "${AUTORELEASE_PR}" ]]
+then
+  ./gradlew publishToSonatype
+else
+  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+fi
