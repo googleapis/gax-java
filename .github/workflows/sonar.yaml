@@ -59,7 +59,7 @@ jobs:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven
       - name: Maven Install
-        run: mvn clean install -DskipTests
+        run: mvn clean install -DskipTests -Denforcer.skip -Dclirr.skip
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
