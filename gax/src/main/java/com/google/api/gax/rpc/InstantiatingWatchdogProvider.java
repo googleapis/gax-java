@@ -48,18 +48,21 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Nullable private final ApiClock clock;
   @Nullable private final ScheduledExecutorService executor;
   @Nullable private final Duration checkInterval;
+  private final boolean autoClose;
 
   public static WatchdogProvider create() {
-    return new InstantiatingWatchdogProvider(null, null, null);
+    return new InstantiatingWatchdogProvider(null, null, null, true);
   }
 
   private InstantiatingWatchdogProvider(
       @Nullable ApiClock clock,
       @Nullable ScheduledExecutorService executor,
-      @Nullable Duration checkInterval) {
+      @Nullable Duration checkInterval,
+      boolean autoClose) {
     this.clock = clock;
     this.executor = executor;
     this.checkInterval = checkInterval;
+    this.autoClose = autoClose;
   }
 
   @Override
@@ -70,7 +73,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public WatchdogProvider withClock(@Nonnull ApiClock clock) {
     return new InstantiatingWatchdogProvider(
-        Preconditions.checkNotNull(clock), executor, checkInterval);
+        Preconditions.checkNotNull(clock), executor, checkInterval, autoClose);
   }
 
   @Override
@@ -81,7 +84,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public WatchdogProvider withCheckInterval(@Nonnull Duration checkInterval) {
     return new InstantiatingWatchdogProvider(
-        clock, executor, Preconditions.checkNotNull(checkInterval));
+        clock, executor, Preconditions.checkNotNull(checkInterval), autoClose);
   }
 
   @Override
@@ -92,7 +95,7 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public WatchdogProvider withExecutor(ScheduledExecutorService executor) {
     return new InstantiatingWatchdogProvider(
-        clock, Preconditions.checkNotNull(executor), checkInterval);
+        clock, Preconditions.checkNotNull(executor), checkInterval, autoClose);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -112,7 +115,12 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
+  public WatchdogProvider withAutoClose(boolean autoClose) {
+    return new InstantiatingWatchdogProvider(clock, executor, checkInterval, autoClose);
+  }
+
+  @Override
   public boolean shouldAutoClose() {
-    return true;
+    return autoClose;
   }
 }

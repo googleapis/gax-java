@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
@@ -49,5 +50,13 @@ public interface WatchdogProvider {
 
   Watchdog getWatchdog();
 
+  @BetaApi
+  default WatchdogProvider withAutoClose(boolean autoClose) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  /**
+   * If this is true, closing the client will automatically shut down the executor used by  Watchdog
+   */
   boolean shouldAutoClose();
 }
