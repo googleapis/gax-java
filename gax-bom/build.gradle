@@ -5,7 +5,7 @@ plugins {
 
 archivesBaseName = 'gax-bom'
 
-project.version = "2.19.5" // {x-version-update:gax-bom:current}
+project.version = "2.19.6-SNAPSHOT" // {x-version-update:gax-bom:current}
 
 def mavenJavaDir = "$buildDir/publications/mavenJava"
 def mavenJavaBomOutputFile = file(mavenJavaDir + '/pom-default.xml')
