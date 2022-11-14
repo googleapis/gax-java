@@ -38,3 +38,26 @@ signing.gnupg.passphrase=${GPG_PASSPHRASE}
 ossrhUsername=${SONATYPE_USERNAME}
 ossrhPassword=${SONATYPE_PASSWORD}" > $1
 }
+
+create_settings_xml_file() {
+  echo "
+<settings>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>${SONATYPE_USERNAME}</username>
+      <password>${SONATYPE_PASSWORD}</password>
+    </server>
+    <server>
+      <id>sonatype-nexus-staging</id>
+      <username>${SONATYPE_USERNAME}</username>
+      <password>${SONATYPE_PASSWORD}</password>
+    </server>
+    <server>
+      <id>sonatype-nexus-snapshots</id>
+      <username>${SONATYPE_USERNAME}</username>
+      <password>${SONATYPE_PASSWORD}</password>
+    </server>
+  </servers>
+</settings>" > $1
+}
