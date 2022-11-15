@@ -138,12 +138,12 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean isShutdown() {
-    return executor.isShutdown();
+    return future.isCancelled();
   }
 
   @Override
   public boolean isTerminated() {
-    return executor.isTerminated();
+    return future.isCancelled();
   }
 
   @Override
@@ -153,7 +153,15 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
-    return executor.awaitTermination(duration, unit);
+    // A simple implementation of awaiting future cancel, we can revisit if we decide to go with
+    // this approach.
+    long milliSecondsWaited = 0;
+    while (!future.isCancelled() && milliSecondsWaited < unit.toMillis(duration)) {
+      int interval = 1000;
+      Thread.sleep(interval);
+      milliSecondsWaited += interval;
+    }
+    return future.isCancelled();
   }
 
   @Override
