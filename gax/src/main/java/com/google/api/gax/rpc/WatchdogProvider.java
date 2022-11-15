@@ -56,7 +56,7 @@ public interface WatchdogProvider {
   }
 
   /**
-   * If this is true, closing the client will automatically shut down the executor used by  Watchdog
+   * If this is true, closing the client will automatically shut down the executor used by Watchdog
    */
   boolean shouldAutoClose();
 }
