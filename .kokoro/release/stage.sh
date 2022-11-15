@@ -13,27 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -eo pipefail
+echo "Running `stage.sh`. Invoking stage_gradle and stage_maven"
 
-if [[ -n "${AUTORELEASE_PR}" ]]
-then
-  # Start the releasetool reporter
-  requirementsFile=$(realpath $(dirname "${BASH_SOURCE[0]}")/../requirements.txt)
-  python3 -m pip install --require-hashes -r $requirementsFile
-  python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
-fi
-
-source $(dirname "$0")/common.sh
-MAVEN_SETTINGS_FILE=$(realpath $(dirname "$0")/../../)/settings.xml
-pushd $(dirname "$0")/../../
-
-setup_environment_secrets
-mkdir -p ${HOME}/.gradle
-create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
-
-if [[ -z "${AUTORELEASE_PR}" ]]
-then
-  ./gradlew publishToSonatype
-else
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-fi
+#set -eo pipefail
+#
+#if [[ -n "${AUTORELEASE_PR}" ]]
+#then
+#  # Start the releasetool reporter
+#  requirementsFile=$(realpath $(dirname "${BASH_SOURCE[0]}")/../requirements.txt)
+#  python3 -m pip install --require-hashes -r $requirementsFile
+#  python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
+#fi
+#
+#source $(dirname "$0")/common.sh
+#MAVEN_SETTINGS_FILE=$(realpath $(dirname "$0")/../../)/settings.xml
+#pushd $(dirname "$0")/../../
+#
+#setup_environment_secrets
+#mkdir -p ${HOME}/.gradle
+#create_gradle_properties_file "${HOME}/.gradle/gradle.properties"
+#
+#if [[ -z "${AUTORELEASE_PR}" ]]
+#then
+#  ./gradlew publishToSonatype
+#else
+#  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+#fi
