@@ -34,5 +34,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=googleapis_gax-java -Dsonar.organization=googleapis -Dsonar.host.url=https://sonarcloud.io -Denforcer.skip -Dclirr.skip -Dsonar.verbose=true
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=googleapis_gax-java -Dsonar.organization=googleapis -Dsonar.host.url=https://sonarcloud.io
 
