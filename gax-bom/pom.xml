@@ -7,6 +7,13 @@
   <packaging>pom</packaging>
   <name>GAX (Google Api eXtensions) for Java (BOM)</name>
   <description>Google Api eXtensions for Java (BOM)</description>
+
+  <parent>
+    <groupId>com.google.cloud</groupId>
+    <artifactId>google-cloud-shared-config</artifactId>
+    <version>1.5.4</version>
+  </parent>
+
   <url>https://github.com/googleapis/gax-java</url>
   <licenses>
     <license>
