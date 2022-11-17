@@ -14,10 +14,6 @@
     <version>1.5.4</version>
   </parent>
 
-  <properties>
-    <checkstyle.header.file>${project.basedir}/../java.header</checkstyle.header.file>
-  </properties>
-
   <developers>
     <developer>
       <id>GoogleAPIs</id>
@@ -79,34 +75,15 @@
     </dependencies>
   </dependencyManagement>
 
-  <profiles>
-    <profile>
-      <!-- Only run checkstyle plugin on Java 11+ (checkstyle artifact only supports Java 11+) -->
-      <id>checkstyle-tests</id>
-      <activation>
-        <jdk>[11,)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>checkstyle</id>
-                <phase>validate</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <configuration>
-                  <headerLocation>${checkstyle.header.file}</headerLocation>
-                  <configLocation>${project.basedir}/../license-checks.xml</configLocation>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
