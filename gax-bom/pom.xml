@@ -14,13 +14,10 @@
     <version>1.5.4</version>
   </parent>
 
-  <url>https://github.com/googleapis/gax-java</url>
-  <licenses>
-    <license>
-      <name>BSD</name>
-      <url>https://github.com/googleapis/gax-java/blob/master/LICENSE</url>
-    </license>
-  </licenses>
+  <properties>
+    <checkstyle.header.file>${project.basedir}/../java.header</checkstyle.header.file>
+  </properties>
+
   <developers>
     <developer>
       <id>GoogleAPIs</id>
@@ -31,10 +28,19 @@
       <organizationUrl>https://www.google.com</organizationUrl>
     </developer>
   </developers>
+
   <scm>
     <connection>scm:git:https://github.com/googleapis/gax-java.git</connection>
     <url>https://github.com/googleapis/gax-java</url>
   </scm>
+
+  <licenses>
+    <license>
+      <name>BSD</name>
+      <url>https://github.com/googleapis/gax-java/blob/master/LICENSE</url>
+    </license>
+  </licenses>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -73,15 +79,34 @@
     </dependencies>
   </dependencyManagement>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <profiles>
+    <profile>
+      <!-- Only run checkstyle plugin on Java 11+ (checkstyle artifact only supports Java 11+) -->
+      <id>checkstyle-tests</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>checkstyle</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <configuration>
+                  <headerLocation>${checkstyle.header.file}</headerLocation>
+                  <configLocation>${project.basedir}/../license-checks.xml</configLocation>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
