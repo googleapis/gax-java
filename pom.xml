@@ -41,6 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <auto-value.version>1.10.1</auto-value.version>
   </properties>
 
   <modules>
@@ -98,6 +99,16 @@
         <groupId>io.opencensus</groupId>
         <artifactId>opencensus-api</artifactId>
         <version>0.31.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>autovalueannotations</artifactId>
+        <version>${auto-value.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value</artifactId>
+        <version>${auto-value.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
