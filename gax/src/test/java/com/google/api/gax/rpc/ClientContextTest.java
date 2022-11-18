@@ -176,7 +176,7 @@ public class ClientContextTest {
 
     @Override
     public TransportChannel getTransportChannel() throws IOException {
-      if (needsCredentials()) {
+      if (needsCredentials() && !headers.containsKey("x-goog-api-key")) {
         throw new IllegalStateException("Needs Credentials");
       }
       transport.setExecutor(executor);
@@ -768,5 +768,29 @@ public class ClientContextTest {
     context = ClientContext.create(builder.build());
     transportChannel = (FakeTransportChannel) context.getTransportChannel();
     assertThat(transportChannel.getExecutor()).isSameInstanceAs(executorProvider.getExecutor());
+  }
+
+  @Test
+  public void testApiKey() throws IOException {
+    FakeStubSettings.Builder builder = new FakeStubSettings.Builder();
+
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, null, true, null, null);
+    builder.setTransportChannelProvider(transportProvider);
+
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of());
+    builder.setHeaderProvider(headerProvider);
+
+    // Set API key.
+    builder.setApiKey("key");
+
+    ClientContext context = ClientContext.create(builder.build());
+
+    // Check API key is in the transport channel's header.
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
+    assertThat(fakeTransportChannel.getHeaders()).containsEntry("x-goog-api-key", "key");
   }
 }
