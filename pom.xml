@@ -4,7 +4,7 @@
   <groupId>com.google.api</groupId>
   <artifactId>gax-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.19.5</version><!-- {x-version-update:gax:current} -->
+  <version>100.0.0</version><!-- {x-version-update:gax:current} -->
   <name>GAX (Google Api eXtensions) for Java (Parent)</name>
   <url>https://github.com/googleapis/gax-java</url>
   <description>Google Api eXtensions for Java (Parent)</description>
@@ -41,7 +41,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <auto-value.version>1.10.1</auto-value.version>
   </properties>
 
   <modules>
@@ -99,16 +98,6 @@
         <groupId>io.opencensus</groupId>
         <artifactId>opencensus-api</artifactId>
         <version>0.31.1</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.auto.value</groupId>
-        <artifactId>auto-value-annotations</artifactId>
-        <version>${auto-value.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.auto.value</groupId>
-        <artifactId>auto-value</artifactId>
-        <version>${auto-value.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -206,33 +195,32 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.google.auto.value</groupId>
-              <artifactId>auto-value</artifactId>
-              <version>${auto-value.version}</version>
-            </path>
-          </annotationProcessorPaths>
-          <release>8</release>
-          <compilerArgs>
-            <arg>-Xlint:unchecked</arg>
-            <arg>-Xlint:deprecation</arg>
-          </compilerArgs>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <addMavenDescriptor>false</addMavenDescriptor>
-            <index>false</index>
-          </archive>
-        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <classifier>testlib</classifier>
+              <testClassesDirectory>${project.basedir}/src/test/java</testClassesDirectory>
+              <includes>
+                <include>com/google/api/gax/rpc/testing/**</include>
+                <include>com/google/api/gax/grpc/testing/**</include>
+                <include>com/google/api/gax/httpjson/testing/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.coveo</groupId>

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>gax-httpjson</artifactId>
-  <version>0.104.5</version> <!-- {x-version-update:gax-httpjson:current} -->
+  <version>100.0.0</version> <!-- {x-version-update:gax-httpjson:current} -->
   <packaging>jar</packaging>
   <name>GAX (Google Api eXtensions) for Java (HTTP JSON)</name>
   <description>Google Api eXtensions for Java (HTTP JSON)</description>
@@ -87,34 +87,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-            </manifest>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>
