@@ -58,35 +58,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-            <configuration>
-              <classifier>testlib</classifier>
-              <testClassesDirectory>${project.basedir}/src/test/java</testClassesDirectory>
-              <includes>
-                <include>com/google/api/gax/rpc/testing/**</include>
-                <include>com/google/api/gax/grpc/testing/**</include>
-                <include>com/google/api/gax/httpjson/testing/**</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>
