@@ -41,7 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <auto-value.version>1.10</auto-value.version>
+    <auto-value.version>1.10.1</auto-value.version>
   </properties>
 
   <modules>
