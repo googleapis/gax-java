@@ -68,7 +68,7 @@ python3 -m docuploader create-metadata \
   --version ${VERSION} \
   --language java
 
-## upload docs
+# upload docs
 python3 -m docuploader upload . \
   --credentials ${CREDENTIALS} \
   --staging-bucket ${STAGING_BUCKET_V2} \
