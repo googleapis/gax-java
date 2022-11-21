@@ -206,9 +206,9 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         // A retry algorithm triggered cancellation.
         tracer.attemptFailedRetriesExhausted(e);
         super.cancel(false);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         // Should never happen, but still possible in case of buggy retry algorithm implementation.
-        // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
+        // Any bugs/throwables (except CancellationException) in retry algorithms immediately
         // terminate retrying future and set the result to the thrown exception.
         tracer.attemptPermanentFailure(e);
         super.setException(e);
