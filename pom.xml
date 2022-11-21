@@ -130,6 +130,7 @@
         <artifactId>gax</artifactId>
         <version>2.19.5</version> <!-- {x-version-update:gax:current} -->
         <type>test-jar</type>
+        <classifier>testlib</classifier>
       </dependency>
       <dependency>
         <groupId>com.google.api.grpc</groupId>
@@ -240,9 +241,10 @@
             </goals>
             <configuration>
               <classifier>testlib</classifier>
-              <testClassesDirectory>${project.basedir}/src/test/java</testClassesDirectory>
               <includes>
+                <include>com/google/api/gax/core/**</include>
                 <include>com/google/api/gax/rpc/testing/**</include>
+                <include>com/google/api/gax/rpc/mtls/**</include>
                 <include>com/google/api/gax/grpc/testing/**</include>
                 <include>com/google/api/gax/httpjson/testing/**</include>
               </includes>
