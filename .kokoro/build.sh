@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2018 Google Inc.
+# Copyright 2022 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,15 +37,12 @@ fi
 echo "Compiling using Java:"
 java -version
 echo
-./gradlew compileJava compileTestJava javadoc
+mvn -V -B -ntp clean install -DskipTests -Dclirr.skip=true -Denforcer.skip=true
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
   setJava "${JAVA8_HOME}"
 fi
-
-echo "Running tests using Java:"
-java -version
 
 if [ "${GITHUB_JOB}" == "units-java8" ]; then
   java -version 2>&1 | grep -q 'openjdk version "1.8.'
@@ -56,7 +53,20 @@ if [ "${GITHUB_JOB}" == "units-java8" ]; then
   fi
 fi
 
-echo
-./gradlew build publishToMavenLocal \
-  --exclude-task compileJava --exclude-task compileTestJava \
-  --exclude-task javadoc
+RETURN_CODE=0
+
+case "${JOB_TYPE}" in
+test)
+  # run tests in Java 8 with the source compiled in Java 11
+  mvn -V -B -ntp surefire:test -Dclirr.skip=true -Denforcer.skip=true
+  RETURN_CODE=$?
+  ;;
+clirr)
+  mvn -B -ntp -Denforcer.skip=true clirr:check
+  RETURN_CODE=$?
+  ;;
+*) ;;
+esac
+
+echo "exiting with ${RETURN_CODE}"
+exit ${RETURN_CODE}
