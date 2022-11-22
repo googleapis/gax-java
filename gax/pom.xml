@@ -14,6 +14,10 @@
     <version>2.19.5</version><!-- {x-version-update:gax:current} -->
   </parent>
 
+  <properties>
+    <generate.testlib>false</generate.testlib>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.google.api</groupId>
@@ -58,4 +62,23 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <skip>${generate.testlib}</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
