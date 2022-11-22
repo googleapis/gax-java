@@ -37,6 +37,10 @@
     </license>
   </licenses>
 
+  <properties>
+    <skip.generate.testlib>true</skip.generate.testlib>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -93,7 +97,7 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
-              <skip>true</skip>
+              <skip>${skip.generate.testlib}</skip>
             </configuration>
           </execution>
         </executions>

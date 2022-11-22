@@ -15,7 +15,7 @@
   </parent>
 
   <properties>
-    <generate.testlib>false</generate.testlib>
+    <skip.generate.testlib>false</skip.generate.testlib>
   </properties>
 
   <dependencies>
@@ -74,7 +74,7 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
-              <skip>${generate.testlib}</skip>
+              <skip>${skip.generate.testlib}</skip>
             </configuration>
           </execution>
         </executions>
