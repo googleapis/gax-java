@@ -115,6 +115,7 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
+              <skip>false</skip>
               <classifier>testlib</classifier>
               <includes>
                 <include>com/google/api/gax/grpc/testing/**</include>
