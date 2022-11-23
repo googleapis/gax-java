@@ -14,10 +14,6 @@
     <version>2.19.5</version><!-- {x-version-update:gax:current} -->
   </parent>
 
-  <properties>
-    <skip.generate.testlib>false</skip.generate.testlib>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.google.api</groupId>
@@ -119,7 +115,10 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
-              <skip>${skip.generate.testlib}</skip>
+              <classifier>testlib</classifier>
+              <includes>
+                <include>com/google/api/gax/grpc/testing/**</include>
+              </includes>
             </configuration>
           </execution>
         </executions>

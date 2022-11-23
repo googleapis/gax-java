@@ -17,7 +17,6 @@
   <properties>
     <!-- Skip breaking changes checking against previous version while gax-httpjson is not GA -->
     <clirr.skip>true</clirr.skip>
-    <skip.generate.testlib>false</skip.generate.testlib>
   </properties>
 
   <dependencies>
@@ -101,7 +100,10 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
-              <skip>${skip.generate.testlib}</skip>
+              <classifier>testlib</classifier>
+              <includes>
+                <include>com/google/api/gax/httpjson/testing/**</include>
+              </includes>
             </configuration>
           </execution>
         </executions>
