@@ -58,4 +58,29 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <skip>false</skip>
+              <classifier>testlib</classifier>
+              <includes>
+                <include>com/google/api/gax/core/**</include>
+                <include>com/google/api/gax/rpc/testing/**</include>
+                <include>com/google/api/gax/rpc/mtls/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -240,14 +240,7 @@
               <goal>test-jar</goal>
             </goals>
             <configuration>
-              <classifier>testlib</classifier>
-              <includes>
-                <include>com/google/api/gax/core/**</include>
-                <include>com/google/api/gax/rpc/testing/**</include>
-                <include>com/google/api/gax/rpc/mtls/**</include>
-                <include>com/google/api/gax/grpc/testing/**</include>
-                <include>com/google/api/gax/httpjson/testing/**</include>
-              </includes>
+              <skip>true</skip>
             </configuration>
           </execution>
         </executions>
