@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
-
+  private CountDownLatch countDownLatch = new CountDownLatch(0);
   private final ApiClock clock;
   private final Duration scheduleInterval;
   private final ScheduledExecutorService executor;
@@ -113,10 +114,17 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public void run() {
+    // Initialization of countDownLatch is usually done outside of run() method, reassigning
+    // countDownLatch is not ideal here.
+    // However, there should be only one runnable per Watchdog, so there shouldn't be a scenario
+    // that multiple threads are trying to reassign countDownLatch at the same time.
+    countDownLatch = new CountDownLatch(1);
     try {
       runUnsafe();
     } catch (Throwable t) {
       LOG.log(Level.SEVERE, "Caught throwable in periodic Watchdog run. Continuing.", t);
+    } finally {
+      countDownLatch.countDown();
     }
   }
 
@@ -143,7 +151,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean isTerminated() {
-    return future.isCancelled();
+    return future.isCancelled() && countDownLatch.getCount() == 0;
   }
 
   @Override
@@ -153,15 +161,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
-    // A simple implementation of awaiting future cancel, we can revisit if we decide to go with
-    // this approach.
-    long milliSecondsWaited = 0;
-    while (!future.isCancelled() && milliSecondsWaited < unit.toMillis(duration)) {
-      int interval = 1000;
-      Thread.sleep(interval);
-      milliSecondsWaited += interval;
-    }
-    return future.isCancelled();
+    return countDownLatch.await(duration, unit);
   }
 
   @Override
@@ -181,6 +181,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
   }
 
   class WatchdogStream<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
+
     private final Object lock = new Object();
 
     private final Duration waitTimeout;
