@@ -85,6 +85,7 @@
       <artifactId>gax</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
+      <classifier>testlib</classifier>
     </dependency>
   </dependencies>
 </project>

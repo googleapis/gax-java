@@ -5,6 +5,6 @@
 <module name="Checker">
   <module name="RegexpHeader">
     <property name="fileExtensions" value="java"/>
-    <property name="headerFile" value="java.header"/>
+    <property name="headerFile" value="${checkstyle.header.file}"/>
   </module>
 </module>
