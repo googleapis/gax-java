@@ -22,3 +22,4 @@ out
 *.sw*
 *.vim
 
+.flattened-pom.xml
