@@ -250,6 +250,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
+    /**
+     * Sets the API key. The API key will be passed to API call request via the x-goog-api-key
+     * header to authenticate the API call.
+     */
     public B setApiKey(String apiKey) {
       stubSettings.setApiKey(apiKey);
       return self();

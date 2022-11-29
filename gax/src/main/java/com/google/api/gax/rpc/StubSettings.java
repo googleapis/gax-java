@@ -435,6 +435,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
+    /**
+     * Sets the API key. The API key will be passed to API call request via the x-goog-api-key
+     * header to authenticate the API call.
+     */
     public B setApiKey(String apiKey) {
       this.apiKey = apiKey;
       return self();
