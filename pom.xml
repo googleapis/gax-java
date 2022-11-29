@@ -214,7 +214,7 @@
       </resource>
     </resources>
     <plugins>
-      <!-- Do not deploy the aggregator POM -->
+      <!-- Do not deploy the root POM -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
