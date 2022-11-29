@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: 11
       - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-      - run: .kokoro/maven-build.sh
+      - run: .kokoro/build.sh
         env:
           JOB_TYPE: clirr
   units-java11:

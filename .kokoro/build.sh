@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2022 Google Inc.
+# Copyright 2018 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,23 +34,11 @@ if [ ! -z "${JAVA11_HOME}" ]; then
   setJava "${JAVA11_HOME}"
 fi
 
-echo "Compiling using Java:"
-java -version
-echo
-mvn -V -B -ntp clean install -DskipTests -Dclirr.skip=true -Denforcer.skip=true
+mvn -V -B -ntp clean install -DskipTests
 
 # We ensure the generated class files are compatible with Java 8
 if [ ! -z "${JAVA8_HOME}" ]; then
   setJava "${JAVA8_HOME}"
-fi
-
-if [ "${GITHUB_JOB}" == "units-java8" ]; then
-  java -version 2>&1 | grep -q 'openjdk version "1.8.'
-  MATCH=$? # 0 if the output has the match
-  if [ "$MATCH" != "0" ]; then
-    echo "Please specify JDK 8 for Java 8 tests"
-    exit 1
-  fi
 fi
 
 RETURN_CODE=0
