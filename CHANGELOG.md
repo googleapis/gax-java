@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.20.0](https://github.com/googleapis/gax-java/compare/v2.19.5...v2.20.0) (2022-11-30)
+
+
+### Features
+
+* De-experiment google-c2p resolver ([#1896](https://github.com/googleapis/gax-java/issues/1896)) ([66b348b](https://github.com/googleapis/gax-java/commit/66b348b9fd817e0986c67eb02e0609646fb822b3))
+* Next release from main branch is 2.20.0 ([#1867](https://github.com/googleapis/gax-java/issues/1867)) ([c7aeed3](https://github.com/googleapis/gax-java/commit/c7aeed3362352b77f86749e86ccebd1d1390de48))
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.13.0 ([#1881](https://github.com/googleapis/gax-java/issues/1881)) ([d059db7](https://github.com/googleapis/gax-java/commit/d059db7131c6866c9782c0c3ac39b980b13911df))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.13.0 ([#1882](https://github.com/googleapis/gax-java/issues/1882)) ([67af68a](https://github.com/googleapis/gax-java/commit/67af68a02198360dad2941eefa9897628342ee60))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.51.0 ([#1889](https://github.com/googleapis/gax-java/issues/1889)) ([85af72c](https://github.com/googleapis/gax-java/commit/85af72c4159a416e7026cf47a0d8e4fc5ef23be0))
+* **deps:** Update dependency org.mockito:mockito-core to v4.9.0 ([#1879](https://github.com/googleapis/gax-java/issues/1879)) ([9505cb1](https://github.com/googleapis/gax-java/commit/9505cb1d89de8f6fc47f5f4a7a083129b4ffc58d))
+
 ## [2.19.5](https://github.com/googleapis/gax-java/compare/v2.19.4...v2.19.5) (2022-11-07)
 
 
