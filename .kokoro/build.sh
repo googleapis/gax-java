@@ -46,11 +46,11 @@ RETURN_CODE=0
 case "${JOB_TYPE}" in
 test)
   # run tests in Java 8 with the source compiled in Java 11
-  mvn -V -B -ntp surefire:test -Dclirr.skip=true -Denforcer.skip=true
+  mvn -V -B -ntp surefire:test
   RETURN_CODE=$?
   ;;
 clirr)
-  mvn -B -ntp -Denforcer.skip=true clirr:check
+  mvn -B -ntp clirr:check
   RETURN_CODE=$?
   ;;
 *) ;;
