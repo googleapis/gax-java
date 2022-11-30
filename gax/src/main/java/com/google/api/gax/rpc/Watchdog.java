@@ -151,7 +151,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean isTerminated() {
-    return future.isCancelled() && countDownLatch.getCount() == 0;
+    return countDownLatch.getCount() == 0;
   }
 
   @Override
