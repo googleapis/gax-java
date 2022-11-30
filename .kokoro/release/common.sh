@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Google Inc.
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,17 +26,6 @@ setup_environment_secrets() {
   export GPG_KEY_ID=$(echo -n $(gpg --with-colons ${GPG_HOMEDIR}/pubring.gpg | awk -F':' '/pub/{ print $5 }'))
   export SONATYPE_USERNAME=$(cat ${KOKORO_KEYSTORE_DIR}/70247_sonatype-credentials | cut -f1 -d'|')
   export SONATYPE_PASSWORD=$(cat ${KOKORO_KEYSTORE_DIR}/70247_sonatype-credentials | cut -f2 -d'|')
-}
-
-create_gradle_properties_file() {
-  echo "
-signing.gnupg.executable=gpg
-signing.gnupg.homeDir=${GPG_HOMEDIR}
-signing.gnupg.keyName=${GPG_KEY_ID}
-signing.gnupg.passphrase=${GPG_PASSPHRASE}
-
-ossrhUsername=${SONATYPE_USERNAME}
-ossrhPassword=${SONATYPE_PASSWORD}" > $1
 }
 
 create_settings_xml_file() {

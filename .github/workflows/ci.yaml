@@ -19,28 +19,9 @@ jobs:
           distribution: temurin
           java-version: 11
       - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-      - run: .kokoro/maven-build.sh
+      - run: .kokoro/build.sh
         env:
           JOB_TYPE: clirr
-  maven-units:
-    name: "maven unit tests"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-java@v3
-      with:
-        java-version: 8
-        distribution: zulu
-    - run: echo "JAVA8_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-    - uses: actions/setup-java@v3
-      with:
-        java-version: 11
-        distribution: zulu
-    - run: echo "JAVA11_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-    - run: printenv
-    - run: .kokoro/maven-build.sh
-      env:
-        JOB_TYPE: test
   units-java11:
     name: "units (11)"
     runs-on: ubuntu-latest
