@@ -24,13 +24,13 @@ use Github pull requests for this purpose.
 To build GAX:
 
 ```sh
-./gradlew build
+mvn clean compile
 ```
 
 To install GAX into the local maven repository:
 
 ```sh
-./gradlew publishToMavenLocal
+mvn clean install
 ```
 
 ### The small print
