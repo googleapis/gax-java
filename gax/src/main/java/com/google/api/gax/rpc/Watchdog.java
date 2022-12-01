@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -87,7 +86,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
     this.scheduleInterval = scheduleInterval;
     this.executor = executor;
-    //Register the main thread
+    // Register the main thread
     this.phaser = new Phaser(1);
   }
 
@@ -118,14 +117,14 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public void run() {
-    //Register the current thread
+    // Register the current thread
     phaser.register();
     try {
       runUnsafe();
     } catch (Throwable t) {
       LOG.log(Level.SEVERE, "Caught throwable in periodic Watchdog run. Continuing.", t);
     } finally {
-      //Unregister the current thread
+      // Unregister the current thread
       phaser.arriveAndDeregister();
     }
   }
@@ -144,7 +143,7 @@ public final class Watchdog implements Runnable, BackgroundResource {
   @Override
   public void shutdown() {
     future.cancel(false);
-    //Unregister the main thread
+    // Unregister the main thread
     phaser.arriveAndDeregister();
   }
 
@@ -161,14 +160,15 @@ public final class Watchdog implements Runnable, BackgroundResource {
   @Override
   public void shutdownNow() {
     future.cancel(true);
-    //Unregister the main thread
+    // Unregister the main thread
     phaser.arriveAndDeregister();
   }
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
     try {
-      //Default phase is 0, this method wait until all parties arrive and unregister, then terminate the Phaser
+      // Default phase is 0, this method wait until all parties arrive and unregister, then
+      // terminate the Phaser
       phaser.awaitAdvanceInterruptibly(0, duration, unit);
       return true;
     } catch (TimeoutException e) {
