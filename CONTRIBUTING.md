@@ -24,12 +24,6 @@ use Github pull requests for this purpose.
 To build GAX:
 
 ```sh
-mvn clean compile
-```
-
-To install GAX into the local maven repository:
-
-```sh
 mvn clean install
 ```
 
