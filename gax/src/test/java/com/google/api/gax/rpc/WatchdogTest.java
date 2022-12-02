@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -195,14 +196,7 @@ public class WatchdogTest {
   @SuppressWarnings("unchecked")
   public void testWatchdogBeingClosed() {
     ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
-    ScheduledExecutorService mockExecutor = Mockito.mock(ScheduledExecutorService.class);
-    Mockito.when(
-            mockExecutor.scheduleAtFixedRate(
-                Mockito.any(Watchdog.class),
-                Mockito.anyLong(),
-                Mockito.anyLong(),
-                Mockito.any(TimeUnit.class)))
-        .thenReturn(future);
+    ScheduledExecutorService mockExecutor = getMockExecutorService(future);
     Watchdog underTest = Watchdog.create(clock, checkInterval, mockExecutor);
     assertThat(underTest).isInstanceOf(BackgroundResource.class);
 
@@ -217,6 +211,78 @@ public class WatchdogTest {
     underTest.shutdownNow();
     Mockito.verify(future).cancel(true);
     Mockito.verifyNoMoreInteractions(mockExecutor);
+  }
+
+  @Test
+  public void awaitTermination_shouldReturnTrueIfFutureIsDone() throws Exception {
+    int duration = 1000;
+    TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
+    // Mockito.doNothing().when(future).get(duration, timeUnit);
+    ScheduledExecutorService mockExecutor = getMockExecutorService(future);
+    Watchdog watchdog = Watchdog.create(clock, checkInterval, mockExecutor);
+    watchdog.shutdown();
+
+    boolean actual = watchdog.awaitTermination(duration, timeUnit);
+
+    assertThat(actual).isTrue();
+  }
+
+  @Test
+  public void awaitTermination_shouldReturnFalseIfGettingFutureTimedOut() throws Exception {
+    int duration = 1000;
+    TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
+    Mockito.doThrow(new TimeoutException()).when(future).get(duration, timeUnit);
+    ScheduledExecutorService mockExecutor = getMockExecutorService(future);
+    Watchdog watchdog = Watchdog.create(clock, checkInterval, mockExecutor);
+
+    boolean actual = watchdog.awaitTermination(duration, timeUnit);
+
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void awaitTermination_shouldReturnTrueIfFutureIsAlreadyCancelled() throws Exception {
+    int duration = 1000;
+    TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
+    Mockito.doThrow(new CancellationException()).when(future).get(duration, timeUnit);
+    ScheduledExecutorService mockExecutor = getMockExecutorService(future);
+    Watchdog watchdog = Watchdog.create(clock, checkInterval, mockExecutor);
+
+    boolean actual = watchdog.awaitTermination(duration, timeUnit);
+
+    assertThat(actual).isTrue();
+  }
+
+  @Test
+  public void awaitTermination_shouldReturnFalseIfGettingFutureThrowsExecutionException()
+      throws Exception {
+    int duration = 1000;
+    TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
+    Mockito.doThrow(new ExecutionException(new RuntimeException()))
+        .when(future)
+        .get(duration, timeUnit);
+    ScheduledExecutorService mockExecutor = getMockExecutorService(future);
+    Watchdog watchdog = Watchdog.create(clock, checkInterval, mockExecutor);
+
+    boolean actual = watchdog.awaitTermination(duration, timeUnit);
+
+    assertThat(actual).isTrue();
+  }
+
+  private ScheduledExecutorService getMockExecutorService(ScheduledFuture future) {
+    ScheduledExecutorService mockExecutor = Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(
+            mockExecutor.scheduleAtFixedRate(
+                Mockito.any(Watchdog.class),
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.any(TimeUnit.class)))
+        .thenReturn(future);
+    return mockExecutor;
   }
 
   static class AccumulatingObserver<T> implements ResponseObserver<T> {
