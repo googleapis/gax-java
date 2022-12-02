@@ -218,7 +218,6 @@ public class WatchdogTest {
     int duration = 1000;
     TimeUnit timeUnit = TimeUnit.MILLISECONDS;
     ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
-    // Mockito.doNothing().when(future).get(duration, timeUnit);
     ScheduledExecutorService mockExecutor = getMockExecutorService(future);
     Watchdog watchdog = Watchdog.create(clock, checkInterval, mockExecutor);
     watchdog.shutdown();
