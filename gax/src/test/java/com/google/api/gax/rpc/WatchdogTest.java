@@ -154,6 +154,26 @@ public class WatchdogTest {
   }
 
   @Test
+  public void awaitTermination_shouldReturnFalseIfShutDownIsNotCalledFirst() throws Exception {
+    watchdog.watch(new AccumulatingObserver<>(), waitTime, idleTime);
+    watchdog.watch(new AccumulatingObserver<>(), waitTime, idleTime);
+    boolean awaitTermination = watchdog.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    assertThat(awaitTermination).isFalse();
+  }
+
+  @Test
+  public void awaitTermination_shouldReturnTrue() throws Exception {
+    watchdog.watch(new AccumulatingObserver<>(), waitTime, idleTime);
+    watchdog.watch(new AccumulatingObserver<>(), waitTime, idleTime);
+    // Make sure the run() method is run before calling shutdown()
+    Thread.sleep(2000);
+    watchdog.shutdown();
+    boolean awaitTermination = watchdog.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    assertThat(awaitTermination).isTrue();
+    assertThat(watchdog.isTerminated()).isTrue();
+  }
+
+  @Test
   public void testMultiple() throws Exception {
     // Start stream1
     AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
