@@ -36,9 +36,11 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -61,6 +63,7 @@ import org.threeten.bp.Duration;
  * </ul>
  */
 public final class Watchdog implements Runnable, BackgroundResource {
+
   private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
 
   // Dummy value to convert the ConcurrentHashMap into a Set
@@ -138,12 +141,12 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean isShutdown() {
-    return executor.isShutdown();
+    return future.isCancelled();
   }
 
   @Override
   public boolean isTerminated() {
-    return executor.isTerminated();
+    return future.isDone();
   }
 
   @Override
@@ -153,7 +156,14 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
-    return executor.awaitTermination(duration, unit);
+    try {
+      future.get(duration, unit);
+      return true;
+    } catch (ExecutionException | CancellationException e) {
+      return true;
+    } catch (TimeoutException e) {
+      return false;
+    }
   }
 
   @Override
