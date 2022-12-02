@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.20.1](https://github.com/googleapis/gax-java/compare/v2.20.0...v2.20.1) (2022-12-02)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.11.0 ([#1906](https://github.com/googleapis/gax-java/issues/1906)) ([d27d848](https://github.com/googleapis/gax-java/commit/d27d8485d3da4de00253c1f5df435516d1af8d8e))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.11.0 ([#1907](https://github.com/googleapis/gax-java/issues/1907)) ([7504e37](https://github.com/googleapis/gax-java/commit/7504e37163d39d10bd8388101e9ce614e2839aca))
+* **deps:** Update dependency com.google.cloud:google-cloud-shared-config to v1.5.5 ([#1911](https://github.com/googleapis/gax-java/issues/1911)) ([772c221](https://github.com/googleapis/gax-java/commit/772c2213dfa10120b6efccf411550e77df3f9de7))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.10 ([#1912](https://github.com/googleapis/gax-java/issues/1912)) ([f508f24](https://github.com/googleapis/gax-java/commit/f508f245a59b2086c4b56d55f0cb25e9e7c29136))
+* Watchdog controls lifecycle of the future, not executor ([#1890](https://github.com/googleapis/gax-java/issues/1890)) ([bd1714e](https://github.com/googleapis/gax-java/commit/bd1714e484eef8aa8f09632eee976c9da26da5f1))
+
 ## [2.20.0](https://github.com/googleapis/gax-java/compare/v2.19.5...v2.20.0) (2022-11-30)
 
 
