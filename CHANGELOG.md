@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.6](https://github.com/googleapis/gax-java/compare/v2.19.5...v2.19.6) (2022-12-09)
+
+
+### Bug Fixes
+
+* Watchdog controls lifecycle of the future, not executor ([#1890](https://github.com/googleapis/gax-java/issues/1890)) ([#1930](https://github.com/googleapis/gax-java/issues/1930)) ([89e55e4](https://github.com/googleapis/gax-java/commit/89e55e4ca201eb7714c70a91151f1e6927b5a8e1))
+
 ## [2.19.5](https://github.com/googleapis/gax-java/compare/v2.19.4...v2.19.5) (2022-11-07)
 
 
