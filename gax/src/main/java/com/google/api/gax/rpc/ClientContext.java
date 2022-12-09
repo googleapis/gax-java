@@ -65,6 +65,7 @@ import org.threeten.bp.Duration;
 @AutoValue
 public abstract class ClientContext {
   private static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
+  private static final String API_KEY_HEADER_KEY = "x-goog-api-key";
 
   /**
    * The objects that need to be closed in order to clean up the resources created in the process of
@@ -165,14 +166,18 @@ public abstract class ClientContext {
     ExecutorProvider backgroundExecutorProvider = settings.getBackgroundExecutorProvider();
     final ScheduledExecutorService backgroundExecutor = backgroundExecutorProvider.getExecutor();
 
-    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    Credentials credentials = null;
+    if (settings.getApiKey() == null) {
+      credentials = settings.getCredentialsProvider().getCredentials();
 
-    if (settings.getQuotaProjectId() != null) {
-      // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
-      // QuotaProjectIdHidingCredentials.
-      // Ensure that a custom set quota project id takes priority over one detected by credentials.
-      // Avoid the backend receiving possibly conflict values of quotaProjectId
-      credentials = new QuotaProjectIdHidingCredentials(credentials);
+      if (settings.getQuotaProjectId() != null) {
+        // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
+        // QuotaProjectIdHidingCredentials.
+        // Ensure that a custom set quota project id takes priority over one detected by
+        // credentials.
+        // Avoid the backend receiving possibly conflict values of quotaProjectId
+        credentials = new QuotaProjectIdHidingCredentials(credentials);
+      }
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
@@ -282,6 +287,9 @@ public abstract class ClientContext {
     effectiveHeaders.putAll(internalHeaders);
     effectiveHeaders.putAll(userHeaders);
     effectiveHeaders.putAll(conflictResolution);
+    if (settings.getApiKey() != null) {
+      effectiveHeaders.put(API_KEY_HEADER_KEY, settings.getApiKey());
+    }
 
     return ImmutableMap.copyOf(effectiveHeaders);
   }

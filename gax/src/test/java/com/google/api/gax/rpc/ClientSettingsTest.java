@@ -121,6 +121,7 @@ public class ClientSettingsTest {
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
     Truth.assertThat(builder.getQuotaProjectId()).isNull();
+    Truth.assertThat(builder.getApiKey()).isNull();
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider())
@@ -139,6 +140,7 @@ public class ClientSettingsTest {
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(settings.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
     Truth.assertThat((settings.getQuotaProjectId())).isSameInstanceAs(builder.getQuotaProjectId());
+    Truth.assertThat((settings.getApiKey())).isSameInstanceAs(builder.getApiKey());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
@@ -150,6 +152,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settingsString).contains("watchdogProvider");
     Truth.assertThat(settingsString).contains("watchdogCheckInterval");
     Truth.assertThat(settingsString).contains(("quotaProjectId"));
+    Truth.assertThat(settingsString).contains(("apiKey"));
   }
 
   @Test
@@ -165,6 +168,7 @@ public class ClientSettingsTest {
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(13);
     String quotaProjectId = "test_quota_project_id";
+    String apiKey = "test_api_key";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -175,6 +179,7 @@ public class ClientSettingsTest {
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
     builder.setQuotaProjectId(quotaProjectId);
+    builder.setApiKey(apiKey);
 
     // For backward compatibility, backgroundExecutorProvider is set to executorProvider
     Truth.assertThat(builder.getExecutorProvider()).isSameInstanceAs(executorProvider);
@@ -187,6 +192,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isSameInstanceAs(watchdogCheckInterval);
     Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(quotaProjectId);
+    Truth.assertThat(builder.getApiKey()).isEqualTo(apiKey);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
@@ -199,6 +205,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builderString).contains("watchdogProvider");
     Truth.assertThat(builderString).contains("watchdogCheckInterval");
     Truth.assertThat(builderString).contains("quotaProjectId");
+    Truth.assertThat(builderString).contains("apiKey");
   }
 
   @Test
@@ -259,6 +266,7 @@ public class ClientSettingsTest {
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(14);
     String quotaProjectId = "test_builder_from_settings_quotaProjectId";
+    String apiKey = "test_builder_from_settings_api_key";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -269,6 +277,7 @@ public class ClientSettingsTest {
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
     builder.setQuotaProjectId(quotaProjectId);
+    builder.setApiKey(apiKey);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -284,6 +293,7 @@ public class ClientSettingsTest {
     Truth.assertThat(newBuilder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(newBuilder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
     Truth.assertThat(newBuilder.getQuotaProjectId()).isEqualTo(quotaProjectId);
+    Truth.assertThat(newBuilder.getApiKey()).isEqualTo(apiKey);
   }
 
   @Test

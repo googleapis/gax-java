@@ -101,6 +101,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getQuotaProjectId();
   }
 
+  public final String getApiKey() {
+    return stubSettings.getApiKey();
+  }
+
   @Nullable
   public final WatchdogProvider getWatchdogProvider() {
     return stubSettings.getStreamWatchdogProvider();
@@ -122,6 +126,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("clock", getClock())
         .add("endpoint", getEndpoint())
         .add("quotaProjectId", getQuotaProjectId())
+        .add("apiKey", getApiKey())
         .add("watchdogProvider", getWatchdogProvider())
         .add("watchdogCheckInterval", getWatchdogCheckInterval())
         .toString();
@@ -245,6 +250,15 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
+    /**
+     * Sets the API key. The API key will be passed to API call request via the x-goog-api-key
+     * header to authenticate the API call.
+     */
+    public B setApiKey(String apiKey) {
+      stubSettings.setApiKey(apiKey);
+      return self();
+    }
+
     public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
       stubSettings.setStreamWatchdogProvider(watchdogProvider);
       return self();
@@ -312,6 +326,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getQuotaProjectId();
     }
 
+    /** Gets the ApiKey that was previously set on this Builder. */
+    public String getApiKey() {
+      return stubSettings.getApiKey();
+    }
+
     @Nullable
     public WatchdogProvider getWatchdogProvider() {
       return stubSettings.getStreamWatchdogProvider();
@@ -342,6 +361,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("clock", getClock())
           .add("endpoint", getEndpoint())
           .add("quotaProjectId", getQuotaProjectId())
+          .add("apiKey", getApiKey())
           .add("watchdogProvider", getWatchdogProvider())
           .add("watchdogCheckInterval", getWatchdogCheckInterval())
           .toString();
