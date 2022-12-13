@@ -326,9 +326,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           GoogleDefaultChannelCredentials.newBuilder().callCredentials(callCreds).build();
       isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
       if (isDirectPathXdsEnabled) {
-        // google-c2p resolver target must not have a port number
-        builder =
-            Grpc.newChannelBuilder("google-c2p-experimental:///" + serviceAddress, channelCreds);
+        // google-c2p: CloudToProd(C2P) Directpath. This scheme is defined in
+        // io.grpc.googleapis.GoogleCloudToProdNameResolverProvider.
+        // This resolver target must not have a port number.
+        builder = Grpc.newChannelBuilder("google-c2p:///" + serviceAddress, channelCreds);
       } else {
         builder = Grpc.newChannelBuilderForAddress(serviceAddress, port, channelCreds);
         builder.defaultServiceConfig(directPathServiceConfig);

@@ -49,5 +49,6 @@ public interface WatchdogProvider {
 
   Watchdog getWatchdog();
 
+  /** Return true if the watchdog should be automatically unscheduled. */
   boolean shouldAutoClose();
 }

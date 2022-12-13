@@ -1,5 +1,110 @@
 # Changelog
 
+## [2.20.1](https://github.com/googleapis/gax-java/compare/v2.20.0...v2.20.1) (2022-12-02)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.11.0 ([#1906](https://github.com/googleapis/gax-java/issues/1906)) ([d27d848](https://github.com/googleapis/gax-java/commit/d27d8485d3da4de00253c1f5df435516d1af8d8e))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.11.0 ([#1907](https://github.com/googleapis/gax-java/issues/1907)) ([7504e37](https://github.com/googleapis/gax-java/commit/7504e37163d39d10bd8388101e9ce614e2839aca))
+* **deps:** Update dependency com.google.cloud:google-cloud-shared-config to v1.5.5 ([#1911](https://github.com/googleapis/gax-java/issues/1911)) ([772c221](https://github.com/googleapis/gax-java/commit/772c2213dfa10120b6efccf411550e77df3f9de7))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.10 ([#1912](https://github.com/googleapis/gax-java/issues/1912)) ([f508f24](https://github.com/googleapis/gax-java/commit/f508f245a59b2086c4b56d55f0cb25e9e7c29136))
+* Watchdog controls lifecycle of the future, not executor ([#1890](https://github.com/googleapis/gax-java/issues/1890)) ([bd1714e](https://github.com/googleapis/gax-java/commit/bd1714e484eef8aa8f09632eee976c9da26da5f1))
+
+## [2.20.0](https://github.com/googleapis/gax-java/compare/v2.19.5...v2.20.0) (2022-11-30)
+
+
+### Features
+
+* De-experiment google-c2p resolver ([#1896](https://github.com/googleapis/gax-java/issues/1896)) ([66b348b](https://github.com/googleapis/gax-java/commit/66b348b9fd817e0986c67eb02e0609646fb822b3))
+* Next release from main branch is 2.20.0 ([#1867](https://github.com/googleapis/gax-java/issues/1867)) ([c7aeed3](https://github.com/googleapis/gax-java/commit/c7aeed3362352b77f86749e86ccebd1d1390de48))
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.13.0 ([#1881](https://github.com/googleapis/gax-java/issues/1881)) ([d059db7](https://github.com/googleapis/gax-java/commit/d059db7131c6866c9782c0c3ac39b980b13911df))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.13.0 ([#1882](https://github.com/googleapis/gax-java/issues/1882)) ([67af68a](https://github.com/googleapis/gax-java/commit/67af68a02198360dad2941eefa9897628342ee60))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.51.0 ([#1889](https://github.com/googleapis/gax-java/issues/1889)) ([85af72c](https://github.com/googleapis/gax-java/commit/85af72c4159a416e7026cf47a0d8e4fc5ef23be0))
+* **deps:** Update dependency org.mockito:mockito-core to v4.9.0 ([#1879](https://github.com/googleapis/gax-java/issues/1879)) ([9505cb1](https://github.com/googleapis/gax-java/commit/9505cb1d89de8f6fc47f5f4a7a083129b4ffc58d))
+
+## [2.19.5](https://github.com/googleapis/gax-java/compare/v2.19.4...v2.19.5) (2022-11-07)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.cloud:google-cloud-shared-config to v1.5.4 ([#1840](https://github.com/googleapis/gax-java/issues/1840)) ([8f7a38c](https://github.com/googleapis/gax-java/commit/8f7a38ca0a9d187af49649adf7d96ef97c9e9915))
+* **deps:** Update dependency com.google.code.gson:gson to v2.10 ([#1845](https://github.com/googleapis/gax-java/issues/1845)) ([816e666](https://github.com/googleapis/gax-java/commit/816e6665e06bc65cbaf2703617342c8db9780115))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.9 ([#1850](https://github.com/googleapis/gax-java/issues/1850)) ([f270ac4](https://github.com/googleapis/gax-java/commit/f270ac45b6a21d531eb8bd75157f2784fcad90fc))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.50.2 ([#1842](https://github.com/googleapis/gax-java/issues/1842)) ([11c4a7c](https://github.com/googleapis/gax-java/commit/11c4a7caf31de256f29678de829f11f9558adcfd))
+* **deps:** Update dependency org.mockito:mockito-core to v4.8.1 ([#1843](https://github.com/googleapis/gax-java/issues/1843)) ([bf67fc2](https://github.com/googleapis/gax-java/commit/bf67fc26236286d72b9ddcb2e66113fdac74b51a))
+* **deps:** Update dependency org.threeten:threetenbp to v1.6.4 ([#1857](https://github.com/googleapis/gax-java/issues/1857)) ([a9e2374](https://github.com/googleapis/gax-java/commit/a9e23744a40f6e5484f1834824515f8ae952873c))
+
+
+### Dependencies
+
+* update dependency com.google.api:api-common to 2.2.2 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* update dependency com.google.api.grpc:grpc-google-common-protos to 2.10.0 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* Update dependency com.google.api.grpc:proto-google-common-protos to 2.10.0 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* update dependency com.google.auth:google-auth-library-credentials to 1.12.1 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* update dependency com.google.auth:google-auth-library-oauth2-http to 1.12.1 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* update dependency com.google.http-client:google-http-client to 1.42.3 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+* update dependency com.google.http-client:google-http-client-gson to 1.42.3 ([ad7ad1c](https://github.com/googleapis/gax-java/commit/ad7ad1c5b450cd0569ff34d3b553dd1493fa462c))
+
+## [2.19.4](https://github.com/googleapis/gax-java/compare/v2.19.3...v2.19.4) (2022-10-19)
+
+
+### Bug Fixes
+
+* Scope the throttling metric to exclude element size calculation ([#1835](https://github.com/googleapis/gax-java/issues/1835)) ([0287f83](https://github.com/googleapis/gax-java/commit/0287f83f9cabbb9dff6cb7e8ea3068ccc1ab12d9))
+
+## [2.19.3](https://github.com/googleapis/gax-java/compare/v2.19.2...v2.19.3) (2022-10-19)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.12.0 ([#1822](https://github.com/googleapis/gax-java/issues/1822)) ([ad139e4](https://github.com/googleapis/gax-java/commit/ad139e45d29bd0fbf6b6f080b12ef9a987fa2e0d))
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.12.1 ([#1830](https://github.com/googleapis/gax-java/issues/1830)) ([d726921](https://github.com/googleapis/gax-java/commit/d7269210767a92e94568712920b34064278dddbc))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.12.0 ([#1823](https://github.com/googleapis/gax-java/issues/1823)) ([c6180ca](https://github.com/googleapis/gax-java/commit/c6180cacdaf4d191098e499eff0f6b014e730654))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.12.1 ([#1831](https://github.com/googleapis/gax-java/issues/1831)) ([227c8af](https://github.com/googleapis/gax-java/commit/227c8af66c95e86e8d90e5de9dd3f429895b44cc))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.8 ([#1828](https://github.com/googleapis/gax-java/issues/1828)) ([462a100](https://github.com/googleapis/gax-java/commit/462a1009a84a046da28298ad10f23cadfb7a61ea))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.50.1 ([#1819](https://github.com/googleapis/gax-java/issues/1819)) ([75600ea](https://github.com/googleapis/gax-java/commit/75600eab90ec2e33378c00824535763f5df87b24))
+* **deps:** Update dependency org.graalvm.sdk:graal-sdk to v22.2.0.1 ([#1817](https://github.com/googleapis/gax-java/issues/1817)) ([a8f8ae2](https://github.com/googleapis/gax-java/commit/a8f8ae2b5e035dc08ce161134ec2e441e6c2d4fc))
+* **deps:** Update dependency org.threeten:threetenbp to v1.6.3 ([#1821](https://github.com/googleapis/gax-java/issues/1821)) ([3bca572](https://github.com/googleapis/gax-java/commit/3bca572486e7780ff8fb8b581aa691738885401c))
+* **java:** Address ClassNotFoundException in GraalVM 22.2.0 ([#1816](https://github.com/googleapis/gax-java/issues/1816)) ([ae6e8be](https://github.com/googleapis/gax-java/commit/ae6e8beb6ed5525504df1a3bb7ce71bdf114a233))
+* **java:** Address reachability issues in native image compilation with version 22.2.0 ([#1815](https://github.com/googleapis/gax-java/issues/1815)) ([0f3215f](https://github.com/googleapis/gax-java/commit/0f3215f98bfc5def4e608c780d91953900e17946))
+
+## [2.19.2](https://github.com/googleapis/gax-java/compare/v2.19.1...v2.19.2) (2022-10-02)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.3 ([#1797](https://github.com/googleapis/gax-java/issues/1797)) ([50c6a75](https://github.com/googleapis/gax-java/commit/50c6a75db05537b873d0d143fdccab82f46bc644))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.4 ([#1800](https://github.com/googleapis/gax-java/issues/1800)) ([6d4e62d](https://github.com/googleapis/gax-java/commit/6d4e62de5c2303d7c31faa046966b8842cbcfe53))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.5 ([#1805](https://github.com/googleapis/gax-java/issues/1805)) ([1f9fe38](https://github.com/googleapis/gax-java/commit/1f9fe38e3b152dad50a026adea8ea9b488acf786))
+* **deps:** Update dependency com.google.api.grpc:grpc-google-common-protos to v2.9.6 ([#1810](https://github.com/googleapis/gax-java/issues/1810)) ([a206f46](https://github.com/googleapis/gax-java/commit/a206f46a095812c77cce1085a546692ba871deef))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.3 ([#1798](https://github.com/googleapis/gax-java/issues/1798)) ([8a1c732](https://github.com/googleapis/gax-java/commit/8a1c732bf938818a40c907b5656025cac52b9645))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.4 ([#1801](https://github.com/googleapis/gax-java/issues/1801)) ([0e2a405](https://github.com/googleapis/gax-java/commit/0e2a4053d945f4d4da55f8b5486df6dbcab66c2f))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.5 ([#1806](https://github.com/googleapis/gax-java/issues/1806)) ([da9dff8](https://github.com/googleapis/gax-java/commit/da9dff8a9cd2db63b396df42830c679b3555187d))
+* **deps:** Update dependency com.google.api.grpc:proto-google-common-protos to v2.9.6 ([#1811](https://github.com/googleapis/gax-java/issues/1811)) ([bb5dffa](https://github.com/googleapis/gax-java/commit/bb5dffa51de48a6f97304a50c4a596e21673bb6e))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.6 ([#1792](https://github.com/googleapis/gax-java/issues/1792)) ([d94482e](https://github.com/googleapis/gax-java/commit/d94482ef19f45b6dfbe775d7facf3467b09cb194))
+* **deps:** Update dependency com.google.protobuf:protobuf-bom to v3.21.7 ([#1803](https://github.com/googleapis/gax-java/issues/1803)) ([534250b](https://github.com/googleapis/gax-java/commit/534250bdb165576bea7793a61b39c11312e4ec31))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.1 ([#1796](https://github.com/googleapis/gax-java/issues/1796)) ([9cb8d36](https://github.com/googleapis/gax-java/commit/9cb8d3640ff40f30f8dae2efd7341578fd449a7d))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.2 ([#1808](https://github.com/googleapis/gax-java/issues/1808)) ([b27f15d](https://github.com/googleapis/gax-java/commit/b27f15d277f74bc11e10e6e25b588b1767f8e5ee))
+* **deps:** Update dependency org.threeten:threetenbp to v1.6.2 ([#1799](https://github.com/googleapis/gax-java/issues/1799)) ([6a45067](https://github.com/googleapis/gax-java/commit/6a450679302c611960710f5a98e32d278bda2b60))
+* remove --allow-incomplete-classpath which has been deprecated as of Graalvm 22.1.0 ([e5c739c](https://github.com/googleapis/gax-java/commit/e5c739c093067f6f2340f873ed96dfea8ef9b7d6))
+* Remove --allow-incomplete-classpath which was deprecated as of Graalvm 22.1.0 ([#1794](https://github.com/googleapis/gax-java/issues/1794)) ([e5c739c](https://github.com/googleapis/gax-java/commit/e5c739c093067f6f2340f873ed96dfea8ef9b7d6))
+
+## [2.19.1](https://github.com/googleapis/gax-java/compare/v2.19.0...v2.19.1) (2022-09-13)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency com.google.auth:google-auth-library-credentials to v1.11.0 ([#1786](https://github.com/googleapis/gax-java/issues/1786)) ([4889ff7](https://github.com/googleapis/gax-java/commit/4889ff7ccd3ae13052c4b7009ce81bcd88d650a9))
+* **deps:** Update dependency com.google.auth:google-auth-library-oauth2-http to v1.11.0 ([#1787](https://github.com/googleapis/gax-java/issues/1787)) ([4f5cd42](https://github.com/googleapis/gax-java/commit/4f5cd428f416e7d43f3268de32e5314ac3317460))
+* **deps:** Update dependency io.grpc:grpc-bom to v1.49.0 ([#1779](https://github.com/googleapis/gax-java/issues/1779)) ([037e131](https://github.com/googleapis/gax-java/commit/037e131ad46690f6d1badb45dc2f31ca981c1348))
+* **deps:** Update dependency org.mockito:mockito-core to v4.8.0 ([#1785](https://github.com/googleapis/gax-java/issues/1785)) ([f2989bd](https://github.com/googleapis/gax-java/commit/f2989bd706e7b3c524d2f0b8ceaa1d576dd7f751))
+* **httpjson:** Handle message derived query params ([#1784](https://github.com/googleapis/gax-java/issues/1784)) ([4524fad](https://github.com/googleapis/gax-java/commit/4524fadbe688d96a7c5e715ab88b542b4bb3891a))
+
 ## [2.19.0](https://github.com/googleapis/gax-java/compare/v2.18.7...v2.19.0) (2022-08-22)
 
 

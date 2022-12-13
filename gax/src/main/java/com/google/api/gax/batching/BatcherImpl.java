@@ -213,6 +213,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // will only be done from a single calling thread.
     Preconditions.checkState(closeFuture == null, "Cannot add elements on a closed batcher");
 
+    long bytesSize = batchingDescriptor.countBytes(element);
+
     // This is not the optimal way of throttling. It does not send out partial batches, which
     // means that the Batcher might not use up all the resources allowed by FlowController.
     // The more efficient implementation should look like:
@@ -230,7 +232,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // defer it till we decide on if refactoring FlowController is necessary.
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      flowController.reserve(1, batchingDescriptor.countBytes(element));
+      flowController.reserve(1, bytesSize);
     } catch (FlowControlException e) {
       // This exception will only be thrown if the FlowController is set to ThrowException behavior
       throw FlowControlRuntimeException.fromFlowControlException(e);

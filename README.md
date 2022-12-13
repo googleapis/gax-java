@@ -20,6 +20,13 @@ a high risk of diamond dependency problems, because google-cloud-java uses beta 
 library which can change in breaking ways between versions. See [VERSIONING](#versioning) for
 more information.
 
+> For new and existing Developers/ Contributors:
+> 
+> In December 2022, gax-java's build tool has been migrated from gradle to maven. 
+> Gradle related files are no longer being maintained and will be eventually removed.
+> 
+> The artifact coordinates in Maven Central (`{{ group_id }}:{{ artifact_id }}`) remain the same.
+
 Quickstart
 ----------
 
