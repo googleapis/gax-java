@@ -152,18 +152,20 @@ public class HttpJsonDirectCallableTest {
   }
 
   /**
-   * This test is for a Unary Call where server mistakenly sends multiple responses back
-   * The expectation for this MOCK_SERVICE is to return what was sent into the request
-   * i.e. callable.futureCall(x) -> x
-   * <p>
-   * For a Unary Call, gax will return only the first (and hopefully only) response back.
+   * This test is for a Unary Call where server mistakenly sends multiple responses back The
+   * expectation for this MOCK_SERVICE is to return what was sent into the request i.e.
+   * callable.futureCall(x) -> x
+   *
+   * <p>For a Unary Call, gax will return only the first (and hopefully only) response back.
+   *
    * @throws InterruptedException
    * @throws ExecutionException
    */
   @Test
-  public void testSuccessfulMultipleResponsesForUnaryCall() throws InterruptedException, ExecutionException {
+  public void testSuccessfulMultipleResponsesForUnaryCall()
+      throws InterruptedException, ExecutionException {
     HttpJsonDirectCallable<Field, Field> callable =
-            new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
@@ -183,18 +185,20 @@ public class HttpJsonDirectCallableTest {
   }
 
   /**
-   * This test is for a Unary Call where server mistakenly sends multiple responses back
-   * The expectation for this MOCK_SERVICE is to return what was sent into the request
-   * i.e. callable.futureCall(x) -> x
-   * <p>
-   * For a Unary Call, gax will return only the first (and hopefully only) response back.
+   * This test is for a Unary Call where server mistakenly sends multiple responses back The
+   * expectation for this MOCK_SERVICE is to return what was sent into the request i.e.
+   * callable.futureCall(x) -> x
+   *
+   * <p>For a Unary Call, gax will return only the first (and hopefully only) response back.
+   *
    * @throws InterruptedException
    * @throws ExecutionException
    */
   @Test
-  public void testErrorMultipleResponsesForUnaryCall() throws InterruptedException, ExecutionException {
+  public void testErrorMultipleResponsesForUnaryCall()
+      throws InterruptedException, ExecutionException {
     HttpJsonDirectCallable<Field, Field> callable =
-            new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
@@ -218,6 +222,7 @@ public class HttpJsonDirectCallableTest {
 
   /**
    * The expectation for gax is that an exception from the server will return an exception response
+   *
    * @throws InterruptedException
    */
   @Test
@@ -244,8 +249,9 @@ public class HttpJsonDirectCallableTest {
 
   /**
    * This test is for a Unary Call where server sends back a null value but successful status code
-   * Gax expects the response back to be parse-able into JSON but the null value is not valid.
-   * This will throw an Exception for a successful response but invalid content
+   * Gax expects the response back to be parse-able into JSON but the null value is not valid. This
+   * will throw an Exception for a successful response but invalid content
+   *
    * @throws InterruptedException
    */
   @Test
@@ -269,8 +275,9 @@ public class HttpJsonDirectCallableTest {
   }
 
   /**
-   * The expectation for an exception from the server is an exception response
-   * regardless of what content is sent back
+   * The expectation for an exception from the server is an exception response regardless of what
+   * content is sent back
+   *
    * @throws InterruptedException
    */
   @Test
@@ -293,18 +300,19 @@ public class HttpJsonDirectCallableTest {
 
   /**
    * Expectation is that an Exception is returned even on a non 4xx status code
+   *
    * @throws InterruptedException
    */
   @Test
   public void testErrorNon2xxOr4xxResponse() throws InterruptedException {
     HttpJsonDirectCallable<Field, Field> callable =
-            new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
+        new HttpJsonDirectCallable<>(FAKE_METHOD_DESCRIPTOR);
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
     ApiException exception =
-            ApiExceptionFactory.createException(
-                    new Exception(), FakeStatusCode.of(Code.INTERNAL), false);
+        ApiExceptionFactory.createException(
+            new Exception(), FakeStatusCode.of(Code.INTERNAL), false);
     MOCK_SERVICE.addException(500, exception);
 
     try {
