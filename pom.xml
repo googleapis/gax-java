@@ -4,7 +4,7 @@
   <groupId>com.google.api</groupId>
   <artifactId>gax-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.19.5</version><!-- {x-version-update:gax:current} -->
+  <version>2.20.1</version><!-- {x-version-update:gax:current} -->
   <name>GAX (Google Api eXtensions) for Java (Parent)</name>
   <url>https://github.com/googleapis/gax-java</url>
   <description>Google Api eXtensions for Java (Parent)</description>
@@ -12,7 +12,7 @@
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.5.4</version>
+    <version>1.5.5</version>
   </parent>
 
   <developers>
@@ -41,7 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <auto-value.version>1.10</auto-value.version>
+    <auto-value.version>1.10.1</auto-value.version>
   </properties>
 
   <modules>
@@ -61,7 +61,7 @@
       <dependency>
         <groupId>com.google.auth</groupId>
         <artifactId>google-auth-library-credentials</artifactId>
-        <version>1.12.1</version>
+        <version>1.13.0</version>
       </dependency>
       <dependency>
         <groupId>org.threeten</groupId>
@@ -71,7 +71,13 @@
       <dependency>
         <groupId>com.google.auth</groupId>
         <artifactId>google-auth-library-oauth2-http</artifactId>
-        <version>1.12.1</version>
+        <version>1.13.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -112,33 +118,34 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>4.8.1</version>
+        <version>4.9.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax</artifactId>
-        <version>2.19.5</version> <!-- {x-version-update:gax:current} -->
+        <version>2.20.1</version> <!-- {x-version-update:gax:current} -->
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax</artifactId>
-        <version>2.19.5</version> <!-- {x-version-update:gax:current} -->
+        <version>2.20.1</version> <!-- {x-version-update:gax:current} -->
         <type>test-jar</type>
+        <classifier>testlib</classifier>
       </dependency>
       <dependency>
         <groupId>com.google.api.grpc</groupId>
         <artifactId>proto-google-common-protos</artifactId>
-        <version>2.10.0</version>
+        <version>2.11.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.api.grpc</groupId>
         <artifactId>grpc-google-common-protos</artifactId>
-        <version>2.10.0</version>
+        <version>2.11.0</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-bom</artifactId>
-        <version>1.50.2</version>
+        <version>1.51.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -150,7 +157,7 @@
       <dependency>
         <groupId>org.graalvm.sdk</groupId>
         <artifactId>graal-sdk</artifactId>
-        <version>22.2.0.1</version>
+        <version>22.3.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.http-client</groupId>
@@ -162,7 +169,7 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-bom</artifactId>
-        <version>3.21.9</version>
+        <version>3.21.10</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -200,6 +207,12 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -212,17 +225,25 @@
             </path>
           </annotationProcessorPaths>
           <release>8</release>
+          <compilerArgs>
+            <arg>-Xlint:unchecked</arg>
+            <arg>-Xlint:deprecation</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <addMavenDescriptor>false</addMavenDescriptor>
-            <index>false</index>
-          </archive>
-        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.coveo</groupId>
@@ -238,4 +259,27 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- profile for nexus-staging:release invocation -->
+      <id>release-staging-repository</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- The root project runs nexus-staging:release task -->
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.13</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>sonatype-nexus-staging</serverId>
+              <nexusUrl>https://google.oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>false</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
