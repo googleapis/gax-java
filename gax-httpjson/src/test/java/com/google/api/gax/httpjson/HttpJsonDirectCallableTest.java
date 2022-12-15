@@ -208,6 +208,8 @@ public class HttpJsonDirectCallableTest {
     MOCK_SERVICE.addResponse(randomResponse2);
 
     Field actualResponse = callable.futureCall(request, callContext).get();
+    // Gax returns the first response for Unary Call
+    assertThat(actualResponse).isEqualTo(randomResponse1);
     assertThat(actualResponse).isNotEqualTo(expectedResponse);
     assertThat(MOCK_SERVICE.getRequestPaths().size()).isEqualTo(1);
     String headerValue = MOCK_SERVICE.getRequestHeaders().get("header-key").iterator().next();
