@@ -169,9 +169,8 @@ public class HttpJsonDirectCallableTest {
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
-    Field request;
-    Field expectedResponse;
-    request = expectedResponse = createTestMessage(2);
+    Field request = createTestMessage(2);
+    Field expectedResponse = createTestMessage(2);
     Field otherResponse = createTestMessage(10);
     MOCK_SERVICE.addResponse(expectedResponse);
     MOCK_SERVICE.addResponse(otherResponse);
@@ -202,9 +201,8 @@ public class HttpJsonDirectCallableTest {
 
     HttpJsonCallContext callContext = HttpJsonCallContext.createDefault().withChannel(channel);
 
-    Field request;
-    Field expectedResponse;
-    request = expectedResponse = createTestMessage(2);
+    Field request = createTestMessage(2);
+    Field expectedResponse = createTestMessage(2);
     Field randomResponse1 = createTestMessage(10);
     Field randomResponse2 = createTestMessage(3);
     MOCK_SERVICE.addResponse(randomResponse1);
@@ -275,8 +273,8 @@ public class HttpJsonDirectCallableTest {
   }
 
   /**
-   * The expectation for an exception from the server is an exception response regardless of what
-   * content is sent back
+   * The expectation for a non-2xx from the server is an exception response regardless of the
+   * content sent back
    *
    * @throws InterruptedException
    */
@@ -299,7 +297,7 @@ public class HttpJsonDirectCallableTest {
   }
 
   /**
-   * Expectation is that an Exception is returned even on a non 4xx status code
+   * Expectation is that an Exception is returned even on a non-2xx status code
    *
    * @throws InterruptedException
    */

@@ -115,23 +115,26 @@ class HttpJsonClientCalls {
 
   private static class FutureListener<T> extends HttpJsonClientCall.Listener<T> {
     private final HttpJsonFuture<T> future;
-    private T storedMessage;
+    private T message;
+    private boolean isMessageReceived;
 
     private FutureListener(HttpJsonFuture<T> future) {
       this.future = future;
+      this.isMessageReceived = false;
     }
 
     @Override
     public void onMessage(T message) {
-      if (storedMessage != null) {
+      if (isMessageReceived) {
         throw new IllegalStateException("More than one value received for unary call");
       }
-      storedMessage = message;
+      isMessageReceived = true;
+      this.message = message;
     }
 
     @Override
     public void onClose(int statusCode, HttpJsonMetadata trailers) {
-      if (storedMessage == null) {
+      if (!isMessageReceived) {
         if (trailers == null || trailers.getException() == null) {
           future.setException(
               new HttpJsonStatusRuntimeException(
@@ -142,11 +145,8 @@ class HttpJsonClientCalls {
         } else {
           future.setException(trailers.getException());
         }
-      } else if (statusCode < 200 || statusCode >= 400) {
-        LOGGER.log(
-            Level.WARNING, "Received error for unary call after receiving a successful response");
       } else {
-        future.set(storedMessage);
+        future.set(message);
       }
     }
   }
