@@ -45,6 +45,7 @@ import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -517,6 +519,8 @@ class ChannelPool extends ManagedChannel {
 
   /** ClientCall wrapper that makes sure to decrement the outstanding RPC count on completion. */
   static class ReleasingClientCall<ReqT, RespT> extends SimpleForwardingClientCall<ReqT, RespT> {
+    private CancellationException cancellationException;
+
     final Entry entry;
 
     public ReleasingClientCall(ClientCall<ReqT, RespT> delegate, Entry entry) {
@@ -526,6 +530,9 @@ class ChannelPool extends ManagedChannel {
 
     @Override
     public void start(Listener<RespT> responseListener, Metadata headers) {
+      if (cancellationException != null) {
+        throw new IllegalStateException("Call has already been cancelled", cancellationException);
+      }
       try {
         super.start(
             new SimpleForwardingClientCallListener<RespT>(responseListener) {
@@ -542,7 +549,14 @@ class ChannelPool extends ManagedChannel {
       } catch (Exception e) {
         // In case start failed, make sure to release
         entry.release();
+        throw e;
       }
+    }
+
+    @Override
+    public void cancel(@Nullable String message, @Nullable Throwable cause) {
+      this.cancellationException = new CancellationException(message);
+      super.cancel(message, cause);
     }
   }
 }
