@@ -3,6 +3,9 @@ Google API Extensions for Java
 
 [![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=main)](https://travis-ci.org/googleapis/gax-java)
 
+🚌 In January 2023, this library has moved to [gapic-generator-java/gax-java](https://github.com/googleapis/gapic-generator-java/tree/main/gax-java). This repository will be archived in the future. Future releases will appear in the new repository (https://github.com/googleapis/gapic-generator-java/releases).
+The Maven artifact coordinates (com.google.api:gax) remain the same.
+
 - [Documentation](https://googleapis.dev/java/gax/latest/)
 
 Google API Extensions for Java (GAX Java) is a library which aids in the
