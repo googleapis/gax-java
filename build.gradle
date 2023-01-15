@@ -249,7 +249,7 @@ configure(normalReleasableProjects) {
             licenses {
               license {
                 name = 'BSD'
-                url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+                url = 'https://github.com/googleapis/gax-java/blob/main/LICENSE'
               }
             }
 
