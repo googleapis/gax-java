@@ -64,12 +64,12 @@
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax-httpjson</artifactId>
-        <version>0.105.1</version><!-- {x-version-update:gax-httpjson:current} -->
+        <version>0.108.0</version><!-- {x-version-update:gax-httpjson:current} -->
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>
         <artifactId>gax-httpjson</artifactId>
-        <version>0.105.1</version><!-- {x-version-update:gax-httpjson:current} -->
+        <version>0.108.0</version><!-- {x-version-update:gax-httpjson:current} -->
         <classifier>testlib</classifier>
       </dependency>
     </dependencies>
