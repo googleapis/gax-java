@@ -36,7 +36,7 @@ import com.google.api.core.InternalExtensionOnly;
  *
  * <p>The status codes are modeled after the status codes in grpc. For more information about grpc
  * status codes, see
- * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
+ * https://github.com/grpc/grpc-java/blob/master/api/src/main/java/io/grpc/Status.java
  */
 @InternalExtensionOnly
 public interface StatusCode {
