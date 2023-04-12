@@ -109,6 +109,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
+  @Nullable private final Boolean useDirectPathXds;
   @Nullable private final Boolean allowNonDefaultServiceAccount;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
   @Nullable private final MtlsProvider mtlsProvider;
@@ -134,6 +135,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
     this.attemptDirectPath = builder.attemptDirectPath;
+    this.useDirectPathXds = builder.useDirectPathXds;
     this.allowNonDefaultServiceAccount = builder.allowNonDefaultServiceAccount;
     this.directPathServiceConfig =
         builder.directPathServiceConfig == null
@@ -262,6 +264,20 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return false;
   }
 
+  private boolean isDirectPathXdsUsed() {
+    // Method 1: Enable DirectPath xDS by env.
+    String directPathXdsEnv = envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS);
+    boolean isDirectPathXdsEnv = Boolean.parseBoolean(directPathXdsEnv);
+    if (isDirectPathXdsEnv) {
+      return true;
+    }
+    // Method 2: Enable DirectPath xDS by option.
+    if (useDirectPathXds != null) {
+      return useDirectPathXds;
+    }
+    return false;
+  }
+
   private boolean isNonDefaultServiceAccountAllowed() {
     if (allowNonDefaultServiceAccount != null && allowNonDefaultServiceAccount) {
       return true;
@@ -324,7 +340,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       CallCredentials callCreds = MoreCallCredentials.from(credentials);
       ChannelCredentials channelCreds =
           GoogleDefaultChannelCredentials.newBuilder().callCredentials(callCreds).build();
-      isDirectPathXdsEnabled = Boolean.parseBoolean(envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS));
+      isDirectPathXdsEnabled = isDirectPathXdsUsed();
       if (isDirectPathXdsEnabled) {
         // google-c2p: CloudToProd(C2P) Directpath. This scheme is defined in
         // io.grpc.googleapis.GoogleCloudToProdNameResolverProvider.
@@ -450,6 +466,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private ChannelPrimer channelPrimer;
     private ChannelPoolSettings channelPoolSettings;
     @Nullable private Boolean attemptDirectPath;
+    @Nullable private Boolean useDirectPathXds;
     @Nullable private Boolean allowNonDefaultServiceAccount;
     @Nullable private ImmutableMap<String, ?> directPathServiceConfig;
 
@@ -476,6 +493,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.channelPrimer = provider.channelPrimer;
       this.channelPoolSettings = provider.channelPoolSettings;
       this.attemptDirectPath = provider.attemptDirectPath;
+      this.useDirectPathXds = provider.useDirectPathXds;
       this.allowNonDefaultServiceAccount = provider.allowNonDefaultServiceAccount;
       this.directPathServiceConfig = provider.directPathServiceConfig;
       this.mtlsProvider = provider.mtlsProvider;
@@ -681,6 +699,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setAllowNonDefaultServiceAccount(boolean allowNonDefaultServiceAccount) {
       this.allowNonDefaultServiceAccount = allowNonDefaultServiceAccount;
+      return this;
+    }
+
+    /** Use DirectPath xDS. Only valid if DirectPath is attempted. */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setUseDirectPathXds(boolean useDirectPathXds) {
+      this.useDirectPathXds = useDirectPathXds;
       return this;
     }
 
