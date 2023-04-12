@@ -272,8 +272,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return true;
     }
     // Method 2: Enable DirectPath xDS by option.
-    if (useDirectPathXds != null) {
-      return useDirectPathXds;
+    if (Boolean.TRUE.equals(useDirectPathXds)) {
+      return true;
     }
     return false;
   }
