@@ -274,6 +274,31 @@ public class InstantiatingGrpcChannelProviderTest extends AbstractMtlsTransportC
   }
 
   @Test
+  public void testDirectPathXds() throws IOException {
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setAttemptDirectPath(true)
+            .setUseDirectPathXds()
+            .build()
+            .withExecutor((Executor) executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+
+    assertThat(provider.needsCredentials()).isTrue();
+    if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+      provider = provider.withCredentials(ComputeEngineCredentials.create());
+    } else {
+      provider = provider.withCredentials(CloudShellCredentials.create(3000));
+    }
+    assertThat(provider.needsCredentials()).isFalse();
+
+    provider.getTransportChannel().shutdownNow();
+  }
+
+  @Test
   public void testWithNonGCECredentials() throws IOException {
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();

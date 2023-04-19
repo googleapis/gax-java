@@ -265,14 +265,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private boolean isDirectPathXdsUsed() {
-    // Method 1: Enable DirectPath xDS by env.
+    // Method 1: Enable DirectPath xDS by option.
+    if (Boolean.TRUE.equals(useDirectPathXds)) {
+      return true;
+    }
+    // Method 2: Enable DirectPath xDS by env.
     String directPathXdsEnv = envProvider.getenv(DIRECT_PATH_ENV_ENABLE_XDS);
     boolean isDirectPathXdsEnv = Boolean.parseBoolean(directPathXdsEnv);
     if (isDirectPathXdsEnv) {
-      return true;
-    }
-    // Method 2: Enable DirectPath xDS by option.
-    if (Boolean.TRUE.equals(useDirectPathXds)) {
       return true;
     }
     return false;
@@ -704,8 +704,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     /** Use DirectPath xDS. Only valid if DirectPath is attempted. */
     @InternalApi("For internal use by google-cloud-java clients only")
-    public Builder setUseDirectPathXds(boolean useDirectPathXds) {
-      this.useDirectPathXds = useDirectPathXds;
+    public Builder setUseDirectPathXds() {
+      this.useDirectPathXds = true;
       return this;
     }
 
