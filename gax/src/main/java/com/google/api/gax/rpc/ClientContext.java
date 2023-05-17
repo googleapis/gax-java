@@ -167,7 +167,7 @@ public abstract class ClientContext {
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
-    if (settings.getQuotaProjectId() != null) {
+    if (settings.getQuotaProjectId() != null && credentials != null) {
       // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
       // QuotaProjectIdHidingCredentials.
       // Ensure that a custom set quota project id takes priority over one detected by credentials.

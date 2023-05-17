@@ -41,6 +41,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider;
 import com.google.api.gax.rpc.mtls.MtlsProvider.MtlsEndpointUsagePolicy;
 import com.google.api.gax.rpc.testing.FakeChannel;
@@ -531,6 +532,26 @@ public class ClientContextTest {
 
     ClientContext clientContext = ClientContext.create(builder.build());
     assertThat(clientContext.getCredentials().getRequestMetadata(null)).isEqualTo(metaData);
+  }
+
+  @Test
+  public void testQuotaProjectId_worksWithNullCredentials() throws IOException {
+    final String QUOTA_PROJECT_ID = "quota_project_id";
+
+    final InterceptingExecutor executor = new InterceptingExecutor(1);
+    final FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    final FakeTransportProvider transportProvider =
+        new FakeTransportProvider(
+            transportChannel, executor, true, null, Mockito.mock(Credentials.class));
+
+    final FakeClientSettings.Builder settingsBuilder = new FakeClientSettings.Builder();
+
+    settingsBuilder
+        .setTransportChannelProvider(transportProvider)
+        .setCredentialsProvider(NoCredentialsProvider.create())
+        .setQuotaProjectId(QUOTA_PROJECT_ID);
+
+    assertThat(ClientContext.create(settingsBuilder.build()).getCredentials()).isNull();
   }
 
   @Test
