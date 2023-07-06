@@ -1,7 +1,0 @@
-# Format:
-# module:released-version:current-version
-
-gax:2.20.1:2.20.1
-gax-bom:2.20.1:2.20.1
-gax-grpc:2.20.1:2.20.1
-gax-httpjson:0.105.1:0.105.1
